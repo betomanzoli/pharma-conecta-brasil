@@ -43,12 +43,12 @@ const ComplianceFooter = () => {
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PN</span>
+                <span className="text-white font-bold text-sm">FC</span>
               </div>
-              <span className="text-2xl font-bold text-primary">PharmaNexus</span>
+              <span className="text-2xl font-bold text-primary">FarmaConnect Brasil</span>
             </div>
             <p className="text-gray-400 mb-4">
-              A plataforma completa do ecossistema farmacêutico brasileiro
+              O ecossistema colaborativo da indústria farmacêutica brasileira
             </p>
             <div className="space-y-2 text-sm">
               <p className="text-yellow-400 font-medium">
@@ -95,7 +95,7 @@ const ComplianceFooter = () => {
         {/* Bottom Disclaimer */}
         <div className="pt-8 border-t border-gray-700 text-center">
           <p className="text-sm text-gray-400 mb-2">
-            © 2024 PharmaNexus. Todos os direitos reservados.
+            © 2024 FarmaConnect Brasil. Todos os direitos reservados.
           </p>
           <p className="text-xs text-gray-500">
             Todas as informações são para fins educacionais e networking profissional entre profissionais qualificados da indústria farmacêutica.

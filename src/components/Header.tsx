@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { User, Network, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen, Search, Target, FlaskConical, Briefcase, Bell, ChevronDown, Menu, X, Plus, Phone, AlertTriangle } from "lucide-react";
 import { useState } from "react";
@@ -61,7 +60,7 @@ const Header = () => {
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-2">
               <Network className="h-8 w-8 text-primary" />
-              <span className="text-xl md:text-2xl font-bold text-primary">PharmaNexus</span>
+              <span className="text-xl md:text-2xl font-bold text-primary">FarmaConnect Brasil</span>
             </Link>
           </div>
 
@@ -194,7 +193,7 @@ const Header = () => {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-2">
                         <Network className="h-6 w-6 text-primary" />
-                        <span className="text-lg font-bold text-primary">PharmaNexus</span>
+                        <span className="text-lg font-bold text-primary">FarmaConnect Brasil</span>
                       </div>
                     </div>
                     
