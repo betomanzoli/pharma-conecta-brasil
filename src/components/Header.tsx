@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User, Network, Building2, Users, Calendar, FileText, Shield } from "lucide-react";
+import { User, Network, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -13,6 +13,9 @@ const Header = () => {
     const baseItems = [
       { title: "Dashboard", path: "/dashboard", icon: User },
       { title: "Rede", path: "/network", icon: Network },
+      { title: "Mentoria", path: "/mentorship", icon: GraduationCap },
+      { title: "Fóruns", path: "/forums", icon: MessageCircle },
+      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
     ];
 
     switch (userType) {
@@ -20,24 +23,21 @@ const Header = () => {
         return [
           ...baseItems,
           { title: "Projetos", path: "/projects", icon: FileText },
-          { title: "Fornecedores", path: "/suppliers", icon: Building2 },
-          { title: "Laboratórios", path: "/laboratories", icon: Users },
+          { title: "Marketplace", path: "/marketplace", icon: Building2 },
           { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       case "laboratory":
         return [
           ...baseItems,
           { title: "Capacidade", path: "/capacity", icon: Calendar },
-          { title: "Equipamentos", path: "/equipment", icon: Building2 },
-          { title: "Clientes", path: "/clients", icon: Users },
+          { title: "Marketplace", path: "/marketplace", icon: Building2 },
           { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       case "consultant":
         return [
           ...baseItems,
           { title: "Portfólio", path: "/portfolio", icon: FileText },
-          { title: "Disponibilidade", path: "/availability", icon: Calendar },
-          { title: "Clientes", path: "/clients", icon: Users },
+          { title: "Marketplace", path: "/marketplace", icon: Building2 },
           { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       default:

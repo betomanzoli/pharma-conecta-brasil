@@ -1,101 +1,101 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, FlaskConical, UserCheck, Wrench, GraduationCap, Shield } from "lucide-react";
-
-interface UserType {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<any>;
-  color: string;
-}
-
-const userTypes: UserType[] = [
-  {
-    id: "professional",
-    title: "Profissional da Indústria",
-    description: "Networking profissional e desenvolvimento de carreira",
-    icon: Users,
-    color: "bg-blue-50 border-blue-200 text-blue-800"
-  },
-  {
-    id: "company",
-    title: "Empresa",
-    description: "Farmacêutica, Alimentícia, Biotecnológica",
-    icon: Building2,
-    color: "bg-green-50 border-green-200 text-green-800"
-  },
-  {
-    id: "laboratory",
-    title: "Laboratório Analítico",
-    description: "Serviços analíticos especializados",
-    icon: FlaskConical,
-    color: "bg-purple-50 border-purple-200 text-purple-800"
-  },
-  {
-    id: "consultant",
-    title: "Consultor/Prestador de Serviços",
-    description: "Expertise especializada e consultoria",
-    icon: UserCheck,
-    color: "bg-orange-50 border-orange-200 text-orange-800"
-  },
-  {
-    id: "supplier",
-    title: "Fornecedor de Equipamentos",
-    description: "Catálogos de produtos e suporte técnico",
-    icon: Wrench,
-    color: "bg-red-50 border-red-200 text-red-800"
-  },
-  {
-    id: "university",
-    title: "Universidade/Pesquisador",
-    description: "Colaboração em pesquisa e desenvolvimento",
-    icon: GraduationCap,
-    color: "bg-indigo-50 border-indigo-200 text-indigo-800"
-  },
-  {
-    id: "regulatory",
-    title: "Órgão Regulatório",
-    description: "Atualizações oficiais e diretrizes",
-    icon: Shield,
-    color: "bg-gray-50 border-gray-200 text-gray-800"
-  }
-];
+import { Badge } from "@/components/ui/badge";
+import { Users, GraduationCap, Building2, FlaskConical, Shield, Briefcase } from "lucide-react";
 
 interface UserTypeSelectorProps {
-  selectedType: string;
-  onTypeSelect: (type: string) => void;
+  onSelect: (userType: string) => void;
+  selectedType?: string;
 }
 
-const UserTypeSelector = ({ selectedType, onTypeSelect }: UserTypeSelectorProps) => {
+const UserTypeSelector = ({ onSelect, selectedType }: UserTypeSelectorProps) => {
+  const userTypes = [
+    {
+      id: "professional",
+      title: "Profissional",
+      description: "Profissional da indústria farmacêutica buscando networking e oportunidades",
+      icon: Users,
+      color: "bg-blue-50 border-blue-200 text-blue-800",
+      features: ["Networking", "Marketplace", "Fóruns", "Mentorias"]
+    },
+    {
+      id: "mentor",
+      title: "Mentor",
+      description: "Profissional experiente oferecendo mentoria e consultoria",
+      icon: GraduationCap,
+      color: "bg-green-50 border-green-200 text-green-800",
+      features: ["Oferecer Mentoria", "Consultorias", "Receita Adicional", "Impacto Social"]
+    },
+    {
+      id: "company",
+      title: "Empresa",
+      description: "Empresa farmacêutica buscando talentos, fornecedores e parcerias",
+      icon: Building2,
+      color: "bg-purple-50 border-purple-200 text-purple-800",
+      features: ["Recrutamento", "Fornecedores", "Parcerias", "Projetos"]
+    },
+    {
+      id: "laboratory",
+      title: "Laboratório",
+      description: "Laboratório oferecendo serviços analíticos e de P&D",
+      icon: FlaskConical,
+      color: "bg-orange-50 border-orange-200 text-orange-800",
+      features: ["Serviços Analíticos", "Capacidade", "Equipamentos", "Clientes"]
+    },
+    {
+      id: "consultant",
+      title: "Consultor",
+      description: "Consultor independente oferecendo expertise especializada",
+      icon: Briefcase,
+      color: "bg-indigo-50 border-indigo-200 text-indigo-800",
+      features: ["Projetos", "Expertise", "Flexibilidade", "Network"]
+    },
+    {
+      id: "regulatory",
+      title: "Regulatório",
+      description: "Especialista em assuntos regulatórios e compliance",
+      icon: Shield,
+      color: "bg-red-50 border-red-200 text-red-800",
+      features: ["Compliance", "Auditorias", "Registros", "Treinamentos"]
+    }
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {userTypes.map((type) => {
         const Icon = type.icon;
         const isSelected = selectedType === type.id;
         
         return (
           <Card 
-            key={type.id}
+            key={type.id} 
             className={`cursor-pointer transition-all hover:shadow-lg ${
-              isSelected ? 'ring-2 ring-primary border-primary' : ''
-            }`}
-            onClick={() => onTypeSelect(type.id)}
+              isSelected ? 'ring-2 ring-primary shadow-lg' : ''
+            } ${type.color}`}
+            onClick={() => onSelect(type.id)}
           >
-            <CardHeader className="text-center pb-2">
-              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${type.color} mb-2`}>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-3 rounded-full bg-white">
                 <Icon className="h-8 w-8" />
               </div>
               <CardTitle className="text-lg">{type.title}</CardTitle>
             </CardHeader>
-            <CardContent className="text-center">
-              <p className="text-gray-600 text-sm mb-4">{type.description}</p>
+            <CardContent>
+              <p className="text-sm mb-4 text-center">{type.description}</p>
+              <div className="space-y-2">
+                {type.features.map((feature, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {feature}
+                  </Badge>
+                ))}
+              </div>
               <Button 
+                className={`w-full mt-4 ${isSelected ? 'bg-primary' : ''}`}
                 variant={isSelected ? "default" : "outline"}
-                className="w-full"
               >
-                {isSelected ? "Selecionado" : "Selecionar"}
+                {isSelected ? 'Selecionado' : 'Selecionar'}
               </Button>
             </CardContent>
           </Card>

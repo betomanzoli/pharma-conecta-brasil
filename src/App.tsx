@@ -13,6 +13,9 @@ import Network from "./pages/Network";
 import Marketplace from "./pages/Marketplace";
 import Projects from "./pages/Projects";
 import Regulatory from "./pages/Regulatory";
+import MentorshipHub from "./pages/MentorshipHub";
+import Forums from "./pages/Forums";
+import KnowledgeLibrary from "./pages/KnowledgeLibrary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +36,9 @@ const App = () => (
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/regulatory" element={<Regulatory />} />
+          <Route path="/mentorship" element={<MentorshipHub />} />
+          <Route path="/forums" element={<Forums />} />
+          <Route path="/knowledge" element={<KnowledgeLibrary />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
