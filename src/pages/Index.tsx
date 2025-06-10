@@ -70,7 +70,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SwipeableCards 
             professionals={sampleProfessionals}
-            title="Profissionais em Destaque"
+            title="Participantes do Piloto"
           />
         </div>
       </section>
@@ -83,10 +83,10 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Ferramentas Interativas Farmacêuticas
+              Ferramentas em Desenvolvimento
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Utilize nossas ferramentas especializadas para tomar decisões mais assertivas
+              Teste nossas ferramentas conceituais e ajude a validar sua utilidade
             </p>
           </div>
 
@@ -101,55 +101,108 @@ const Index = () => {
       {/* Platform Features Showcase */}
       <PlatformFeatures />
 
-      {/* Statistics Section */}
+      {/* Pilot Statistics Section */}
       <section className="py-16 bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Impulsionando a Colaboração Farmacêutica
+              Programa Piloto PharmaNexus
             </h2>
+            <p className="text-primary-100 mb-8">
+              Validando o conceito com profissionais selecionados da indústria farmacêutica
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">10.000+</div>
-              <div className="text-primary-100">Profissionais Farmacêuticos</div>
+              <div className="text-4xl font-bold text-white mb-2">50+</div>
+              <div className="text-primary-100">Profissionais Convidados para o Piloto</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">500+</div>
-              <div className="text-primary-100">Empresas Encontrando Soluções Diariamente</div>
+              <div className="text-4xl font-bold text-white mb-2">15+</div>
+              <div className="text-primary-100">Empresas Participantes da Validação</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">300+</div>
-              <div className="text-primary-100">Laboratórios Otimizando Capacidade</div>
+              <div className="text-4xl font-bold text-white mb-2">8+</div>
+              <div className="text-primary-100">Laboratórios Testando a Plataforma</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">1.000+</div>
-              <div className="text-primary-100">Colaborações Bem-sucedidas</div>
+              <div className="text-4xl font-bold text-white mb-2">90 dias</div>
+              <div className="text-primary-100">Período de Teste Gratuito</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Enhanced Testimonials */}
+      {/* Pilot Testimonials */}
       <TestimonialsSection />
+
+      {/* Pricing Section - Pilot Phase */}
+      <section className="py-20 bg-muted">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            Fase Piloto Gratuita
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Participe da validação do conceito sem nenhum custo
+          </p>
+          
+          <div className="bg-white rounded-lg p-8 shadow-lg max-w-md mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Programa Piloto</h3>
+            <div className="text-4xl font-bold text-primary mb-2">Gratuito</div>
+            <p className="text-gray-500 mb-6">90 dias de teste</p>
+            
+            <ul className="text-left space-y-3 mb-8">
+              <li className="flex items-center">
+                <span className="text-green-500 mr-2">✓</span>
+                Acesso completo à plataforma
+              </li>
+              <li className="flex items-center">
+                <span className="text-green-500 mr-2">✓</span>
+                Ferramentas de matching
+              </li>
+              <li className="flex items-center">
+                <span className="text-green-500 mr-2">✓</span>
+                Suporte direto da equipe
+              </li>
+              <li className="flex items-center">
+                <span className="text-green-500 mr-2">✓</span>
+                Participação na definição do produto
+              </li>
+            </ul>
+            
+            <Button size="lg" className="w-full mb-4">
+              Candidatar-se ao Piloto
+            </Button>
+            
+            <p className="text-sm text-gray-500">
+              Modelo comercial será definido baseado no valor comprovado durante o piloto
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Call to Action */}
       <section className="py-20 bg-primary">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
-            Comece a Colaborar Hoje
+            Ajude a Construir o Futuro da Colaboração Farmacêutica
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Junte-se ao maior ecossistema farmacêutico e acelere seu crescimento
+            Participe do nosso programa piloto e seja parte da validação deste conceito inovador
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" className="px-8 py-3 text-lg">
-              Cadastrar Gratuitamente
+              Participar do Piloto Gratuito
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary px-8 py-3 text-lg">
-              Agendar Demo
+              Agendar Conversa sobre o Conceito
             </Button>
           </div>
+          
+          <p className="text-sm text-primary-100 mt-6 max-w-2xl mx-auto">
+            Estamos buscando profissionais experientes da indústria farmacêutica para validar se nossa hipótese 
+            de valor realmente resolve problemas reais do setor.
+          </p>
         </div>
       </section>
 

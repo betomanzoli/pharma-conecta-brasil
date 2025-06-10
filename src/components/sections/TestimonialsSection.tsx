@@ -1,67 +1,70 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Award, Shield, TrendingUp, Building2, FlaskConical, UserCheck, User } from "lucide-react";
+import { Star, Award, Shield, TrendingUp, Building2, FlaskConical, UserCheck, User, Target } from "lucide-react";
 
 const TestimonialsSection = () => {
-  const testimonials = [
+  const pilotParticipants = [
     {
       icon: Building2,
-      rating: 5,
-      text: "O PharmaNexus revolucionou nossa busca por laboratórios especializados. O sistema de matching nos conectou com parceiros ideais que aceleraram nosso desenvolvimento em 40% e reduziram custos em R$ 300k.",
+      status: "Em Teste",
+      text: "Estamos testando a plataforma para avaliar como ela pode otimizar nossa busca por laboratórios especializados e acelerar nossos projetos de desenvolvimento.",
       author: "Dra. Maria Santos",
       position: "VP de P&D, BioPharma Brasil",
       credentials: "CRF-SP 12345 • 15 anos de experiência",
-      metrics: {
+      testingMetrics: {
         color: "blue",
-        title: "Resultados Mensuráveis:",
-        items: ["Tempo reduzido: 40%", "Economia: R$ 300k", "Parceiros encontrados: 8", "Projetos acelerados: 3"]
+        title: "Métricas que Estamos Avaliando:",
+        items: ["Tempo de busca por parceiros", "Qualidade dos matches", "Facilidade de uso", "Valor agregado ao processo"]
       }
     },
     {
       icon: FlaskConical,
-      rating: 5,
-      text: "Nossa utilização de capacidade laboratorial aumentou 60% em 6 meses. A plataforma nos trouxe projetos de alta qualidade e faturamento adicional de R$ 2.4M no primeiro ano.",
+      status: "Piloto Ativo",
+      text: "Participamos do piloto para verificar se a plataforma realmente pode aumentar nossa utilização de capacidade e trazer novos projetos qualificados.",
       author: "Carlos Ferreira",
       position: "Diretor, AnalyticLab São Paulo",
       credentials: "CNPJ: 12.345.678/0001-90 • ISO 17025 Certificado",
-      metrics: {
+      testingMetrics: {
         color: "green",
-        title: "Impacto Financeiro:",
-        items: ["Utilização: +60%", "Faturamento: R$ 2.4M", "Novos clientes: 24", "Projetos ativos: 15"]
+        title: "Indicadores em Monitoramento:",
+        items: ["Taxa de utilização", "Qualidade dos leads", "Tempo de resposta", "Novos contatos estabelecidos"]
       }
     },
     {
       icon: UserCheck,
-      rating: 5,
-      text: "Como consultora regulatória, encontro leads qualificados que resultaram em 85% de conversão e crescimento de 200% na minha base de clientes em apenas 8 meses.",
+      status: "Testando",
+      text: "Como consultora, estou avaliando se a plataforma pode realmente gerar leads mais qualificados e facilitar conexões com empresas que precisam de expertise regulatória.",
       author: "Ana Rodrigues",
       position: "Consultora Regulatória Sênior",
       credentials: "CRF-RJ 67890 • MBA Regulatório USP",
-      metrics: {
+      testingMetrics: {
         color: "purple",
-        title: "Performance Comercial:",
-        items: ["Conversão: 85%", "Crescimento: +200%", "Leads mensais: 12", "Projetos fechados: 28"]
+        title: "Validando Hipóteses:",
+        items: ["Qualidade dos leads", "Taxa de conversão", "Facilidade de networking", "Valor das conexões"]
       }
     },
     {
       icon: User,
-      rating: 5,
-      text: "Minha carreira acelerou drasticamente. Consegui uma promoção 18 meses mais rápido que o esperado e aumento salarial de 45% através das conexões e mentoria da plataforma.",
+      status: "Participante",
+      text: "Estou testando como a plataforma pode acelerar conexões profissionais e facilitar acesso a mentoria especializada na indústria farmacêutica.",
       author: "João Silva",
       position: "Especialista em P&D, FarmaTech",
       credentials: "Farmacêutico Unicamp • Especialização ANVISA",
-      metrics: {
+      testingMetrics: {
         color: "orange",
-        title: "Crescimento Profissional:",
-        items: ["Promoção: -18 meses", "Aumento: +45%", "Mentores conectados: 3", "Certificações: 4"]
+        title: "Aspectos em Avaliação:",
+        items: ["Facilidade de networking", "Qualidade das conexões", "Acesso a mentoria", "Oportunidades de aprendizado"]
       }
     }
   ];
 
-  const companies = [
-    "BioPharma Brasil", "AnalyticLab SP", "FarmaTech", "BioTest Labs", 
-    "PharmaGlobal", "RegConsult", "LabMax", "BioSolutions"
+  const baselineMetrics = [
+    "Tempo médio para encontrar parceiros especializados",
+    "Taxa de resposta a solicitações de colaboração", 
+    "Qualidade percebida dos matches",
+    "Satisfação com processo atual de networking",
+    "Número de conexões relevantes por mês"
   ];
 
   return (
@@ -69,64 +72,60 @@ const TestimonialsSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Reconhecimento da Indústria Farmacêutica
+            Participantes do Programa Piloto
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Profissionais verificados compartilham seus sucessos
+            Profissionais da indústria farmacêutica testando e validando o conceito
           </p>
           
-          {/* Industry Recognition Badges */}
+          {/* Pilot Phase Badges */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <Award className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Endossado por Líderes da Indústria</span>
+              <Target className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Fase de Validação</span>
             </div>
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Profissionais Verificados</span>
+              <span className="text-sm font-medium">Participantes Verificados</span>
             </div>
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">ROI Comprovado</span>
+              <FlaskConical className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Teste Gratuito</span>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {testimonials.map((testimonial, index) => {
-            const Icon = testimonial.icon;
+          {pilotParticipants.map((participant, index) => {
+            const Icon = participant.icon;
             return (
               <Card key={index} className="p-8">
                 <div className="flex items-center mb-4">
-                  <div className="flex text-primary">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                  </div>
-                  <Badge className="ml-3 bg-green-100 text-green-800">Verificado</Badge>
+                  <Badge className="bg-blue-100 text-blue-800">{participant.status}</Badge>
+                  <Badge className="ml-3 bg-green-100 text-green-800">Piloto</Badge>
                 </div>
                 <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  "{testimonial.text}"
+                  "{participant.text}"
                 </p>
                 <div className="flex items-center">
                   <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mr-4">
                     <Icon className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <div className="font-semibold text-lg">{testimonial.author}</div>
-                    <div className="text-sm text-gray-500">{testimonial.position}</div>
+                    <div className="font-semibold text-lg">{participant.author}</div>
+                    <div className="text-sm text-gray-500">{participant.position}</div>
                     <div className="text-xs text-primary font-medium mt-1">
-                      {testimonial.credentials}
+                      {participant.credentials}
                     </div>
                   </div>
                 </div>
                 
-                <div className={`mt-4 p-3 bg-${testimonial.metrics.color}-50 rounded-lg`}>
-                  <div className={`text-sm font-medium text-${testimonial.metrics.color}-800 mb-1`}>
-                    {testimonial.metrics.title}
+                <div className={`mt-4 p-3 bg-${participant.testingMetrics.color}-50 rounded-lg`}>
+                  <div className={`text-sm font-medium text-${participant.testingMetrics.color}-800 mb-1`}>
+                    {participant.testingMetrics.title}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-${testimonial.metrics.color}-700">
-                    {testimonial.metrics.items.map((item, itemIndex) => (
+                  <div className="grid grid-cols-1 gap-1 text-xs text-${participant.testingMetrics.color}-700">
+                    {participant.testingMetrics.items.map((item, itemIndex) => (
                       <div key={itemIndex}>• {item}</div>
                     ))}
                   </div>
@@ -136,16 +135,31 @@ const TestimonialsSection = () => {
           })}
         </div>
         
-        {/* Company Logos Section */}
-        <div className="mt-16 text-center">
-          <p className="text-gray-600 mb-8">Empresas que confiam no PharmaNexus:</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            {companies.map((company) => (
-              <div key={company} className="bg-white px-6 py-3 rounded-lg shadow-sm">
-                <span className="text-gray-700 font-medium">{company}</span>
-              </div>
-            ))}
+        {/* Baseline Metrics Section */}
+        <div className="mt-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Métricas Baseline que Estamos Medindo
+            </h3>
+            <p className="text-gray-600">
+              Estabelecendo indicadores para medir o impacto real da plataforma
+            </p>
           </div>
+          
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {baselineMetrics.map((metric, index) => (
+                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span className="text-sm text-gray-700">{metric}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Resultados serão compartilhados transparentemente com todos os participantes do piloto
+          </p>
         </div>
       </div>
     </section>
