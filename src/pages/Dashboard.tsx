@@ -24,9 +24,11 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 
+type UserType = "professional" | "company" | "laboratory" | "consultant";
+
 const Dashboard = () => {
   // Simulando tipo de usuário - em produção viria do contexto/auth
-  const userType = "professional"; // professional, company, laboratory, consultant, etc.
+  const userType: UserType = "professional";
 
   const getKPIsByUserType = () => {
     switch (userType) {
