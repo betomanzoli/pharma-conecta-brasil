@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ const Marketplace = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">B2B Marketplace PharmaNexus</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Marketplace B2B PharmaNexus</h1>
           <p className="text-gray-600">Plataforma inteligente para conexões B2B no setor farmacêutico</p>
         </div>
 
@@ -325,7 +326,7 @@ const Marketplace = () => {
                       <span>Joint Venture</span>
                     </div>
                   </div>
-                  <Badge className="bg-purple-100 text-purple-800">High Value</Badge>
+                  <Badge className="bg-purple-100 text-purple-800">Alto Valor</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -346,7 +347,7 @@ const Marketplace = () => {
                 
                 <div className="flex space-x-2">
                   <Button className="flex-1 bg-purple-600 hover:bg-purple-700">Manifestar Interesse</Button>
-                  <Button variant="outline" className="flex-1">Confidential Briefing</Button>
+                  <Button variant="outline" className="flex-1">Briefing Confidencial</Button>
                 </div>
               </CardContent>
             </Card>

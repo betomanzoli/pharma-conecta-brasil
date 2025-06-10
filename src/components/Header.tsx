@@ -13,10 +13,10 @@ const Header = () => {
     const baseItems = [
       { title: "Dashboard", path: "/dashboard", icon: User },
       { title: "Marketplace", path: "/marketplace", icon: Building2 },
-      { title: "Collaborate", path: "/projects", icon: Target },
-      { title: "Compliance", path: "/regulatory", icon: Shield },
-      { title: "Network", path: "/network", icon: Network },
-      { title: "Knowledge", path: "/knowledge", icon: BookOpen },
+      { title: "Colaborar", path: "/projects", icon: Target },
+      { title: "Conformidade", path: "/regulatory", icon: Shield },
+      { title: "Rede", path: "/network", icon: Network },
+      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
     ];
 
     switch (userType) {
@@ -24,28 +24,28 @@ const Header = () => {
         return [
           { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Find Services", path: "/projects", icon: Search },
-          { title: "Compliance", path: "/regulatory", icon: Shield },
-          { title: "Network", path: "/network", icon: Network },
-          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
+          { title: "Buscar Serviços", path: "/projects", icon: Search },
+          { title: "Conformidade", path: "/regulatory", icon: Shield },
+          { title: "Rede", path: "/network", icon: Network },
+          { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
         ];
       case "laboratory":
         return [
           { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Capacity", path: "/projects", icon: Calendar },
-          { title: "Compliance", path: "/regulatory", icon: Shield },
-          { title: "Network", path: "/network", icon: Network },
-          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
+          { title: "Capacidade", path: "/projects", icon: Calendar },
+          { title: "Conformidade", path: "/regulatory", icon: Shield },
+          { title: "Rede", path: "/network", icon: Network },
+          { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
         ];
       case "consultant":
         return [
           { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Portfolio", path: "/projects", icon: FileText },
-          { title: "Compliance", path: "/regulatory", icon: Shield },
-          { title: "Network", path: "/network", icon: Network },
-          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
+          { title: "Portfólio", path: "/projects", icon: FileText },
+          { title: "Conformidade", path: "/regulatory", icon: Shield },
+          { title: "Rede", path: "/network", icon: Network },
+          { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
         ];
       default:
         return baseItems;
@@ -92,7 +92,7 @@ const Header = () => {
               }`}
             >
               <GraduationCap className="h-4 w-4" />
-              <span>Mentorship</span>
+              <span>Mentoria</span>
             </Link>
             
             <Link
@@ -104,7 +104,7 @@ const Header = () => {
               }`}
             >
               <MessageCircle className="h-4 w-4" />
-              <span>Forums</span>
+              <span>Fóruns</span>
             </Link>
           </nav>
 

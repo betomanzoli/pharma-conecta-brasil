@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ const Dashboard = () => {
           { title: "Projetos Ativos", value: "12", change: "+4%", trend: "up", icon: FileText, color: "bg-blue-50 text-blue-500" },
           { title: "Fornecedores", value: "45", change: "+10%", trend: "up", icon: Building2, color: "bg-green-50 text-green-500" },
           { title: "Leads", value: "23", change: "-2%", trend: "down", icon: Users, color: "bg-orange-50 text-orange-500" },
-          { title: "Budget", value: "R$ 150.000", change: "+15%", trend: "up", icon: DollarSign, color: "bg-purple-50 text-purple-500" },
+          { title: "Orçamento", value: "R$ 150.000", change: "+15%", trend: "up", icon: DollarSign, color: "bg-purple-50 text-purple-500" },
         ];
       case "laboratory":
         return [
