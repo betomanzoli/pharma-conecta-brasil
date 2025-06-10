@@ -16,7 +16,10 @@ import {
   Target,
   TrendingUp,
   Star,
-  CheckCircle
+  CheckCircle,
+  ArrowRight,
+  Award,
+  BarChart3
 } from "lucide-react";
 import Header from "@/components/Header";
 import ComplianceFooter from "@/components/ComplianceFooter";
@@ -32,47 +35,72 @@ const Index = () => {
         <ComplianceDisclaimer />
       </div>
       
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-white py-20">
+      {/* Optimized Hero Section */}
+      <section className="bg-gradient-to-br from-primary-50 to-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-6xl font-bold text-gray-900 mb-6">
-              A Plataforma Completa do
-              <span className="text-primary block">Ecossistema Farmacêutico</span>
+            {/* Main Value Proposition - First 3 seconds */}
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 leading-tight">
+              A Única Plataforma que Conecta
+              <span className="text-primary block">TODA a Indústria Farmacêutica Brasileira</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-4 max-w-4xl mx-auto">
-              Conectando empresas farmacêuticas, laboratórios, consultores, fornecedores e profissionais em uma plataforma inteligente
+            
+            {/* Clear Sub-value - Next 3 seconds */}
+            <p className="text-2xl text-gray-700 mb-6 font-medium max-w-4xl mx-auto">
+              Laboratórios + Indústrias + Consultores + Fornecedores em um só lugar
             </p>
-            <p className="text-lg text-primary font-medium mb-8 max-w-3xl mx-auto">
-              Onde toda a indústria farmacêutica colabora, inova e cresce em conjunto
-            </p>
+
+            {/* Social Proof - Build trust quickly */}
+            <div className="flex items-center justify-center space-x-2 mb-8">
+              <Award className="h-5 w-5 text-primary" />
+              <p className="text-lg text-primary font-semibold">
+                Mais de 500 profissionais farmacêuticos já conectados
+              </p>
+            </div>
+
+            {/* Quick Benefits - Scannable icons */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto">
+              <div className="flex flex-col items-center space-y-2 p-4 bg-white rounded-lg shadow-sm">
+                <FlaskConical className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-gray-700">Laboratórios Qualificados</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-4 bg-white rounded-lg shadow-sm">
+                <Zap className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-gray-700">IA Especializada</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-4 bg-white rounded-lg shadow-sm">
+                <Network className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-gray-700">Parcerias Estratégicas</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 p-4 bg-white rounded-lg shadow-sm">
+                <BarChart3 className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-gray-700">ROI Comprovado</span>
+              </div>
+            </div>
+
+            {/* Clear CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-primary hover:bg-primary-600 px-8 py-3 text-lg">
-                Cadastrar como Profissional
+              <Button size="lg" className="bg-primary hover:bg-primary-600 px-10 py-4 text-lg font-semibold">
+                Começar Gratuitamente
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-8 py-3 text-lg">
-                Cadastrar sua Empresa
-              </Button>
-              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-8 py-3 text-lg">
-                Cadastrar seu Laboratório
-              </Button>
-              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-8 py-3 text-lg">
-                Tornar-se Fornecedor
+              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-10 py-4 text-lg">
+                Ver Demo
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* User Type Sections */}
+      {/* Optimized User Type Sections - Scannable format */}
       <section className="py-20 bg-muted">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Construído para Todos os Stakeholders Farmacêuticos
+              Soluções para Cada Stakeholder Farmacêutico
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Descubra como o PharmaNexus acelera o sucesso de todos os participantes da indústria
+              Descubra como cada tipo de profissional maximiza resultados na nossa plataforma
             </p>
           </div>
 
@@ -83,25 +111,25 @@ const Index = () => {
                 <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
                   <Building2 className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Empresas e Indústrias Farmacêuticas</h3>
-                <ul className="text-gray-600 text-left space-y-2">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Encontre laboratórios especializados, consultores e fornecedores</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Acesse inteligência regulatória e ferramentas de conformidade</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Publique desafios de inovação e encontre soluções</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Conecte-se com os melhores talentos e prestadores de serviços</span>
-                  </li>
-                </ul>
+                <h3 className="text-2xl font-semibold mb-6">Empresas e Indústrias Farmacêuticas</h3>
+                <div className="text-left space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Encontre</strong> laboratórios especializados e fornecedores qualificados</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Acesse</strong> inteligência regulatória ANVISA em tempo real</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Publique</strong> desafios de inovação e encontre soluções</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Conecte-se</strong> com talentos e prestadores de elite</span>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -111,25 +139,25 @@ const Index = () => {
                 <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
                   <FlaskConical className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Laboratórios e Prestadores de Serviços</h3>
-                <ul className="text-gray-600 text-left space-y-2">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Otimize sua utilização de capacidade</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Conecte-se com empresas que precisam dos seus serviços</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Apresente suas capacidades especializadas</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Colabore em projetos multi-empresariais</span>
-                  </li>
-                </ul>
+                <h3 className="text-2xl font-semibold mb-6">Laboratórios e Prestadores de Serviços</h3>
+                <div className="text-left space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Otimize</strong> utilização de capacidade até <strong>60%</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Conecte-se</strong> com empresas que precisam dos seus serviços</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Apresente</strong> suas capacidades especializadas</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Colabore</strong> em projetos multi-empresariais</span>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -139,25 +167,25 @@ const Index = () => {
                 <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
                   <UserCheck className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Consultores e Especialistas</h3>
-                <ul className="text-gray-600 text-left space-y-2">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Acesse leads qualificados de empresas farmacêuticas</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Compartilhe expertise através do nosso marketplace de conhecimento</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Construa sua reputação profissional e rede de contatos</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Participe de projetos colaborativos da indústria</span>
-                  </li>
-                </ul>
+                <h3 className="text-2xl font-semibold mb-6">Consultores e Especialistas</h3>
+                <div className="text-left space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Acesse</strong> leads qualificados de empresas farmacêuticas</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Compartilhe</strong> expertise no marketplace de conhecimento</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Construa</strong> reputação profissional e rede de contatos</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Participe</strong> de projetos colaborativos da indústria</span>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -167,25 +195,25 @@ const Index = () => {
                 <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
                   <User className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">Profissionais e Crescimento de Carreira</h3>
-                <ul className="text-gray-600 text-left space-y-2">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Acelere sua carreira farmacêutica</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Conecte-se com mentores e líderes da indústria</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Acesse oportunidades de trabalho exclusivas</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Mantenha-se atualizado com tendências e regulamentações da indústria</span>
-                  </li>
-                </ul>
+                <h3 className="text-2xl font-semibold mb-6">Profissionais e Crescimento de Carreira</h3>
+                <div className="text-left space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Acelere</strong> sua carreira farmacêutica <strong>40% mais rápido</strong></span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Conecte-se</strong> com mentores e líderes da indústria</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Acesse</strong> oportunidades de trabalho exclusivas</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                    <span className="text-gray-600"><strong>Mantenha-se</strong> atualizado com tendências da indústria</span>
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
