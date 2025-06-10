@@ -32,7 +32,7 @@ type UserType = "professional" | "company" | "laboratory" | "consultant" | "supp
 
 const Dashboard = () => {
   // Simulando tipo de usuário - em produção viria do contexto/auth
-  const userType: UserType = "professional";
+  const [userType] = useState<UserType>("professional");
 
   const getKPIsByUserType = () => {
     switch (userType) {
