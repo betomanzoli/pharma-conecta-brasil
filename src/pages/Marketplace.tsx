@@ -1,16 +1,18 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, Calendar, FlaskConical, Building2, Users, Star, Wrench, Brain, TrendingUp, FileText, Shield, Zap } from "lucide-react";
+import { Search, MapPin, Calendar, FlaskConical, Building2, Users, Star, Wrench, Brain, TrendingUp, FileText, Shield, Zap, Plus } from "lucide-react";
 import Header from "@/components/Header";
 import AIMatchingEngine from "@/components/marketplace/AIMatchingEngine";
 import AdvancedSearch from "@/components/marketplace/AdvancedSearch";
 import TransactionManager from "@/components/marketplace/TransactionManager";
 import MarketplaceStats from "@/components/marketplace/MarketplaceStats";
+import CapacityCalendar from "@/components/marketplace/CapacityCalendar";
+import SupplierDirectory from "@/components/marketplace/SupplierDirectory";
+import ProjectBoard from "@/components/marketplace/ProjectBoard";
 
 const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -129,97 +131,115 @@ const Marketplace = () => {
             <TabsTrigger value="ai-matches">IA Matches</TabsTrigger>
           </TabsList>
 
-          {/* Laboratory Services */}
+          {/* Laboratory Services with Enhanced Features */}
           <TabsContent value="services" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {laboratoryServices.map((lab) => (
-                <Card key={lab.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl text-primary mb-1">{lab.name}</CardTitle>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <FlaskConical className="h-4 w-4" />
-                          <span>{lab.type}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {laboratoryServices.map((lab) => (
+                  <Card key={lab.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-xl text-primary mb-1">{lab.name}</CardTitle>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <FlaskConical className="h-4 w-4" />
+                            <span>{lab.type}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                          <span className="text-sm font-medium">{lab.rating}</span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{lab.rating}</span>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 mb-4">{lab.description}</p>
+                      
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {lab.location}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {lab.specializations.map((spec, index) => (
+                            <Badge key={index} variant="secondary">{spec}</Badge>
+                          ))}
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <Badge variant={lab.capacity === "Disponível" ? "default" : "secondary"}>
+                            {lab.capacity}
+                          </Badge>
+                          <span className="text-sm font-medium text-primary">{lab.price}</span>
+                        </div>
+                        
+                        {/* Certification Badges */}
+                        <div className="flex flex-wrap gap-2 pt-2 border-t">
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">ISO 17025</Badge>
+                          <Badge className="bg-green-100 text-green-800 text-xs">ANVISA</Badge>
+                          <Badge className="bg-purple-100 text-purple-800 text-xs">GMP</Badge>
+                        </div>
                       </div>
-                    </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button className="w-full">Ver Perfil</Button>
+                        <Button variant="outline" className="w-full">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Ver Agenda
+                        </Button>
+                        <Button variant="outline" className="w-full">Solicitar Orçamento</Button>
+                        <Button variant="outline" className="w-full">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Certificados
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              {/* Sidebar with Capacity Calendar */}
+              <div className="space-y-6">
+                <CapacityCalendar />
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Filtros Avançados</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 mb-4">{lab.description}</p>
-                    
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {lab.location}
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {lab.specializations.map((spec, index) => (
-                          <Badge key={index} variant="secondary">{spec}</Badge>
-                        ))}
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Badge variant={lab.capacity === "Disponível" ? "default" : "secondary"}>
-                          {lab.capacity}
-                        </Badge>
-                        <span className="text-sm font-medium text-primary">{lab.price}</span>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Especialização</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="cursor-pointer">Microbiologia</Badge>
+                        <Badge variant="outline" className="cursor-pointer">Estabilidade</Badge>
+                        <Badge variant="outline" className="cursor-pointer">Físico-química</Badge>
                       </div>
                     </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button className="flex-1">Ver Perfil</Button>
-                      <Button variant="outline" className="flex-1">Solicitar Orçamento</Button>
+                    <div>
+                      <label className="text-sm font-medium">Certificações</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="cursor-pointer">ISO 17025</Badge>
+                        <Badge variant="outline" className="cursor-pointer">ANVISA</Badge>
+                        <Badge variant="outline" className="cursor-pointer">FDA</Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Capacidade</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="cursor-pointer">Disponível</Badge>
+                        <Badge variant="outline" className="cursor-pointer">Limitada</Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              </div>
             </div>
           </TabsContent>
 
-          {/* Equipment Marketplace */}
+          {/* Enhanced Equipment Marketplace */}
           <TabsContent value="equipment" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl text-primary mb-1">HPLC Agilent 1260</CardTitle>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Wrench className="h-4 w-4" />
-                        <span>Equipamento Analítico</span>
-                      </div>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Disponível</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 mb-4">Sistema HPLC completo com detector UV-Vis, ideal para análises farmacêuticas</p>
-                  
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      São Paulo, SP
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Venda/Locação</span>
-                      <span className="text-lg font-bold text-primary">R$ 180.000</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button className="flex-1">Ver Detalhes</Button>
-                    <Button variant="outline" className="flex-1">Agendar Demo</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <SupplierDirectory />
           </TabsContent>
 
           {/* Consulting Hub */}
@@ -358,6 +378,22 @@ const Marketplace = () => {
             <AIMatchingEngine />
           </TabsContent>
         </Tabs>
+
+        {/* Project Collaboration Section */}
+        <div className="mt-12 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Projetos Colaborativos</h2>
+              <p className="text-gray-600">Gerencie projetos multi-stakeholder em andamento</p>
+            </div>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Projeto
+            </Button>
+          </div>
+          
+          <ProjectBoard />
+        </div>
 
         {/* Transaction Manager */}
         <TransactionManager />
