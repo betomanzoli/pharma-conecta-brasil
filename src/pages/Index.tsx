@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -20,11 +19,18 @@ import {
   CheckCircle
 } from "lucide-react";
 import Header from "@/components/Header";
+import ComplianceFooter from "@/components/ComplianceFooter";
+import ComplianceDisclaimer from "@/components/ComplianceDisclaimer";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
+      
+      {/* Compliance Disclaimer */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <ComplianceDisclaimer />
+      </div>
       
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-50 to-white py-20">
@@ -392,20 +398,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <Network className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-primary">PharmaNexus</span>
-            </div>
-            <p className="text-gray-400">
-              A plataforma completa do ecossistema farmacêutico
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Replace simple footer with compliance footer */}
+      <ComplianceFooter />
     </div>
   );
 };
