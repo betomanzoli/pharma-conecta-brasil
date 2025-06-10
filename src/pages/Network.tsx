@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -181,7 +180,7 @@ const Network = () => {
             <CardTitle className="text-primary">Buscar Profissionais</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <Input
                   placeholder="Buscar por nome, empresa ou cargo..."
@@ -190,12 +189,11 @@ const Network = () => {
                 />
               </div>
               <div>
-                <Select onValueChange={setFilterArea}>
+                <Select value={filterArea} onValueChange={setFilterArea}>
                   <SelectTrigger>
                     <SelectValue placeholder="Área de Expertise" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as áreas</SelectItem>
                     {expertiseAreas.map((area) => (
                       <SelectItem key={area} value={area}>
                         {area}
@@ -205,12 +203,11 @@ const Network = () => {
                 </Select>
               </div>
               <div>
-                <Select onValueChange={setFilterLocation}>
+                <Select value={filterLocation} onValueChange={setFilterLocation}>
                   <SelectTrigger>
                     <SelectValue placeholder="Localização" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as localizações</SelectItem>
                     {locations.map((location) => (
                       <SelectItem key={location} value={location}>
                         {location}
@@ -218,6 +215,18 @@ const Network = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setFilterArea("");
+                    setFilterLocation("");
+                    setSearchTerm("");
+                  }}
+                >
+                  Limpar Filtros
+                </Button>
               </div>
             </div>
           </CardContent>
