@@ -28,7 +28,7 @@ const ComplianceFooter = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <div className="bg-primary rounded-full p-2">
+            <div className="bg-[#1565C0] rounded-full p-2">
               <CheckCircle className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -42,10 +42,10 @@ const ComplianceFooter = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">FC</span>
+              <div className="h-8 w-8 bg-[#1565C0] rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">PC</span>
               </div>
-              <span className="text-2xl font-bold text-primary">FarmaConnect Brasil</span>
+              <span className="text-2xl font-bold text-[#1565C0]">PharmaConnect Brasil</span>
             </div>
             <p className="text-gray-400 mb-4">
               O ecossistema colaborativo da indústria farmacêutica brasileira
@@ -64,17 +64,17 @@ const ComplianceFooter = () => {
             <h4 className="text-white font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/privacy" className="text-gray-400 hover:text-primary transition-colors">
+                <a href="/privacy" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Política de Privacidade LGPD
                 </a>
               </li>
               <li>
-                <a href="/terms" className="text-gray-400 hover:text-primary transition-colors">
+                <a href="/terms" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Termos de Uso
                 </a>
               </li>
               <li>
-                <a href="/ethics" className="text-gray-400 hover:text-primary transition-colors">
+                <a href="/ethics" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Código de Ética
                 </a>
               </li>
@@ -95,7 +95,7 @@ const ComplianceFooter = () => {
         {/* Bottom Disclaimer */}
         <div className="pt-8 border-t border-gray-700 text-center">
           <p className="text-sm text-gray-400 mb-2">
-            © 2024 FarmaConnect Brasil. Todos os direitos reservados.
+            © 2024 PharmaConnect Brasil. Todos os direitos reservados.
           </p>
           <p className="text-xs text-gray-500">
             Todas as informações são para fins educacionais e networking profissional entre profissionais qualificados da indústria farmacêutica.
