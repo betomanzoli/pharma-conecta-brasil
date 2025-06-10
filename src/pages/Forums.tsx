@@ -22,7 +22,8 @@ import {
   FlaskConical,
   BookOpen,
   Briefcase,
-  Newspaper
+  Newspaper,
+  Building2
 } from "lucide-react";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
