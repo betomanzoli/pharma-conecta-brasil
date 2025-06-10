@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Building2, MapPin, Star, Package, Truck, Calendar, CreditCard, Video, FileText } from "lucide-react";
+import { Building2, MapPin, Star, Package, Truck, Calendar, CreditCard, Video, FileText, Users, MessageSquare, Shield } from "lucide-react";
 
 const SupplierDirectory = () => {
   const [searchTerm, setSearchTerm] = useState("");
