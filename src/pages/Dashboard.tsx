@@ -22,7 +22,9 @@ import {
   Award,
   Briefcase,
   BookOpen,
-  Shield
+  Shield,
+  User,
+  Wrench
 } from "lucide-react";
 import Header from "@/components/Header";
 
