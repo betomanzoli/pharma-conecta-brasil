@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User, Network, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen } from "lucide-react";
+import { User, Network, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen, Search, Target } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -12,41 +12,43 @@ const Header = () => {
   const getNavigationItems = () => {
     const baseItems = [
       { title: "Dashboard", path: "/dashboard", icon: User },
-      { title: "Rede", path: "/network", icon: Network },
-      { title: "Mentoria", path: "/mentorship", icon: GraduationCap },
-      { title: "Fóruns", path: "/forums", icon: MessageCircle },
-      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
+      { title: "Marketplace", path: "/marketplace", icon: Building2 },
+      { title: "Collaborate", path: "/projects", icon: Target },
+      { title: "Compliance", path: "/regulatory", icon: Shield },
+      { title: "Network", path: "/network", icon: Network },
+      { title: "Knowledge", path: "/knowledge", icon: BookOpen },
     ];
 
     switch (userType) {
       case "company":
         return [
-          ...baseItems,
-          { title: "Projetos", path: "/projects", icon: FileText },
+          { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Regulatório", path: "/regulatory", icon: Shield },
+          { title: "Find Services", path: "/projects", icon: Search },
+          { title: "Compliance", path: "/regulatory", icon: Shield },
+          { title: "Network", path: "/network", icon: Network },
+          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
         ];
       case "laboratory":
         return [
-          ...baseItems,
-          { title: "Capacidade", path: "/capacity", icon: Calendar },
+          { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Regulatório", path: "/regulatory", icon: Shield },
+          { title: "Capacity", path: "/projects", icon: Calendar },
+          { title: "Compliance", path: "/regulatory", icon: Shield },
+          { title: "Network", path: "/network", icon: Network },
+          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
         ];
       case "consultant":
         return [
-          ...baseItems,
-          { title: "Portfólio", path: "/portfolio", icon: FileText },
+          { title: "Dashboard", path: "/dashboard", icon: User },
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Regulatório", path: "/regulatory", icon: Shield },
+          { title: "Portfolio", path: "/projects", icon: FileText },
+          { title: "Compliance", path: "/regulatory", icon: Shield },
+          { title: "Network", path: "/network", icon: Network },
+          { title: "Knowledge", path: "/knowledge", icon: BookOpen },
         ];
       default:
-        return [
-          ...baseItems,
-          { title: "Marketplace", path: "/marketplace", icon: Building2 },
-          { title: "Projetos", path: "/projects", icon: FileText },
-          { title: "Regulatório", path: "/regulatory", icon: Shield },
-        ];
+        return baseItems;
     }
   };
 
@@ -79,6 +81,31 @@ const Header = () => {
                 </Link>
               );
             })}
+            
+            {/* Additional ecosystem features */}
+            <Link
+              to="/mentorship"
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === "/mentorship"
+                  ? "text-primary bg-primary-50"
+                  : "text-gray-700 hover:text-primary hover:bg-gray-50"
+              }`}
+            >
+              <GraduationCap className="h-4 w-4" />
+              <span>Mentorship</span>
+            </Link>
+            
+            <Link
+              to="/forums"
+              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === "/forums"
+                  ? "text-primary bg-primary-50"
+                  : "text-gray-700 hover:text-primary hover:bg-gray-50"
+              }`}
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Forums</span>
+            </Link>
           </nav>
 
           <div className="flex items-center space-x-4">
