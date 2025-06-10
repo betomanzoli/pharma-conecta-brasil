@@ -1,15 +1,19 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, Calendar, FlaskConical, Building2, Users, Star, Wrench } from "lucide-react";
+import { Search, MapPin, Calendar, FlaskConical, Building2, Users, Star, Wrench, Brain, TrendingUp, FileText, Shield, Zap } from "lucide-react";
 import Header from "@/components/Header";
+import AIMatchingEngine from "@/components/marketplace/AIMatchingEngine";
+import AdvancedSearch from "@/components/marketplace/AdvancedSearch";
+import TransactionManager from "@/components/marketplace/TransactionManager";
+import MarketplaceStats from "@/components/marketplace/MarketplaceStats";
 
 const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const laboratoryServices = [
     {
@@ -82,37 +86,46 @@ const Marketplace = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Marketplace PharmaNexus</h1>
-          <p className="text-gray-600">Conecte-se com laboratórios, consultores e fornecedores especializados</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">B2B Marketplace PharmaNexus</h1>
+          <p className="text-gray-600">Plataforma inteligente para conexões B2B no setor farmacêutico</p>
         </div>
 
-        {/* Search Bar */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar serviços, especialidades, localização..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* AI Matching Alert */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Brain className="h-6 w-6 text-blue-600" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900">IA encontrou 12 oportunidades para você</h3>
+                <p className="text-sm text-blue-700">3 laboratórios disponíveis, 5 projetos compatíveis, 4 fornecedores recomendados</p>
               </div>
-              <Button className="bg-primary hover:bg-primary-600">
-                Buscar
+              <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                Ver Recomendações
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Marketplace Tabs */}
+        {/* Marketplace Stats */}
+        <MarketplaceStats />
+
+        {/* Advanced Search */}
+        <AdvancedSearch 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+        />
+
+        {/* Main Marketplace Tabs */}
         <Tabs defaultValue="services" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-            <TabsTrigger value="services">Serviços</TabsTrigger>
-            <TabsTrigger value="needs">Demandas</TabsTrigger>
-            <TabsTrigger value="consultants">Consultores</TabsTrigger>
+          <TabsList className="grid grid-cols-6 w-full">
+            <TabsTrigger value="services">Serviços Lab</TabsTrigger>
             <TabsTrigger value="equipment">Equipamentos</TabsTrigger>
+            <TabsTrigger value="consulting">Consultoria</TabsTrigger>
+            <TabsTrigger value="challenges">Desafios</TabsTrigger>
+            <TabsTrigger value="partnerships">Parcerias</TabsTrigger>
+            <TabsTrigger value="ai-matches">IA Matches</TabsTrigger>
           </TabsList>
 
           {/* Laboratory Services */}
@@ -168,57 +181,48 @@ const Marketplace = () => {
             </div>
           </TabsContent>
 
-          {/* Company Needs */}
-          <TabsContent value="needs" className="space-y-6">
+          {/* Equipment Marketplace */}
+          <TabsContent value="equipment" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {companyNeeds.map((need) => (
-                <Card key={need.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl text-primary mb-1">{need.title}</CardTitle>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <Building2 className="h-4 w-4" />
-                          <span>{need.company}</span>
-                        </div>
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl text-primary mb-1">HPLC Agilent 1260</CardTitle>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Wrench className="h-4 w-4" />
+                        <span>Equipamento Analítico</span>
                       </div>
-                      <Badge variant={need.urgency === "Alta" ? "destructive" : "secondary"}>
-                        {need.urgency}
-                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 mb-4">{need.description}</p>
-                    
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {need.location}
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Prazo: {need.deadline}
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <Badge variant="outline">{need.category}</Badge>
-                        <span className="text-sm font-medium text-green-600">{need.budget}</span>
-                      </div>
+                    <Badge className="bg-green-100 text-green-800">Disponível</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 mb-4">Sistema HPLC completo com detector UV-Vis, ideal para análises farmacêuticas</p>
+                  
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      São Paulo, SP
                     </div>
                     
-                    <div className="flex space-x-2">
-                      <Button className="flex-1">Ver Detalhes</Button>
-                      <Button variant="outline" className="flex-1">Enviar Proposta</Button>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Venda/Locação</span>
+                      <span className="text-lg font-bold text-primary">R$ 180.000</span>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button className="flex-1">Ver Detalhes</Button>
+                    <Button variant="outline" className="flex-1">Agendar Demo</Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
-          {/* Consultants */}
-          <TabsContent value="consultants" className="space-y-6">
+          {/* Consulting Hub */}
+          <TabsContent value="consulting" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {consultants.map((consultant) => (
                 <Card key={consultant.id} className="hover:shadow-lg transition-shadow">
@@ -270,17 +274,92 @@ const Marketplace = () => {
             </div>
           </TabsContent>
 
-          {/* Equipment placeholder */}
-          <TabsContent value="equipment" className="space-y-6">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Wrench className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Catálogo de Equipamentos</h3>
-                <p className="text-gray-600">Em breve: Navegue pelo catálogo completo de equipamentos farmacêuticos</p>
+          {/* Innovation Challenges */}
+          <TabsContent value="challenges" className="space-y-6">
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl text-orange-800 mb-1">Desafio: Formulação Estável pH 7.4</CardTitle>
+                    <div className="flex items-center space-x-2 text-sm text-orange-600">
+                      <Zap className="h-4 w-4" />
+                      <span>Desafio Técnico</span>
+                    </div>
+                  </div>
+                  <Badge className="bg-orange-100 text-orange-800">R$ 75.000 Prêmio</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-orange-700 mb-4">Desenvolvimento de formulação líquida estável em pH fisiológico para princípio ativo sensível</p>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center text-sm text-orange-600">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Prazo: 90 dias
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">Formulação</Badge>
+                    <Badge variant="outline">Estabilidade</Badge>
+                    <Badge variant="outline">pH Crítico</Badge>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button className="flex-1 bg-orange-600 hover:bg-orange-700">Aceitar Desafio</Button>
+                  <Button variant="outline" className="flex-1">Ver Detalhes</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Partnership Finder */}
+          <TabsContent value="partnerships" className="space-y-6">
+            <Card className="border-purple-200 bg-purple-50">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl text-purple-800 mb-1">Parceria Estratégica: Expansão LATAM</CardTitle>
+                    <div className="flex items-center space-x-2 text-sm text-purple-600">
+                      <Building2 className="h-4 w-4" />
+                      <span>Joint Venture</span>
+                    </div>
+                  </div>
+                  <Badge className="bg-purple-100 text-purple-800">High Value</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-purple-700 mb-4">Multinacional farmacêutica busca parceiro local para distribuição e registro na América Latina</p>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-purple-600">Investimento:</span>
+                    <span className="font-bold text-purple-800">USD 2-5M</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">Registro</Badge>
+                    <Badge variant="outline">Distribuição</Badge>
+                    <Badge variant="outline">LATAM</Badge>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button className="flex-1 bg-purple-600 hover:bg-purple-700">Manifestar Interesse</Button>
+                  <Button variant="outline" className="flex-1">Confidential Briefing</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI Matches */}
+          <TabsContent value="ai-matches" className="space-y-6">
+            <AIMatchingEngine />
+          </TabsContent>
         </Tabs>
+
+        {/* Transaction Manager */}
+        <TransactionManager />
       </div>
     </div>
   );
