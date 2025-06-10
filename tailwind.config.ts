@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -25,8 +26,13 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: '#1565C0',
+					50: '#E3F2FD',
+					100: '#BBDEFB',
+					500: '#1565C0',
+					600: '#1976D2',
+					700: '#1565C0',
+					foreground: '#FFFFFF'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -37,7 +43,7 @@ export default {
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
+					DEFAULT: '#F5F5F5',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
 				accent: {
@@ -67,6 +73,10 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				roboto: ['Roboto', 'system-ui', 'sans-serif']
 			},
 			keyframes: {
 				'accordion-down': {
