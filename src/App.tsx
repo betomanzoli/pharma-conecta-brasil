@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import Network from "./pages/Network";
 import Marketplace from "./pages/Marketplace";
 import Projects from "./pages/Projects";
+import Regulatory from "./pages/Regulatory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/network" element={<Network />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/regulatory" element={<Regulatory />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

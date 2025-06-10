@@ -1,30 +1,32 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, 
-  Network, 
-  TrendingUp, 
-  Calendar, 
-  Bell, 
-  Target,
+import {
+  TrendingUp,
+  TrendingDown,
   Users,
   Building2,
   FlaskConical,
   CheckCircle,
-  AlertCircle,
   Clock,
-  Star,
-  ArrowUp,
-  ArrowDown,
-  BarChart3
+  AlertCircle,
+  Calendar,
+  FileText,
+  DollarSign,
+  BarChart3,
+  Network,
+  Target,
+  Award,
+  Briefcase,
+  BookOpen,
+  Shield
 } from "lucide-react";
 import Header from "@/components/Header";
 
-type UserType = "professional" | "company" | "laboratory" | "consultant";
+type UserType = "professional" | "company" | "laboratory" | "consultant" | "supplier" | "university" | "regulatory";
 
 const Dashboard = () => {
   // Simulando tipo de usuário - em produção viria do contexto/auth
@@ -34,123 +36,115 @@ const Dashboard = () => {
     switch (userType) {
       case "company":
         return [
-          { title: "Projetos Ativos", value: "8", icon: Target, change: "+2", trend: "up" },
-          { title: "Fornecedores Conectados", value: "24", icon: Building2, change: "+5", trend: "up" },
-          { title: "Orçamentos Pendentes", value: "12", icon: Clock, change: "-3", trend: "down" },
-          { title: "ROI Médio", value: "127%", icon: TrendingUp, change: "+15%", trend: "up" }
+          { title: "Projetos Ativos", value: "12", change: "+4%", trend: "up", icon: FileText, color: "bg-blue-50 text-blue-500" },
+          { title: "Fornecedores", value: "45", change: "+10%", trend: "up", icon: Building2, color: "bg-green-50 text-green-500" },
+          { title: "Leads", value: "23", change: "-2%", trend: "down", icon: Users, color: "bg-orange-50 text-orange-500" },
+          { title: "Budget", value: "R$ 150.000", change: "+15%", trend: "up", icon: DollarSign, color: "bg-purple-50 text-purple-500" },
         ];
       case "laboratory":
         return [
-          { title: "Capacidade Utilizada", value: "78%", icon: BarChart3, change: "+8%", trend: "up" },
-          { title: "Clientes Ativos", value: "15", icon: Users, change: "+3", trend: "up" },
-          { title: "Análises Concluídas", value: "145", icon: CheckCircle, change: "+22", trend: "up" },
-          { title: "Tempo Médio", value: "4.2d", icon: Clock, change: "-0.5d", trend: "down" }
+          { title: "Capacidade Ocupada", value: "85%", change: "+5%", trend: "up", icon: Calendar, color: "bg-blue-50 text-blue-500" },
+          { title: "Equipamentos", value: "60", change: "+3%", trend: "up", icon: Building2, color: "bg-green-50 text-green-500" },
+          { title: "Clientes", value: "120", change: "+8%", trend: "up", icon: Users, color: "bg-orange-50 text-orange-500" },
+          { title: "Receita", value: "R$ 220.000", change: "+12%", trend: "up", icon: DollarSign, color: "bg-purple-50 text-purple-500" },
         ];
       case "consultant":
         return [
-          { title: "Projetos Ativos", value: "6", icon: Target, change: "+1", trend: "up" },
-          { title: "Taxa de Ocupação", value: "85%", icon: Calendar, change: "+10%", trend: "up" },
-          { title: "Avaliação Média", value: "4.8", icon: Star, change: "+0.2", trend: "up" },
-          { title: "Receita Mensal", value: "R$ 28k", icon: TrendingUp, change: "+15%", trend: "up" }
+          { title: "Projetos", value: "8", change: "+6%", trend: "up", icon: FileText, color: "bg-blue-50 text-blue-500" },
+          { title: "Clientes", value: "15", change: "+4%", trend: "up", icon: Users, color: "bg-green-50 text-green-500" },
+          { title: "Disponibilidade", value: "70%", change: "-10%", trend: "down", icon: Calendar, color: "bg-orange-50 text-orange-500" },
+          { title: "Receita", value: "R$ 80.000", change: "+9%", trend: "up", icon: DollarSign, color: "bg-purple-50 text-purple-500" },
         ];
-      default: // professional
+      case "regulatory":
         return [
-          { title: "Conexões", value: "124", icon: Network, change: "+8", trend: "up" },
-          { title: "Visualizações do Perfil", value: "89", icon: User, change: "+15", trend: "up" },
-          { title: "Oportunidades", value: "7", icon: Target, change: "+2", trend: "up" },
-          { title: "Engajamento", value: "92%", icon: TrendingUp, change: "+5%", trend: "up" }
+          { title: "Regulamentações", value: "25", change: "+2%", trend: "up", icon: Shield, color: "bg-blue-50 text-blue-500" },
+          { title: "Conformidade", value: "95%", change: "+1%", trend: "up", icon: CheckCircle, color: "bg-green-50 text-green-500" },
+          { title: "Alertas", value: "3", change: "-1%", trend: "down", icon: AlertCircle, color: "bg-orange-50 text-orange-500" },
+          { title: "Auditoria", value: "100%", change: "+0%", trend: "up", icon: Briefcase, color: "bg-purple-50 text-purple-500" },
+        ];
+      default:
+        return [
+          { title: "Conexões", value: "350", change: "+5%", trend: "up", icon: Network, color: "bg-blue-50 text-blue-500" },
+          { title: "Projetos", value: "15", change: "+3%", trend: "up", icon: FileText, color: "bg-green-50 text-green-500" },
+          { title: "Marketplace", value: "8", change: "+2%", trend: "up", icon: Building2, color: "bg-orange-50 text-orange-500" },
+          { title: "Cursos", value: "5", change: "+1%", trend: "up", icon: BookOpen, color: "bg-purple-50 text-purple-500" },
         ];
     }
   };
 
-  const kpis = getKPIsByUserType();
-
-  const recentActivities = [
-    {
-      type: "connection",
-      message: "Dr. Ana Silva aceitou sua conexão",
-      time: "2 horas atrás",
-      icon: Network
-    },
-    {
-      type: "opportunity",
-      message: "Nova oportunidade: Validação de Método Analítico",
-      time: "5 horas atrás",
-      icon: Target
-    },
-    {
-      type: "project",
-      message: "Projeto 'Estudo de Estabilidade' foi atualizado",
-      time: "1 dia atrás",
-      icon: FlaskConical
-    },
-    {
-      type: "event",
-      message: "Lembrete: Webinar sobre Regulamentação às 14h",
-      time: "1 dia atrás",
-      icon: Calendar
+  const getQuickActions = () => {
+    switch (userType) {
+      case "company":
+        return [
+          { title: "Novo Projeto", icon: FileText },
+          { title: "Buscar Fornecedor", icon: Building2 },
+          { title: "Analisar Dados", icon: BarChart3 },
+          { title: "Verificar Conformidade", icon: CheckCircle },
+          { title: "Criar Alerta", icon: AlertCircle },
+          { title: "Agendar Auditoria", icon: Calendar },
+        ];
+      case "laboratory":
+        return [
+          { title: "Agendar Teste", icon: FlaskConical },
+          { title: "Verificar Equipamento", icon: Building2 },
+          { title: "Analisar Resultados", icon: BarChart3 },
+          { title: "Gerenciar Clientes", icon: Users },
+          { title: "Calibrar Equipamento", icon: Wrench },
+          { title: "Emitir Laudo", icon: FileText },
+        ];
+      case "consultant":
+        return [
+          { title: "Novo Projeto", icon: FileText },
+          { title: "Agendar Reunião", icon: Calendar },
+          { title: "Analisar Dados", icon: BarChart3 },
+          { title: "Gerenciar Clientes", icon: Users },
+          { title: "Criar Proposta", icon: FileText },
+          { title: "Atualizar Portfólio", icon: Briefcase },
+        ];
+      case "regulatory":
+        return [
+          { title: "Nova Regra", icon: Shield },
+          { title: "Verificar Conformidade", icon: CheckCircle },
+          { title: "Criar Alerta", icon: AlertCircle },
+          { title: "Agendar Auditoria", icon: Calendar },
+          { title: "Analisar Impacto", icon: BarChart3 },
+          { title: "Emitir Certificado", icon: Award },
+        ];
+      default:
+        return [
+          { title: "Ver Perfil", icon: User },
+          { title: "Minha Rede", icon: Network },
+          { title: "Marketplace", icon: Building2 },
+          { title: "Meus Projetos", icon: FileText },
+          { title: "Buscar Cursos", icon: BookOpen },
+          { title: "Definir Metas", icon: Target },
+        ];
     }
-  ];
+  };
 
-  const matchingSuggestions = [
-    {
-      type: "laboratory",
-      name: "LabAnalítica SP",
-      match: 95,
-      reason: "Especialização em análises farmacêuticas",
-      location: "São Paulo, SP"
-    },
-    {
-      type: "consultant",
-      name: "Dr. Carlos Mendes",
-      match: 88,
-      reason: "Expertise em Assuntos Regulatórios",
-      location: "São Paulo, SP"
-    },
-    {
-      type: "company",
-      name: "FarmaTech Ltda",
-      match: 82,
-      reason: "Área de P&D compatível",
-      location: "Rio de Janeiro, RJ"
-    }
-  ];
-
-  const marketplaceHighlights = [
-    {
-      title: "Demanda: Validação de Método",
-      company: "BioNova S.A.",
-      budget: "R$ 25.000 - R$ 50.000",
-      urgency: "Alta",
-      match: 92
-    },
-    {
-      title: "Projeto: Desenvolvimento Biossimilar",
-      company: "BioPharma Internacional",
-      budget: "R$ 500.000+",
-      urgency: "Média",
-      match: 85
-    }
-  ];
+  const getRecentActivity = () => {
+    return [
+      { title: "Nova Conexão", description: "Maria Silva aceitou seu convite", time: "5 min atrás", icon: Network, color: "bg-blue-50 text-blue-500" },
+      { title: "Projeto Atualizado", description: "Validação de método concluída", time: "15 min atrás", icon: FileText, color: "bg-green-50 text-green-500" },
+      { title: "Alerta Regulatório", description: "Nova RDC sobre Boas Práticas", time: "30 min atrás", icon: AlertCircle, color: "bg-orange-50 text-orange-500" },
+      { title: "Novo Curso", description: "Inscrição no curso de BPF", time: "1 hora atrás", icon: BookOpen, color: "bg-purple-50 text-purple-500" },
+    ];
+  };
 
   return (
     <div className="min-h-screen bg-muted">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Bem-vindo de volta, Dr. João!
-          </h1>
-          <p className="text-gray-600">
-            Aqui está um resumo das suas atividades no PharmaNexus
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard PharmaNexus</h1>
+          <p className="text-gray-600">Visão geral do seu ecossistema farmacêutico</p>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPIs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {kpis.map((kpi, index) => {
+          {getKPIsByUserType().map((kpi, index) => {
             const Icon = kpi.icon;
             const isPositive = kpi.trend === "up";
             
@@ -159,23 +153,21 @@ const Dashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">{kpi.title}</p>
+                      <p className="text-sm font-medium text-gray-600 mb-1">{kpi.title}</p>
                       <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
-                      <div className="flex items-center mt-1">
+                      <div className="flex items-center mt-2">
                         {isPositive ? (
-                          <ArrowUp className="h-4 w-4 text-green-600" />
+                          <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
                         ) : (
-                          <ArrowDown className="h-4 w-4 text-red-600" />
+                          <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
                         )}
-                        <span className={`text-sm font-medium ${
-                          isPositive ? "text-green-600" : "text-red-600"
-                        }`}>
+                        <span className={`text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                           {kpi.change}
                         </span>
                       </div>
                     </div>
-                    <div className="p-3 bg-primary-50 rounded-full">
-                      <Icon className="h-6 w-6 text-primary" />
+                    <div className={`p-3 rounded-full ${kpi.color}`}>
+                      <Icon className="h-6 w-6" />
                     </div>
                   </div>
                 </CardContent>
@@ -184,182 +176,114 @@ const Dashboard = () => {
           })}
         </div>
 
+        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* Left Column - Quick Actions & Recent Activity */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-primary">Ações Rápidas</CardTitle>
+                <CardTitle>Ações Rápidas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                    <Network className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Buscar Conexões</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                    <Target className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Ver Oportunidades</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                    <FlaskConical className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Marketplace</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                    <Calendar className="h-6 w-6 mb-2" />
-                    <span className="text-sm">Eventos</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Marketplace Highlights */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-primary">Oportunidades Relevantes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {marketplaceHighlights.map((highlight, index) => (
-                    <div key={index} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-gray-900">{highlight.title}</h4>
-                        <Badge className="bg-green-100 text-green-800">
-                          {highlight.match}% match
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{highlight.company}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-primary">{highlight.budget}</span>
-                        <Badge variant={highlight.urgency === "Alta" ? "destructive" : "secondary"}>
-                          {highlight.urgency}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button className="w-full mt-4" variant="outline">
-                  Ver Todas as Oportunidades
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Profile Completion */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-primary">Completude do Perfil</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Progresso geral</span>
-                    <span className="text-sm text-gray-600">85%</span>
-                  </div>
-                  <Progress value={85} className="h-3" />
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-green-600">
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Informações básicas preenchidas
-                    </div>
-                    <div className="flex items-center text-green-600">
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Experiência profissional adicionada
-                    </div>
-                    <div className="flex items-center text-yellow-600">
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Adicione certificações profissionais
-                    </div>
-                    <div className="flex items-center text-yellow-600">
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Complete seu portfólio de projetos
-                    </div>
-                  </div>
-                  
-                  <Button variant="outline" className="w-full">
-                    Completar Perfil
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Matching Suggestions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-primary">Sugestões de Conexão</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {matchingSuggestions.map((suggestion, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-sm">{suggestion.name}</h4>
-                        <Badge className="bg-blue-100 text-blue-800 text-xs">
-                          {suggestion.match}%
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-gray-600 mb-2">{suggestion.reason}</p>
-                      <p className="text-xs text-gray-500 mb-2">{suggestion.location}</p>
-                      <Button size="sm" variant="outline" className="w-full text-xs">
-                        Conectar
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {getQuickActions().map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <Button key={index} variant="outline" className="h-20 flex flex-col space-y-2">
+                        <Icon className="h-6 w-6" />
+                        <span className="text-sm">{action.title}</span>
                       </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Recent Activities */}
+            {/* Recent Activity */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-primary">Atividades Recentes</CardTitle>
+                <CardTitle>Atividade Recente</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivities.map((activity, index) => {
+                  {getRecentActivity().map((activity, index) => {
                     const Icon = activity.icon;
                     return (
                       <div key={index} className="flex items-start space-x-3">
-                        <div className="p-2 bg-gray-100 rounded-full">
-                          <Icon className="h-4 w-4 text-gray-600" />
+                        <div className={`p-2 rounded-full ${activity.color}`}>
+                          <Icon className="h-4 w-4" />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">{activity.message}</p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-sm text-gray-500">{activity.description}</p>
+                          <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <Button variant="outline" className="w-full mt-4" size="sm">
-                  Ver Todas
-                </Button>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Upcoming Events */}
+          {/* Right Column - Opportunities & Alerts */}
+          <div className="space-y-6">
+            {/* Opportunities */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-primary">Próximos Eventos</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Target className="h-5 w-5 mr-2" />
+                  Oportunidades
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium text-sm">Webinar: Regulamentação ANVISA</h4>
-                    <p className="text-xs text-gray-600">Hoje, 14:00</p>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800">Novo Laboratório</p>
+                    <p className="text-xs text-blue-600">LabAnalítica SP disponível</p>
                   </div>
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium text-sm">Congresso PharmaBrasil 2024</h4>
-                    <p className="text-xs text-gray-600">15-17 Dez, São Paulo</p>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm font-medium text-green-800">Projeto Colaborativo</p>
+                    <p className="text-xs text-green-600">Estudo de estabilidade conjunto</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <p className="text-sm font-medium text-purple-800">Capacitação</p>
+                    <p className="text-xs text-purple-600">Workshop ANVISA gratuito</p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full mt-4" size="sm">
-                  Ver Agenda
-                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Progress Tracking */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Progresso do Perfil</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Completude do Perfil</span>
+                      <span>75%</span>
+                    </div>
+                    <Progress value={75} />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Conexões da Rede</span>
+                      <span>60%</span>
+                    </div>
+                    <Progress value={60} />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Atividade do Mês</span>
+                      <span>90%</span>
+                    </div>
+                    <Progress value={90} />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User, Network, Building2, Users, Calendar, FileText } from "lucide-react";
+import { User, Network, Building2, Users, Calendar, FileText, Shield } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -22,6 +22,7 @@ const Header = () => {
           { title: "Projetos", path: "/projects", icon: FileText },
           { title: "Fornecedores", path: "/suppliers", icon: Building2 },
           { title: "Laboratórios", path: "/laboratories", icon: Users },
+          { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       case "laboratory":
         return [
@@ -29,6 +30,7 @@ const Header = () => {
           { title: "Capacidade", path: "/capacity", icon: Calendar },
           { title: "Equipamentos", path: "/equipment", icon: Building2 },
           { title: "Clientes", path: "/clients", icon: Users },
+          { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       case "consultant":
         return [
@@ -36,12 +38,14 @@ const Header = () => {
           { title: "Portfólio", path: "/portfolio", icon: FileText },
           { title: "Disponibilidade", path: "/availability", icon: Calendar },
           { title: "Clientes", path: "/clients", icon: Users },
+          { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
       default:
         return [
           ...baseItems,
           { title: "Marketplace", path: "/marketplace", icon: Building2 },
           { title: "Projetos", path: "/projects", icon: FileText },
+          { title: "Regulatório", path: "/regulatory", icon: Shield },
         ];
     }
   };
