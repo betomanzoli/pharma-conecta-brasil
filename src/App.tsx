@@ -16,6 +16,11 @@ import Regulatory from "./pages/Regulatory";
 import MentorshipHub from "./pages/MentorshipHub";
 import Forums from "./pages/Forums";
 import KnowledgeLibrary from "./pages/KnowledgeLibrary";
+import Laboratories from "./pages/Laboratories";
+import Consultants from "./pages/Consultants";
+import Suppliers from "./pages/Suppliers";
+import Careers from "./pages/Careers";
+import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +44,11 @@ const App = () => (
           <Route path="/mentorship" element={<MentorshipHub />} />
           <Route path="/forums" element={<Forums />} />
           <Route path="/knowledge" element={<KnowledgeLibrary />} />
+          <Route path="/laboratories" element={<Laboratories />} />
+          <Route path="/consultants" element={<Consultants />} />
+          <Route path="/suppliers" element={<Suppliers />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/events" element={<Events />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
