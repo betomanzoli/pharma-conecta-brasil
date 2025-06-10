@@ -145,7 +145,7 @@ const TransactionManager = () => {
               <div className="space-y-2">
                 <div className="flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  <span>Escrow automático para transações > R$ 10k</span>
+                  <span>Escrow automático para transações {'>'}= R$ 10k</span>
                 </div>
                 <div className="flex items-center text-green-600">
                   <CheckCircle className="h-4 w-4 mr-2" />
