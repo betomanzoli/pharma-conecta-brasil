@@ -1,8 +1,8 @@
 
-import { HeroSection } from "@/components/sections/HeroSection";
-import { PlatformFeatures } from "@/components/sections/PlatformFeatures";
-import { UserTypeSolutions } from "@/components/sections/UserTypeSolutions";
-import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
+import HeroSection from "@/components/sections/HeroSection";
+import PlatformFeatures from "@/components/sections/PlatformFeatures";
+import UserTypeSolutions from "@/components/sections/UserTypeSolutions";
+import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import ComplianceFooter from "@/components/ComplianceFooter";
 import { Button } from "@/components/ui/button";
 import { Network } from "lucide-react";
