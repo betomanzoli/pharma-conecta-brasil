@@ -23,6 +23,9 @@ import Consultants from "./pages/Consultants";
 import Suppliers from "./pages/Suppliers";
 import Careers from "./pages/Careers";
 import Events from "./pages/Events";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Ethics from "./pages/Ethics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +56,9 @@ const App = () => (
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/ethics" element={<Ethics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

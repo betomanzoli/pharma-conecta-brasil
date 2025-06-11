@@ -50,14 +50,9 @@ const ComplianceFooter = () => {
             <p className="text-gray-400 mb-4">
               O ecossistema colaborativo da indústria farmacêutica brasileira
             </p>
-            <div className="space-y-2 text-sm">
-              <p className="text-yellow-400 font-medium">
-                ⚠️ Esta plataforma não substitui consulta médica profissional
-              </p>
-              <p className="text-gray-400">
-                Informações destinadas exclusivamente para profissionais de saúde qualificados
-              </p>
-            </div>
+            <p className="text-gray-400 text-sm">
+              Informações destinadas exclusivamente para profissionais de saúde qualificados
+            </p>
           </div>
 
           <div>
@@ -95,7 +90,7 @@ const ComplianceFooter = () => {
         {/* Bottom Disclaimer */}
         <div className="pt-8 border-t border-gray-700 text-center">
           <p className="text-sm text-gray-400 mb-2">
-            © 2024 PharmaConnect Brasil. Todos os direitos reservados.
+            © 2025 PharmaConnect Brasil. Todos os direitos reservados.
           </p>
           <p className="text-xs text-gray-500">
             Todas as informações são para fins educacionais e networking profissional entre profissionais qualificados da indústria farmacêutica.
