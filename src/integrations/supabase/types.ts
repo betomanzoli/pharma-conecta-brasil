@@ -81,6 +81,51 @@ export type Database = {
           },
         ]
       }
+      company_interactions: {
+        Row: {
+          company_a_id: string | null
+          company_b_id: string | null
+          compatibility_score: number | null
+          created_at: string | null
+          id: string
+          interaction_type: string
+          notes: string | null
+        }
+        Insert: {
+          company_a_id?: string | null
+          company_b_id?: string | null
+          compatibility_score?: number | null
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          notes?: string | null
+        }
+        Update: {
+          company_a_id?: string | null
+          company_b_id?: string | null
+          compatibility_score?: number | null
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_interactions_company_a_id_fkey"
+            columns: ["company_a_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_interactions_company_b_id_fkey"
+            columns: ["company_b_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultants: {
         Row: {
           availability: string | null
@@ -320,6 +365,100 @@ export type Database = {
           },
         ]
       }
+      partnership_opportunities: {
+        Row: {
+          budget_range: string | null
+          company_id: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string
+          id: string
+          partnership_type: string
+          requirements: string[] | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description: string
+          id?: string
+          partnership_type: string
+          requirements?: string[] | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string
+          id?: string
+          partnership_type?: string
+          requirements?: string[] | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partnership_opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmaceutical_products: {
+        Row: {
+          active_ingredient: string
+          anvisa_registration: string | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          status: string
+          therapeutic_class: string
+          updated_at: string | null
+        }
+        Insert: {
+          active_ingredient: string
+          anvisa_registration?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          status?: string
+          therapeutic_class: string
+          updated_at?: string | null
+        }
+        Update: {
+          active_ingredient?: string
+          anvisa_registration?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          status?: string
+          therapeutic_class?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmaceutical_products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -522,6 +661,89 @@ export type Database = {
             columns: ["rater_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regulatory_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          description: string
+          expires_at: string | null
+          id: string
+          published_at: string
+          severity: string
+          source: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          description: string
+          expires_at?: string | null
+          id?: string
+          published_at: string
+          severity: string
+          source: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          description?: string
+          expires_at?: string | null
+          id?: string
+          published_at?: string
+          severity?: string
+          source?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          features: string[]
+          id: string
+          plan_type: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          features?: string[]
+          id?: string
+          plan_type: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          features?: string[]
+          id?: string
+          plan_type?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

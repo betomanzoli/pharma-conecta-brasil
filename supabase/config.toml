@@ -1,1 +1,11 @@
+
 project_id = "irjjksfhyiwsbsipeyrj"
+
+[functions.ai-matching]
+verify_jwt = true
+
+[functions.roi-calculator]
+verify_jwt = true
+
+[functions.regulatory-sync]
+verify_jwt = true
