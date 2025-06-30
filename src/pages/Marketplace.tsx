@@ -1,14 +1,15 @@
-
 import React, { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AIMatchingEngine from '@/components/marketplace/AIMatchingEngine';
 import RegulatoryAlerts from '@/components/pharmaceutical/RegulatoryAlerts';
 import ComplianceChecker from '@/components/pharmaceutical/ComplianceChecker';
+import ComplianceMonitor from '@/components/pharmaceutical/ComplianceMonitor';
+import RealTimeAlerts from '@/components/pharmaceutical/RealTimeAlerts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Shield, AlertTriangle, Users, TrendingUp, Building } from 'lucide-react';
+import { Brain, Shield, AlertTriangle, Users, TrendingUp, Building, Zap } from 'lucide-react';
 
 const Marketplace = () => {
   const [activeConnections, setActiveConnections] = useState(23);
@@ -77,7 +78,7 @@ const Marketplace = () => {
           </div>
 
           <Tabs defaultValue="matching" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="matching" className="flex items-center space-x-2">
                 <Brain className="h-4 w-4" />
                 <span>AI Matching</span>
@@ -89,6 +90,10 @@ const Marketplace = () => {
               <TabsTrigger value="regulatory" className="flex items-center space-x-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span>Regulatório</span>
+              </TabsTrigger>
+              <TabsTrigger value="alerts" className="flex items-center space-x-2">
+                <Zap className="h-4 w-4" />
+                <span>Alertas</span>
               </TabsTrigger>
             </TabsList>
 
@@ -131,12 +136,19 @@ const Marketplace = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="compliance">
-              <ComplianceChecker />
+            <TabsContent value="compliance" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ComplianceChecker />
+                <ComplianceMonitor />
+              </div>
             </TabsContent>
 
             <TabsContent value="regulatory">
               <RegulatoryAlerts />
+            </TabsContent>
+
+            <TabsContent value="alerts">
+              <RealTimeAlerts />
             </TabsContent>
           </Tabs>
         </div>
