@@ -26,6 +26,9 @@ import Events from "./pages/Events";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Ethics from "./pages/Ethics";
+import SubscriptionPage from "./pages/SubscriptionPage";
+import ReportsPage from "./pages/ReportsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +59,9 @@ const App = () => (
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/subscription" element={<SubscriptionPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/ethics" element={<Ethics />} />

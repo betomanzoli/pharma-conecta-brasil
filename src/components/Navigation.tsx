@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,9 @@ import {
   BookOpen,
   Bell,
   LogOut,
-  User
+  User,
+  BarChart3,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -36,6 +37,8 @@ const Navigation = () => {
     { href: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
     { href: '/projects', label: 'Projetos', icon: FolderOpen },
     { href: '/regulatory', label: 'Regulatório', icon: Shield },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/reports', label: 'Relatórios', icon: FileText },
     { href: '/mentorship', label: 'Mentoria', icon: GraduationCap },
     { href: '/forums', label: 'Fóruns', icon: MessageSquare },
     { href: '/knowledge', label: 'Conhecimento', icon: BookOpen },
