@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Index from "./pages/Index";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -36,41 +37,43 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/network" element={<Network />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/regulatory" element={<Regulatory />} />
-            <Route path="/mentorship" element={<MentorshipHub />} />
-            <Route path="/forums" element={<Forums />} />
-            <Route path="/knowledge" element={<KnowledgeLibrary />} />
-            <Route path="/laboratories" element={<Laboratories />} />
-            <Route path="/consultants" element={<Consultants />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/ethics" element={<Ethics />} />
-            <Route path="/integrations" element={<IntegrationsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <NotificationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/network" element={<Network />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/regulatory" element={<Regulatory />} />
+              <Route path="/mentorship" element={<MentorshipHub />} />
+              <Route path="/forums" element={<Forums />} />
+              <Route path="/knowledge" element={<KnowledgeLibrary />} />
+              <Route path="/laboratories" element={<Laboratories />} />
+              <Route path="/consultants" element={<Consultants />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/ethics" element={<Ethics />} />
+              <Route path="/integrations" element={<IntegrationsPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
