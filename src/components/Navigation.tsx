@@ -1,22 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { 
-  Network, 
-  Home, 
-  Users, 
-  ShoppingCart, 
-  FolderOpen, 
-  Shield, 
-  GraduationCap, 
-  MessageSquare, 
-  BookOpen,
-  Bell,
-  LogOut,
-  User,
-  BarChart3,
-  FileText
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
@@ -25,102 +8,190 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const Navigation = () => {
-  const { user, profile, signOut } = useAuth();
-  const location = useLocation();
+  const { profile, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigationItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/network', label: 'Rede', icon: Users },
-    { href: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
-    { href: '/projects', label: 'Projetos', icon: FolderOpen },
-    { href: '/regulatory', label: 'Regulatório', icon: Shield },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/reports', label: 'Relatórios', icon: FileText },
-    { href: '/mentorship', label: 'Mentoria', icon: GraduationCap },
-    { href: '/forums', label: 'Fóruns', icon: MessageSquare },
-    { href: '/knowledge', label: 'Conhecimento', icon: BookOpen },
-  ];
-
-  if (!user) {
-    return (
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-2">
-                <Network className="h-8 w-8 text-[#1565C0]" />
-                <span className="text-xl font-bold text-[#1565C0]">PharmaConnect</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/auth">
-                <Button variant="outline">Entrar</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <Network className="h-8 w-8 text-[#1565C0]" />
-              <span className="text-xl font-bold text-[#1565C0]">PharmaConnect</span>
-            </Link>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              return (
-                <Link key={item.href} to={item.href}>
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    className={isActive ? "bg-[#1565C0] hover:bg-[#1565C0]/90" : ""}
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
+          <div className="flex">
+            <div className="shrink-0 flex items-center">
+              <Link to="/dashboard">
+                <img
+                  className="h-8 w-auto"
+                  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                  alt="PharmaConnect"
+                />
+              </Link>
+            </div>
+            <div className="hidden md:ml-6 md:flex md:space-x-8">
+              <Link to="/network" className="inline-flex items-center px-1 pt-1 border-b-2 border-indigo-500 text-sm font-medium text-gray-900">
+                Rede
+              </Link>
+              <Link to="/marketplace" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Marketplace
+              </Link>
+              <Link to="/projects" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Projetos
+              </Link>
+              <Link to="/regulatory" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Regulatório
+              </Link>
+              <Link to="/mentorship" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Mentoria
+              </Link>
+              <Link to="/forums" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Fóruns
+              </Link>
+              <Link to="/knowledge" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Conhecimento
+              </Link>
+              <Link to="/integrations" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                Integrações
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              <Bell className="h-4 w-4" />
-            </Button>
-
+            <NotificationCenter />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative">
-                  <User className="h-4 w-4" />
-                  <span className="ml-2">{profile?.first_name || user.email}</span>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar} alt={profile?.name} />
+                    <AvatarFallback>{profile?.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{profile?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {profile?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/profile">Perfil</Link>
+                  <Link to="/profile">
+                    Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/subscription">
+                    Assinatura
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/reports">
+                    Relatórios
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/analytics">
+                    Analytics
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
+                <DropdownMenuItem onClick={() => logout()}>
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <div className="-mr-2 flex md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-expanded="false">
+                    <span className="sr-only">Open main menu</span>
+                    <Menu className="h-6 w-6" aria-hidden="true" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64">
+                  <SheetHeader>
+                    <SheetTitle>Menu</SheetTitle>
+                    <SheetDescription>
+                      Navegue pelas opções do sistema.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="pt-4 pb-4 space-y-1">
+                    <Link to="/network" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Rede
+                    </Link>
+                    <Link to="/marketplace" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Marketplace
+                    </Link>
+                    <Link to="/projects" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Projetos
+                    </Link>
+                    <Link to="/regulatory" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Regulatório
+                    </Link>
+                    <Link to="/mentorship" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Mentoria
+                    </Link>
+                    <Link to="/forums" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Fóruns
+                    </Link>
+                    <Link to="/knowledge" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Conhecimento
+                    </Link>
+                    <Link to="/integrations" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+                      Integrações
+                    </Link>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="md:hidden">
+        {/* Mobile menu, show/hide based on menu state. */}
+        <div className={`fixed top-0 left-0 w-full h-full bg-white z-50 transform origin-top transition-all duration-300 ${mobileMenuOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className="pt-2 pb-3 space-y-1">
+            <Link to="/network" className="block bg-indigo-50 border-l-4 border-indigo-500 text-indigo-700 px-4 py-2 text-base font-medium">
+              Rede
+            </Link>
+            <Link to="/marketplace" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Marketplace
+            </Link>
+            <Link to="/projects" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Projetos
+            </Link>
+            <Link to="/regulatory" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Regulatório
+            </Link>
+            <Link to="/mentorship" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Mentoria
+            </Link>
+            <Link to="/forums" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Fóruns
+            </Link>
+            <Link to="/knowledge" className="block border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 px-4 py-2 text-base font-medium">
+              Conhecimento
+            </Link>
           </div>
         </div>
       </div>
