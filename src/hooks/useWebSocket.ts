@@ -9,7 +9,7 @@ interface WebSocketMessage {
 }
 
 export const useWebSocket = (url?: string) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export const useWebSocket = (url?: string) => {
   const maxReconnectAttempts = 5;
 
   const connect = () => {
-    if (!user || !url) return;
+    if (!user || !session || !url) return;
 
     try {
       // In a real implementation, this would connect to your WebSocket server
@@ -31,10 +31,10 @@ export const useWebSocket = (url?: string) => {
         setError(null);
         reconnectAttempts.current = 0;
         
-        // Send authentication message
+        // Send authentication message using session access token
         ws.send(JSON.stringify({
           type: 'auth',
-          token: user.access_token,
+          token: session.access_token,
           userId: user.id
         }));
       };
@@ -87,14 +87,14 @@ export const useWebSocket = (url?: string) => {
   };
 
   useEffect(() => {
-    if (user && url) {
+    if (user && session && url) {
       connect();
     }
 
     return () => {
       disconnect();
     };
-  }, [user, url]);
+  }, [user, session, url]);
 
   return {
     isConnected,

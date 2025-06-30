@@ -37,6 +37,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       : 'wss://your-websocket-server.com/ws'
   );
 
+  // Helper function to validate and convert notification type
+  const validateNotificationType = (type: string): 'info' | 'success' | 'warning' | 'error' => {
+    if (type === 'info' || type === 'success' || type === 'warning' || type === 'error') {
+      return type;
+    }
+    return 'info'; // Default fallback
+  };
+
+  // Helper function to convert database notification to typed notification
+  const convertToNotification = (dbNotification: any): Notification => ({
+    id: dbNotification.id,
+    title: dbNotification.title,
+    message: dbNotification.message,
+    type: validateNotificationType(dbNotification.type),
+    read: dbNotification.read,
+    created_at: dbNotification.created_at
+  });
+
   // Handle incoming WebSocket messages
   useEffect(() => {
     if (lastMessage) {
@@ -84,7 +102,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             filter: `user_id=eq.${user.id}`
           }, 
           (payload) => {
-            const newNotification = payload.new as Notification;
+            const newNotification = convertToNotification(payload.new);
             setNotifications(prev => [newNotification, ...prev]);
             
             // Show toast notification
@@ -119,7 +137,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      setNotifications(data || []);
+      // Convert database notifications to typed notifications
+      const typedNotifications = (data || []).map(convertToNotification);
+      setNotifications(typedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
