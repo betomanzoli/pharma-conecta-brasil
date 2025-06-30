@@ -34,7 +34,7 @@ export const useWebSocket = (url?: string) => {
         // Send authentication message using session access token
         ws.send(JSON.stringify({
           type: 'auth',
-          token: session.access_token,
+          token: session?.access_token,
           userId: user.id
         }));
       };
