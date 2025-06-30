@@ -1,200 +1,234 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Brain, TrendingUp, Target, Star, Clock, Users } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Brain, Users, TrendingUp, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Match {
+  id: string;
+  score: number;
+  company: {
+    name: string;
+    expertise: string[];
+  };
+  provider: {
+    name: string;
+    type: 'laboratory' | 'consultant';
+    specialties: string[];
+  };
+  compatibility_factors: string[];
+}
 
 const AIMatchingEngine = () => {
-  const aiMatches = [
-    {
-      id: 1,
-      type: "Laboratory Match",
-      title: "LabAnalítica SP ↔ Seu Projeto de Estabilidade",
-      compatibility: 92,
-      reason: "Especialização em estudos de estabilidade, disponibilidade imediata, localização estratégica",
-      potentialValue: "R$ 45.000",
-      timeline: "2 semanas",
-      confidence: "Muito Alta",
-      icon: Target
-    },
-    {
-      id: 2,
-      type: "Partnership Opportunity",
-      title: "BioNova S.A. ↔ Sua Expertise Regulatória",
-      compatibility: 87,
-      reason: "Complementaridade de competências, histórico de colaborações similares",
-      potentialValue: "R$ 120.000",
-      timeline: "1 mês",
-      confidence: "Alta",
-      icon: Users
-    },
-    {
-      id: 3,
-      type: "Equipment Need",
-      title: "HPLC Agilent ↔ Seu Laboratório",
-      compatibility: 78,
-      reason: "Análise de crescimento indica necessidade de capacidade adicional em 3 meses",
-      potentialValue: "R$ 180.000",
-      timeline: "3 meses",
-      confidence: "Média-Alta",
-      icon: TrendingUp
-    }
-  ];
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [autoMatching, setAutoMatching] = useState(false);
 
-  const getConfidenceColor = (confidence: string) => {
-    switch (confidence) {
-      case "Muito Alta":
-        return "bg-green-100 text-green-800";
-      case "Alta":
-        return "bg-blue-100 text-blue-800";
-      case "Média-Alta":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const generateMatches = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Simular chamada para IA de matching
+      const mockMatches: Match[] = [
+        {
+          id: '1',
+          score: 94,
+          company: {
+            name: 'FarmaTech Ltda',
+            expertise: ['Genéricos', 'Desenvolvimento']
+          },
+          provider: {
+            name: 'LabAnalyse',
+            type: 'laboratory',
+            specialties: ['Microbiológica', 'Físico-Química']
+          },
+          compatibility_factors: ['Localização próxima', 'Experiência em genéricos', 'Certificação ANVISA']
+        },
+        {
+          id: '2',
+          score: 87,
+          company: {
+            name: 'BioPharma Solutions',
+            expertise: ['Biotecnologia', 'Pesquisa']
+          },
+          provider: {
+            name: 'Dr. Maria Silva',
+            type: 'consultant',
+            specialties: ['Regulatório', 'Registro ANVISA']
+          },
+          compatibility_factors: ['Especialização em biotecnologia', 'Histórico de aprovações', 'Disponibilidade imediata']
+        },
+        {
+          id: '3',
+          score: 82,
+          company: {
+            name: 'MedGenesis',
+            expertise: ['Medicamentos Especiais']
+          },
+          provider: {
+            name: 'Instituto de Pesquisas Farmacêuticas',
+            type: 'laboratory',
+            specialties: ['Estabilidade', 'Bioequivalência']
+          },
+          compatibility_factors: ['Expertise em medicamentos especiais', 'Equipamentos avançados', 'Prazo compatível']
+        }
+      ];
+
+      setMatches(mockMatches);
+      
+      toast({
+        title: "Matches gerados com sucesso",
+        description: `${mockMatches.length} oportunidades encontradas usando IA`,
+      });
+    } catch (error) {
+      console.error('Error generating matches:', error);
+      toast({
+        title: "Erro ao gerar matches",
+        description: "Tente novamente em alguns minutos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const acceptMatch = async (matchId: string) => {
+    try {
+      // Simular aceitar match
+      toast({
+        title: "Match aceito!",
+        description: "O provedor foi notificado e entrará em contato em breve",
+      });
+      
+      // Remover match da lista
+      setMatches(prev => prev.filter(m => m.id !== matchId));
+    } catch (error) {
+      console.error('Error accepting match:', error);
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'bg-green-500';
+    if (score >= 80) return 'bg-blue-500';
+    if (score >= 70) return 'bg-yellow-500';
+    return 'bg-gray-500';
+  };
+
+  useEffect(() => {
+    if (autoMatching) {
+      const interval = setInterval(() => {
+        generateMatches();
+      }, 30000); // Gerar novos matches a cada 30 segundos
+
+      return () => clearInterval(interval);
+    }
+  }, [autoMatching]);
+
   return (
-    <div className="space-y-6">
-      {/* AI Engine Header */}
-      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <Brain className="h-8 w-8 text-blue-600" />
-            <div>
-              <CardTitle className="text-xl text-blue-900">Motor de IA PharmaNexus</CardTitle>
-              <p className="text-blue-700">Algoritmos avançados analisando 10.000+ pontos de dados em tempo real</p>
-            </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Brain className="h-6 w-6 text-blue-600" />
+          <span>AI Matching Engine</span>
+        </CardTitle>
+        <div className="flex items-center space-x-4">
+          <Button 
+            onClick={generateMatches} 
+            disabled={loading}
+            className="flex items-center space-x-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>{loading ? 'Analisando...' : 'Gerar Matches'}</span>
+          </Button>
+          <Button
+            variant={autoMatching ? 'destructive' : 'outline'}
+            onClick={() => setAutoMatching(!autoMatching)}
+            className="flex items-center space-x-2"
+          >
+            <Users className="h-4 w-4" />
+            <span>{autoMatching ? 'Parar Auto-Match' : 'Ativar Auto-Match'}</span>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {matches.length === 0 ? (
+          <div className="text-center py-8">
+            <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">Clique em "Gerar Matches" para encontrar oportunidades</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-900">2.4M</p>
-              <p className="text-sm text-blue-600">Análises/Dia</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-900">94%</p>
-              <p className="text-sm text-green-600">Precisão</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-900">156</p>
-              <p className="text-sm text-purple-600">Matches Hoje</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-orange-900">R$ 15M</p>
-              <p className="text-sm text-orange-600">Valor Facilitado</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AI Recommendations */}
-      <div className="grid grid-cols-1 gap-6">
-        {aiMatches.map((match) => {
-          const Icon = match.icon;
-          return (
-            <Card key={match.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Icon className="h-6 w-6 text-blue-600" />
+        ) : (
+          <div className="space-y-4">
+            {matches.map((match) => (
+              <div key={match.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-12 h-12 rounded-full ${getScoreColor(match.score)} flex items-center justify-center text-white font-bold`}>
+                      {match.score}%
                     </div>
                     <div>
-                      <Badge variant="outline" className="mb-2">{match.type}</Badge>
-                      <CardTitle className="text-lg text-gray-900">{match.title}</CardTitle>
+                      <h3 className="font-semibold text-lg">{match.provider.name}</h3>
+                      <Badge variant="outline" className="mt-1">
+                        {match.provider.type === 'laboratory' ? 'Laboratório' : 'Consultor'}
+                      </Badge>
                     </div>
                   </div>
-                  <Badge className={getConfidenceColor(match.confidence)}>
-                    {match.confidence}
-                  </Badge>
+                  <Button
+                    onClick={() => acceptMatch(match.id)}
+                    className="flex items-center space-x-2"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Aceitar Match</span>
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Compatibility Score */}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Score de Compatibilidade</span>
-                      <span className="text-sm font-bold text-blue-600">{match.compatibility}%</span>
-                    </div>
-                    <Progress value={match.compatibility} className="h-2" />
-                  </div>
-
-                  {/* AI Reasoning */}
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">
-                      <strong>Por que a IA recomenda:</strong> {match.reason}
-                    </p>
-                  </div>
-
-                  {/* Match Details */}
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Valor Potencial:</span>
-                      <p className="font-semibold text-green-600">{match.potentialValue}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Timeline:</span>
-                      <p className="font-semibold">{match.timeline}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Próximo Passo:</span>
-                      <p className="font-semibold text-blue-600">Contato Direto</p>
+                    <h4 className="font-medium text-gray-700 mb-2">Empresa</h4>
+                    <p className="text-sm font-medium">{match.company.name}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {match.company.expertise.map((exp, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {exp}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex space-x-3 pt-2">
-                    <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                      Iniciar Conversa
-                    </Button>
-                    <Button variant="outline" className="flex-1">
-                      Ver Análise Completa
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Star className="h-4 w-4" />
-                    </Button>
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Especialidades</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {match.provider.specialties.map((spec, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {spec}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
 
-      {/* Predictive Analytics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2" />
-            Análises Preditivas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Demanda Prevista - Próximos 30 dias</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Estudos de Estabilidade: +35%</li>
-                <li>• Análises Microbiológicas: +22%</li>
-                <li>• Consultoria Regulatória: +18%</li>
-              </ul>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-900 mb-2">Oportunidades de Crescimento</h4>
-              <ul className="text-sm text-green-700 space-y-1">
-                <li>• Parcerias Internacionais: 3 empresas interessadas</li>
-                <li>• Novos Equipamentos: ROI projetado 240%</li>
-                <li>• Expansão de Serviços: 8 nichos identificados</li>
-              </ul>
-            </div>
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Fatores de Compatibilidade</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {match.compatibility_factors.map((factor, idx) => (
+                      <li key={idx} className="flex items-center space-x-2">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        <span>{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

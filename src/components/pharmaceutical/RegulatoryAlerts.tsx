@@ -1,41 +1,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertTriangle, 
-  Shield, 
-  RefreshCw, 
-  ExternalLink,
-  Bell,
-  Calendar,
-  FileText
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, Bell, ExternalLink, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface RegulatoryAlert {
   id: string;
-  source: string;
   title: string;
   description: string;
   alert_type: string;
-  severity: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  source: string;
   published_at: string;
+  expires_at?: string;
   url?: string;
-  created_at: string;
 }
 
 const RegulatoryAlerts = () => {
+  const { toast } = useToast();
   const [alerts, setAlerts] = useState<RegulatoryAlert[]>([]);
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
+  const [lastUpdate, setLastUpdate] = useState<string>('');
 
   const fetchAlerts = async () => {
     setLoading(true);
@@ -44,15 +33,20 @@ const RegulatoryAlerts = () => {
         .from('regulatory_alerts')
         .select('*')
         .order('published_at', { ascending: false })
-        .limit(20);
+        .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching regulatory alerts:', error);
+        return;
+      }
+
       setAlerts(data || []);
+      setLastUpdate(new Date().toLocaleString('pt-BR'));
     } catch (error) {
-      console.error('Erro ao buscar alertas:', error);
+      console.error('Error fetching alerts:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao carregar alertas regulatórios",
+        title: "Erro ao carregar alertas",
+        description: "Não foi possível carregar os alertas regulatórios",
         variant: "destructive"
       });
     } finally {
@@ -60,52 +54,23 @@ const RegulatoryAlerts = () => {
     }
   };
 
-  const syncRegulatoryData = async (source: string) => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('regulatory-sync', {
-        body: { source }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        await fetchAlerts(); // Recarregar alertas
-        toast({
-          title: "Sincronização Completa!",
-          description: `${data.new_alerts_count} novos alertas de ${source.toUpperCase()}`,
-        });
-      }
-    } catch (error) {
-      console.error('Erro na sincronização:', error);
-      toast({
-        title: "Erro",
-        description: "Falha na sincronização regulatória",
-        variant: "destructive"
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'low': return 'bg-green-100 text-green-800 border-green-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'critical': return 'destructive';
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'outline';
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'recall': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'safety': return <Shield className="h-4 w-4 text-orange-500" />;
-      case 'approval': return <FileText className="h-4 w-4 text-green-500" />;
-      case 'guideline': return <Bell className="h-4 w-4 text-blue-500" />;
-      case 'inspection': return <Calendar className="h-4 w-4 text-purple-500" />;
-      default: return <Bell className="h-4 w-4 text-gray-500" />;
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+      case 'high':
+        return <AlertTriangle className="h-4 w-4" />;
+      default:
+        return <Bell className="h-4 w-4" />;
     }
   };
 
@@ -119,101 +84,115 @@ const RegulatoryAlerts = () => {
     });
   };
 
+  const isExpired = (expiresAt?: string) => {
+    if (!expiresAt) return false;
+    return new Date(expiresAt) < new Date();
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+    
+    // Atualizar alertas a cada 5 minutos
+    const interval = setInterval(fetchAlerts, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-[#1565C0]" />
-              <span>Alertas Regulatórios</span>
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => syncRegulatoryData('anvisa')}
-                disabled={syncing}
-              >
-                <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-                ANVISA
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => syncRegulatoryData('fda')}
-                disabled={syncing}
-              >
-                <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-                FDA
-              </Button>
-            </div>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center space-x-2">
+            <AlertTriangle className="h-6 w-6 text-orange-600" />
+            <span>Alertas Regulatórios</span>
           </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-4">
-            Acompanhe as últimas atualizações regulatórias da ANVISA, FDA e outros órgãos.
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchAlerts}
+              disabled={loading}
+              className="flex items-center space-x-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Atualizar</span>
+            </Button>
+          </div>
+        </div>
+        {lastUpdate && (
+          <p className="text-sm text-gray-600">
+            Última atualização: {lastUpdate}
           </p>
-          
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin text-[#1565C0]" />
-              <span className="ml-2">Carregando alertas...</span>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {alerts.map((alert) => (
-                <Card key={alert.id} className="border-l-4 border-l-[#1565C0]">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
+        )}
+      </CardHeader>
+      <CardContent>
+        {loading && alerts.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-600">Carregando alertas...</span>
+          </div>
+        ) : alerts.length === 0 ? (
+          <div className="text-center py-8">
+            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">Nenhum alerta regulatório no momento</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {alerts.map((alert) => (
+              <Alert 
+                key={alert.id} 
+                className={`${isExpired(alert.expires_at) ? 'opacity-60' : ''}`}
+              >
+                <div className="flex items-start space-x-3">
+                  {getSeverityIcon(alert.severity)}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <AlertTitle className="text-sm font-semibold">
+                        {alert.title}
+                      </AlertTitle>
                       <div className="flex items-center space-x-2">
-                        {getTypeIcon(alert.alert_type)}
-                        <Badge variant="outline" className="text-xs">
-                          {alert.source.toUpperCase()}
+                        <Badge variant={getSeverityColor(alert.severity)} className="text-xs">
+                          {alert.severity.toUpperCase()}
                         </Badge>
-                        <Badge className={`text-xs ${getSeverityColor(alert.severity)}`}>
-                          {alert.severity}
+                        <Badge variant="outline" className="text-xs">
+                          {alert.source}
                         </Badge>
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(alert.published_at)}
-                      </span>
                     </div>
                     
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      {alert.title}
-                    </h4>
-                    
-                    <p className="text-gray-700 text-sm mb-3">
+                    <AlertDescription className="text-sm text-gray-700 mb-3">
                       {alert.description}
-                    </p>
+                    </AlertDescription>
                     
-                    {alert.url && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => window.open(alert.url, '_blank')}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        Ver Original
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-              
-              {alerts.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Nenhum alerta regulatório encontrado</p>
-                  <p className="text-sm">Clique em sincronizar para buscar atualizações</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center space-x-4">
+                        <span>Publicado: {formatDate(alert.published_at)}</span>
+                        {alert.expires_at && (
+                          <span className={isExpired(alert.expires_at) ? 'text-red-500' : ''}>
+                            Expira: {formatDate(alert.expires_at)}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {alert.url && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(alert.url, '_blank')}
+                          className="text-xs h-6 px-2"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Ver detalhes
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+              </Alert>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
