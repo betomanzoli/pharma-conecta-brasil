@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,6 +25,27 @@ const RegulatoryAlerts = () => {
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
+  // Helper function to validate and convert severity
+  const validateSeverity = (severity: string): 'low' | 'medium' | 'high' | 'critical' => {
+    const validSeverities = ['low', 'medium', 'high', 'critical'];
+    return validSeverities.includes(severity) ? severity as 'low' | 'medium' | 'high' | 'critical' : 'medium';
+  };
+
+  // Helper function to convert database alert to RegulatoryAlert
+  const convertToRegulatoryAlert = (dbAlert: any): RegulatoryAlert => {
+    return {
+      id: dbAlert.id,
+      title: dbAlert.title,
+      description: dbAlert.description,
+      alert_type: dbAlert.alert_type,
+      severity: validateSeverity(dbAlert.severity),
+      source: dbAlert.source,
+      published_at: dbAlert.published_at,
+      expires_at: dbAlert.expires_at,
+      url: dbAlert.url
+    };
+  };
+
   const fetchAlerts = async () => {
     setLoading(true);
     try {
@@ -40,7 +60,9 @@ const RegulatoryAlerts = () => {
         return;
       }
 
-      setAlerts(data || []);
+      // Convert the data to match our interface
+      const convertedAlerts = (data || []).map(convertToRegulatoryAlert);
+      setAlerts(convertedAlerts);
       setLastUpdate(new Date().toLocaleString('pt-BR'));
     } catch (error) {
       console.error('Error fetching alerts:', error);
