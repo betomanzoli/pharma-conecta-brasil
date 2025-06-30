@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Bell, Zap, RefreshCw, ExternalLink } from 'lucide-react';
 import { RegulatoryApiService } from '@/services/regulatoryApiService';
 import { useToast } from '@/hooks/use-toast';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface RegulatoryAlert {
   id: string;
@@ -25,12 +26,35 @@ const RealTimeAlerts = () => {
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
 
+  // Helper function to validate and convert severity
+  const validateSeverity = (severity: string): 'low' | 'medium' | 'high' | 'critical' => {
+    const validSeverities = ['low', 'medium', 'high', 'critical'];
+    return validSeverities.includes(severity) ? severity as 'low' | 'medium' | 'high' | 'critical' : 'medium';
+  };
+
+  // Helper function to convert database alert to RegulatoryAlert
+  const convertToRegulatoryAlert = (dbAlert: any): RegulatoryAlert => {
+    return {
+      id: dbAlert.id,
+      title: dbAlert.title,
+      description: dbAlert.description,
+      alert_type: dbAlert.alert_type,
+      severity: validateSeverity(dbAlert.severity),
+      source: dbAlert.source,
+      published_at: dbAlert.published_at,
+      url: dbAlert.url
+    };
+  };
+
   const syncAlerts = async (source: string = 'anvisa') => {
     setLoading(true);
     try {
       const response = await RegulatoryApiService.syncRegulatoryAlerts(source);
       const latestAlerts = await RegulatoryApiService.getLatestAlerts(5);
-      setAlerts(latestAlerts);
+      
+      // Convert alerts to match our interface
+      const convertedAlerts = latestAlerts.map(convertToRegulatoryAlert);
+      setAlerts(convertedAlerts);
       
       toast({
         title: "Alertas sincronizados",
@@ -73,24 +97,32 @@ const RealTimeAlerts = () => {
     syncAlerts();
 
     // Configurar subscription para alertas em tempo real
-    const subscription = RegulatoryApiService.subscribeToAlerts((payload) => {
-      console.log('Novo alerta recebido:', payload);
-      const newAlert = payload.new;
-      
-      setAlerts(prev => [newAlert, ...prev.slice(0, 4)]);
-      
-      toast({
-        title: "Novo alerta regulatório",
-        description: newAlert.title,
-        variant: newAlert.severity === 'critical' ? 'destructive' : 'default'
+    let channel: RealtimeChannel;
+    
+    const setupSubscription = async () => {
+      channel = await RegulatoryApiService.subscribeToAlerts((payload) => {
+        console.log('Novo alerta recebido:', payload);
+        const newAlert = convertToRegulatoryAlert(payload.new);
+        
+        setAlerts(prev => [newAlert, ...prev.slice(0, 4)]);
+        
+        toast({
+          title: "Novo alerta regulatório",
+          description: newAlert.title,
+          variant: newAlert.severity === 'critical' ? 'destructive' : 'default'
+        });
       });
-    });
+      
+      setConnected(true);
+    };
 
-    setConnected(true);
+    setupSubscription();
 
     return () => {
-      subscription.unsubscribe();
-      setConnected(false);
+      if (channel) {
+        channel.unsubscribe();
+        setConnected(false);
+      }
     };
   }, []);
 
