@@ -13,6 +13,7 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
+import { getStatusColor, getStatusLabel, getServiceTypeLabel } from '@/utils/projectUtils';
 
 interface Project {
   id: string;
@@ -42,36 +43,6 @@ const ProjectCard = ({ project, onView, onEdit, onDelete }: ProjectCardProps) =>
       case 'in_progress': return <Clock className="h-4 w-4 text-blue-500" />;
       case 'cancelled': return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default: return <FileText className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'default';
-      case 'in_progress': return 'secondary';
-      case 'cancelled': return 'destructive';
-      default: return 'outline';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'open': return 'Aberto';
-      case 'in_progress': return 'Em Andamento';
-      case 'completed': return 'Concluído';
-      case 'cancelled': return 'Cancelado';
-      default: return status;
-    }
-  };
-
-  const getServiceTypeLabel = (serviceType: string) => {
-    switch (serviceType) {
-      case 'laboratory_analysis': return 'Análise Laboratorial';
-      case 'regulatory_consulting': return 'Consultoria Regulatória';
-      case 'clinical_research': return 'Pesquisa Clínica';
-      case 'manufacturing': return 'Fabricação';
-      case 'quality_control': return 'Controle de Qualidade';
-      default: return serviceType;
     }
   };
 
