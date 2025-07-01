@@ -9,7 +9,7 @@ interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  user_type: 'company' | 'laboratory' | 'consultant' | 'individual';
+  user_type: 'company' | 'laboratory' | 'consultant' | 'individual' | 'admin';
   phone?: string;
   linkedin_url?: string;
   created_at: string;

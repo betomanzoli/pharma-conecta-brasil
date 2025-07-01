@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Plus, Settings, Sync, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Plus, Settings, RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import APIConfigurationForm from './APIConfigurationForm';
 
 interface APIConfig {
@@ -172,7 +171,7 @@ const RealAPIIntegrationPanel: React.FC = () => {
                   {syncing === config.id ? (
                     <Loader2 className="h-3 w-3 animate-spin mr-1" />
                   ) : (
-                    <Sync className="h-3 w-3 mr-1" />
+                    <RefreshCw className="h-3 w-3 mr-1" />
                   )}
                   Sync
                 </Button>

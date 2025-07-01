@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +16,7 @@ import {
   GraduationCap,
   Briefcase,
   ExternalLink,
-  Sync,
+  RefreshCw,
   Bell
 } from 'lucide-react';
 
@@ -280,7 +279,7 @@ const CompletePlatformDemo = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Alertas Regulatórios em Tempo Real</h2>
             <Button variant="outline">
-              <Sync className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Sincronizar
             </Button>
           </div>
