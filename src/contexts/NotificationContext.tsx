@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +80,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             type: 'warning'
           });
           break;
+        case 'system_notification':
+          addNotification({
+            title: lastMessage.data.title,
+            message: lastMessage.data.message,
+            type: lastMessage.data.type || 'info'
+          });
+          break;
         default:
           break;
       }
@@ -110,6 +118,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               description: newNotification.message,
               variant: newNotification.type === 'error' ? 'destructive' : 'default'
             });
+          }
+        )
+        .on('postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const updatedNotification = convertToNotification(payload.new);
+            setNotifications(prev => 
+              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+            );
           }
         )
         .subscribe();
