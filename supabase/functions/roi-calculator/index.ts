@@ -6,138 +6,217 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ROICalculationRequest {
+  investmentType: 'platform_subscription' | 'laboratory_partnership' | 'consultant_hiring' | 'regulatory_compliance';
+  initialCost: number;
+  monthlyCost?: number;
+  timeHorizon: number; // months
+  expectedBenefits: {
+    timeReduction?: number; // percentage
+    costSavings?: number; // absolute value
+    revenueIncrease?: number; // absolute value
+    riskReduction?: number; // percentage
+  };
+  companySize: 'small' | 'medium' | 'large';
+  currentProcessCost?: number;
+}
+
+interface ROIResult {
+  roi: number;
+  paybackPeriod: number; // months
+  netPresentValue: number;
+  totalBenefits: number;
+  totalCosts: number;
+  monthlyBreakdown: Array<{
+    month: number;
+    cumulativeCost: number;
+    cumulativeBenefit: number;
+    netBenefit: number;
+  }>;
+  recommendations: string[];
+  assumptions: string[];
+}
+
+const logStep = (step: string, data?: any) => {
+  console.log(`[ROI-CALCULATOR] ${step}`, data ? JSON.stringify(data) : '');
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { 
-      project_type, 
-      investment_amount, 
-      timeline_months, 
-      market_size, 
-      competition_level,
-      regulatory_complexity 
-    } = await req.json();
+    logStep('Starting ROI calculation');
 
-    // Fatores de risco e retorno por tipo de projeto farmacêutico
-    const projectFactors = {
-      'research': { base_roi: 0.25, risk_factor: 0.8, time_penalty: 0.05 },
-      'manufacturing': { base_roi: 0.15, risk_factor: 0.4, time_penalty: 0.03 },
-      'distribution': { base_roi: 0.12, risk_factor: 0.3, time_penalty: 0.02 },
-      'regulatory': { base_roi: 0.20, risk_factor: 0.6, time_penalty: 0.04 },
-      'clinical_trials': { base_roi: 0.35, risk_factor: 0.9, time_penalty: 0.07 }
+    const request: ROICalculationRequest = await req.json();
+    logStep('Received calculation request', { 
+      investmentType: request.investmentType,
+      timeHorizon: request.timeHorizon 
+    });
+
+    const {
+      investmentType,
+      initialCost,
+      monthlyCost = 0,
+      timeHorizon,
+      expectedBenefits,
+      companySize,
+      currentProcessCost = 0
+    } = request;
+
+    // Industry benchmarks and multipliers
+    const sizeMultipliers = {
+      small: 1.0,
+      medium: 1.5,
+      large: 2.5
     };
 
-    const factors = projectFactors[project_type] || projectFactors['manufacturing'];
-
-    // Cálculo do ROI ajustado
-    let roi_percentage = factors.base_roi * 100;
-
-    // Ajuste por tamanho do mercado
-    const market_multiplier = {
-      'small': 0.8,
-      'medium': 1.0,
-      'large': 1.3,
-      'very_large': 1.6
+    const investmentMultipliers = {
+      platform_subscription: 1.0,
+      laboratory_partnership: 1.8,
+      consultant_hiring: 1.3,
+      regulatory_compliance: 2.2
     };
-    roi_percentage *= market_multiplier[market_size] || 1.0;
 
-    // Ajuste por nível de concorrência
-    const competition_multiplier = {
-      'low': 1.2,
-      'medium': 1.0,
-      'high': 0.8,
-      'very_high': 0.6
-    };
-    roi_percentage *= competition_multiplier[competition_level] || 1.0;
+    const baseMultiplier = sizeMultipliers[companySize] * investmentMultipliers[investmentType];
 
-    // Ajuste por complexidade regulatória
-    const regulatory_multiplier = {
-      'low': 1.1,
-      'medium': 1.0,
-      'high': 0.9,
-      'very_high': 0.7
-    };
-    roi_percentage *= regulatory_multiplier[regulatory_complexity] || 1.0;
+    // Calculate monthly benefits
+    let monthlyBenefit = 0;
 
-    // Penalidade por tempo (projetos mais longos = menor ROI)
-    const time_penalty = Math.max(0, (timeline_months - 12) * factors.time_penalty);
-    roi_percentage -= time_penalty;
-
-    // Cálculos financeiros
-    const roi_decimal = roi_percentage / 100;
-    const expected_return = investment_amount * (1 + roi_decimal);
-    const profit = expected_return - investment_amount;
-    const monthly_return = profit / timeline_months;
-
-    // Análise de risco
-    const risk_score = (factors.risk_factor * 100) + 
-                      (timeline_months > 24 ? 20 : 0) + 
-                      (competition_level === 'very_high' ? 15 : 0) +
-                      (regulatory_complexity === 'very_high' ? 10 : 0);
-
-    const risk_category = risk_score > 80 ? 'Alto' : 
-                         risk_score > 50 ? 'Médio' : 'Baixo';
-
-    // Recomendações personalizadas
-    const recommendations = [];
-    
-    if (roi_percentage < 10) {
-      recommendations.push('Considere revisar o modelo de negócio ou buscar parcerias estratégicas');
-    }
-    if (timeline_months > 36) {
-      recommendations.push('Projeto de longo prazo - considere marcos intermediários para validação');
-    }
-    if (risk_score > 70) {
-      recommendations.push('Alto risco - recomenda-se diversificação ou parcerias para mitigação');
-    }
-    if (market_size === 'large' || market_size === 'very_large') {
-      recommendations.push('Mercado promissor - considere acelerar o desenvolvimento');
+    // Time reduction benefits
+    if (expectedBenefits.timeReduction && currentProcessCost) {
+      const timeSavings = (expectedBenefits.timeReduction / 100) * currentProcessCost;
+      monthlyBenefit += timeSavings * baseMultiplier;
     }
 
-    // Benchmarks do setor farmacêutico brasileiro
-    const industry_benchmarks = {
-      generic_drugs: { avg_roi: 12, avg_timeline: 18 },
-      brand_drugs: { avg_roi: 25, avg_timeline: 36 },
-      medical_devices: { avg_roi: 18, avg_timeline: 24 },
-      clinical_research: { avg_roi: 30, avg_timeline: 48 }
-    };
+    // Direct cost savings
+    if (expectedBenefits.costSavings) {
+      monthlyBenefit += expectedBenefits.costSavings * baseMultiplier;
+    }
 
-    return new Response(JSON.stringify({
-      success: true,
-      roi_analysis: {
-        roi_percentage: Math.round(roi_percentage * 100) / 100,
-        investment_amount,
-        expected_return: Math.round(expected_return),
-        profit: Math.round(profit),
-        monthly_return: Math.round(monthly_return),
-        timeline_months,
-        risk_score: Math.round(risk_score),
-        risk_category,
-        recommendations,
-        industry_benchmarks,
-        calculation_details: {
-          base_roi: factors.base_roi,
-          market_adjustment: market_multiplier[market_size],
-          competition_adjustment: competition_multiplier[competition_level],
-          regulatory_adjustment: regulatory_multiplier[regulatory_complexity],
-          time_penalty
-        }
+    // Revenue increase
+    if (expectedBenefits.revenueIncrease) {
+      monthlyBenefit += expectedBenefits.revenueIncrease * baseMultiplier;
+    }
+
+    // Risk reduction value (converted to monetary benefit)
+    if (expectedBenefits.riskReduction && currentProcessCost) {
+      const riskValue = (expectedBenefits.riskReduction / 100) * currentProcessCost * 0.1; // 10% of process cost as risk value
+      monthlyBenefit += riskValue * baseMultiplier;
+    }
+
+    // Calculate totals
+    const totalCosts = initialCost + (monthlyCost * timeHorizon);
+    const totalBenefits = monthlyBenefit * timeHorizon;
+    const netPresentValue = totalBenefits - totalCosts;
+    const roi = totalCosts > 0 ? ((totalBenefits - totalCosts) / totalCosts) * 100 : 0;
+
+    // Calculate payback period
+    let paybackPeriod = 0;
+    let cumulativeBenefit = 0;
+    let cumulativeCost = initialCost;
+
+    for (let month = 1; month <= timeHorizon; month++) {
+      cumulativeBenefit += monthlyBenefit;
+      cumulativeCost += monthlyCost;
+      
+      if (cumulativeBenefit >= cumulativeCost && paybackPeriod === 0) {
+        paybackPeriod = month;
       }
-    }), {
+    }
+
+    // Generate monthly breakdown
+    const monthlyBreakdown = [];
+    let cumCost = initialCost;
+    let cumBenefit = 0;
+
+    for (let month = 1; month <= Math.min(timeHorizon, 24); month++) {
+      cumCost += monthlyCost;
+      cumBenefit += monthlyBenefit;
+      
+      monthlyBreakdown.push({
+        month,
+        cumulativeCost: Math.round(cumCost),
+        cumulativeBenefit: Math.round(cumBenefit),
+        netBenefit: Math.round(cumBenefit - cumCost)
+      });
+    }
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+    if (roi > 200) {
+      recommendations.push('ROI excelente - investimento altamente recomendado');
+    } else if (roi > 100) {
+      recommendations.push('ROI muito bom - investimento recomendado');
+    } else if (roi > 50) {
+      recommendations.push('ROI positivo - considere o investimento');
+    } else if (roi > 0) {
+      recommendations.push('ROI baixo - avalie outros benefícios intangíveis');
+    } else {
+      recommendations.push('ROI negativo - revise premissas ou considere alternativas');
+    }
+
+    if (paybackPeriod <= 6) {
+      recommendations.push('Payback rápido - benefícios aparecem em curto prazo');
+    } else if (paybackPeriod <= 12) {
+      recommendations.push('Payback moderado - benefícios aparecem em médio prazo');
+    } else if (paybackPeriod > 0) {
+      recommendations.push('Payback longo - avalie se timeframe é adequado');
+    }
+
+    // Add industry-specific recommendations
+    switch (investmentType) {
+      case 'platform_subscription':
+        recommendations.push('Considere o valor do networking e oportunidades de parcerias');
+        break;
+      case 'laboratory_partnership':
+        recommendations.push('Avalie também ganhos de capacidade e flexibilidade');
+        break;
+      case 'consultant_hiring':
+        recommendations.push('Considere transferência de conhecimento para equipe interna');
+        break;
+      case 'regulatory_compliance':
+        recommendations.push('Inclua valor da redução de riscos regulatórios');
+        break;
+    }
+
+    // Generate assumptions
+    const assumptions: string[] = [
+      `Cálculo baseado em ${timeHorizon} meses`,
+      `Porte da empresa: ${companySize}`,
+      `Tipo de investimento: ${investmentType}`,
+      'Benefícios calculados com base em benchmarks da indústria farmacêutica',
+      'Não inclui custos de oportunidade ou inflação',
+      'Pressupõe implementação bem-sucedida da solução'
+    ];
+
+    const result: ROIResult = {
+      roi: Math.round(roi * 100) / 100,
+      paybackPeriod,
+      netPresentValue: Math.round(netPresentValue),
+      totalBenefits: Math.round(totalBenefits),
+      totalCosts: Math.round(totalCosts),
+      monthlyBreakdown,
+      recommendations,
+      assumptions
+    };
+
+    logStep('ROI calculation completed', { 
+      roi: result.roi, 
+      paybackPeriod: result.paybackPeriod 
+    });
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     });
 
   } catch (error) {
-    console.error('Erro no ROI Calculator:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false 
-    }), {
-      status: 500,
+    logStep('ERROR', { message: error.message });
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
     });
   }
 });

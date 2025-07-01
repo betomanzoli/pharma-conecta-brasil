@@ -31,6 +31,7 @@ import NotFound from '@/pages/NotFound';
 import ChatPage from '@/pages/ChatPage';
 import PaymentsPage from '@/pages/PaymentsPage';
 import AdvancedAnalyticsPage from '@/pages/AdvancedAnalyticsPage';
+import PlatformDemoPage from '@/pages/PlatformDemo';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -78,6 +79,7 @@ function App() {
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
+                <Route path="/demo" element={<PlatformDemoPage />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />

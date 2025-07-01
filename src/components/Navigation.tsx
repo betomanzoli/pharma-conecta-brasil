@@ -5,6 +5,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 import UserProfile from '@/components/navigation/UserProfile';
 import MobileMenu from '@/components/navigation/MobileMenu';
 import DesktopNavigation from '@/components/navigation/DesktopNavigation';
+import Logo from '@/components/ui/logo';
 
 const Navigation = () => {
   return (
@@ -14,11 +15,7 @@ const Navigation = () => {
           <div className="flex">
             <div className="shrink-0 flex items-center">
               <Link to="/dashboard">
-                <img
-                  className="h-8 w-auto"
-                  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                  alt="PharmaConnect"
-                />
+                <Logo size="md" />
               </Link>
             </div>
             <DesktopNavigation />

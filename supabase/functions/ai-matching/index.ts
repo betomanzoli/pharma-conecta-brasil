@@ -1,10 +1,36 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface MatchingRequest {
+  entityType: 'company' | 'laboratory' | 'consultant';
+  entityId: string;
+  requirements?: string[];
+  serviceType?: string;
+  location?: string;
+  budget?: { min: number; max: number };
+}
+
+interface MatchingResult {
+  matches: Array<{
+    id: string;
+    name: string;
+    type: string;
+    score: number;
+    reasons: string[];
+    location?: string;
+    capabilities?: string[];
+  }>;
+  recommendations: string[];
+}
+
+const logStep = (step: string, data?: any) => {
+  console.log(`[AI-MATCHING] ${step}`, data ? JSON.stringify(data) : '');
 };
 
 serve(async (req) => {
@@ -13,117 +39,195 @@ serve(async (req) => {
   }
 
   try {
+    logStep('Starting AI matching process');
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { company_id, search_criteria } = await req.json();
+    const { entityType, entityId, requirements, serviceType, location, budget }: MatchingRequest = await req.json();
+    logStep('Received matching request', { entityType, entityId, serviceType });
 
-    // Buscar empresa solicitante
-    const { data: requestingCompany, error: companyError } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('id', company_id)
-      .single();
-
-    if (companyError) {
-      throw new Error(`Erro ao buscar empresa: ${companyError.message}`);
+    // Get entity details
+    let entityData;
+    switch (entityType) {
+      case 'company':
+        const { data: company } = await supabase.from('companies').select('*').eq('id', entityId).single();
+        entityData = company;
+        break;
+      case 'laboratory':
+        const { data: lab } = await supabase.from('laboratories').select('*').eq('id', entityId).single();
+        entityData = lab;
+        break;
+      case 'consultant':
+        const { data: consultant } = await supabase.from('consultants').select('*').eq('id', entityId).single();
+        entityData = consultant;
+        break;
     }
 
-    // Buscar todas as outras empresas
-    const { data: allCompanies, error: companiesError } = await supabase
-      .from('companies')
-      .select('*')
-      .neq('id', company_id);
-
-    if (companiesError) {
-      throw new Error(`Erro ao buscar empresas: ${companiesError.message}`);
+    if (!entityData) {
+      throw new Error('Entity not found');
     }
 
-    // Algoritmo de matching baseado em compatibilidade
-    const matches = allCompanies.map(company => {
-      let score = 0;
-      const factors = [];
+    logStep('Found entity data', { name: entityData.name });
 
-      // Compatibilidade por área de expertise
-      if (requestingCompany.expertise_area && company.expertise_area) {
-        const commonAreas = requestingCompany.expertise_area.filter(area => 
-          company.expertise_area.includes(area)
-        );
-        if (commonAreas.length > 0) {
-          score += 0.4;
-          factors.push(`Áreas em comum: ${commonAreas.join(', ')}`);
-        }
-      }
+    // AI-powered matching logic
+    const matches: MatchingResult['matches'] = [];
+    
+    if (entityType === 'company') {
+      // Company looking for laboratories or consultants
+      if (serviceType === 'laboratory_analysis') {
+        const { data: laboratories } = await supabase
+          .from('laboratories')
+          .select('*')
+          .neq('id', entityId);
 
-      // Compatibilidade por localização (mesmo estado = +0.2)
-      if (requestingCompany.state === company.state) {
-        score += 0.2;
-        factors.push(`Mesmo estado: ${company.state}`);
-      }
+        laboratories?.forEach(lab => {
+          let score = 0;
+          const reasons: string[] = [];
 
-      // Compatibilidade por status de compliance
-      if (requestingCompany.compliance_status === 'compliant' && 
-          company.compliance_status === 'compliant') {
-        score += 0.2;
-        factors.push('Ambas com compliance em dia');
-      }
+          // Location matching
+          if (location && lab.location?.toLowerCase().includes(location.toLowerCase())) {
+            score += 30;
+            reasons.push('Localização compatível');
+          }
 
-      // Bonus por filtros específicos de busca
-      if (search_criteria) {
-        if (search_criteria.service_type && company.expertise_area?.includes(search_criteria.service_type)) {
-          score += 0.2;
-          factors.push(`Serviço desejado: ${search_criteria.service_type}`);
-        }
-      }
+          // Certification matching
+          if (lab.certifications && entityData.expertise_area) {
+            const commonCerts = lab.certifications.filter((cert: string) => 
+              entityData.expertise_area.some((area: string) => 
+                cert.toLowerCase().includes(area.toLowerCase())
+              )
+            );
+            if (commonCerts.length > 0) {
+              score += 40;
+              reasons.push(`Certificações relevantes: ${commonCerts.join(', ')}`);
+            }
+          }
 
-      return {
-        company,
-        compatibility_score: Math.min(score, 1), // Max 1.0
-        match_factors: factors,
-        recommended_actions: [
-          'Enviar mensagem de interesse',
-          'Solicitar reunião virtual',
-          'Compartilhar portfólio'
-        ]
-      };
-    }).filter(match => match.compatibility_score > 0.3) // Filtrar matches com score > 30%
-     .sort((a, b) => b.compatibility_score - a.compatibility_score)
-     .slice(0, 10); // Top 10 matches
+          // Capacity availability
+          if (lab.available_capacity && lab.available_capacity > 0) {
+            score += 20;
+            reasons.push('Capacidade disponível');
+          }
 
-    // Salvar interações de matching
-    for (const match of matches.slice(0, 5)) {
-      await supabase
-        .from('company_interactions')
-        .upsert({
-          company_a_id: company_id,
-          company_b_id: match.company.id,
-          interaction_type: 'match',
-          compatibility_score: match.compatibility_score,
-          notes: `AI Match: ${match.match_factors.join('; ')}`
-        }, {
-          onConflict: 'company_a_id,company_b_id,interaction_type'
+          // Equipment matching
+          if (lab.equipment_list && requirements) {
+            const matchingEquipment = lab.equipment_list.filter((equipment: string) =>
+              requirements.some(req => equipment.toLowerCase().includes(req.toLowerCase()))
+            );
+            if (matchingEquipment.length > 0) {
+              score += 30;
+              reasons.push(`Equipamentos compatíveis: ${matchingEquipment.join(', ')}`);
+            }
+          }
+
+          if (score > 20) {
+            matches.push({
+              id: lab.id,
+              name: lab.name,
+              type: 'laboratory',
+              score,
+              reasons,
+              location: lab.location,
+              capabilities: lab.certifications
+            });
+          }
         });
+      }
+
+      // Look for consultants
+      const { data: consultants } = await supabase
+        .from('consultants')
+        .select('*')
+        .neq('id', entityId);
+
+      consultants?.forEach(consultant => {
+        let score = 0;
+        const reasons: string[] = [];
+
+        // Expertise matching
+        if (consultant.expertise && entityData.expertise_area) {
+          const commonExpertise = consultant.expertise.filter((exp: string) =>
+            entityData.expertise_area.some((area: string) =>
+              exp.toLowerCase().includes(area.toLowerCase()) ||
+              area.toLowerCase().includes(exp.toLowerCase())
+            )
+          );
+          if (commonExpertise.length > 0) {
+            score += 50;
+            reasons.push(`Expertise compatível: ${commonExpertise.join(', ')}`);
+          }
+        }
+
+        // Budget matching
+        if (budget && consultant.hourly_rate) {
+          const hourlyRate = parseFloat(consultant.hourly_rate.toString());
+          if (hourlyRate >= budget.min && hourlyRate <= budget.max) {
+            score += 30;
+            reasons.push('Taxa dentro do orçamento');
+          }
+        }
+
+        // Location matching
+        if (location && consultant.location?.toLowerCase().includes(location.toLowerCase())) {
+          score += 20;
+          reasons.push('Localização compatível');
+        }
+
+        // Experience (projects completed)
+        if (consultant.projects_completed && consultant.projects_completed > 5) {
+          score += 20;
+          reasons.push(`Experiência comprovada: ${consultant.projects_completed} projetos`);
+        }
+
+        if (score > 30) {
+          matches.push({
+            id: consultant.id,
+            name: `Consultor ${consultant.id}`, // In real scenario, get from profiles
+            type: 'consultant',
+            score,
+            reasons,
+            location: consultant.location,
+            capabilities: consultant.expertise
+          });
+        }
+      });
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      matches,
-      total_companies_analyzed: allCompanies.length,
-      top_match_score: matches[0]?.compatibility_score || 0
-    }), {
+    // Sort matches by score
+    matches.sort((a, b) => b.score - a.score);
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+    if (matches.length === 0) {
+      recommendations.push('Considere ampliar os critérios de busca');
+      recommendations.push('Verifique se há laboratórios em regiões próximas');
+    } else {
+      recommendations.push(`Encontrados ${matches.length} parceiros compatíveis`);
+      if (matches[0].score > 80) {
+        recommendations.push('Match de alta qualidade encontrado - recomendamos contato direto');
+      }
+    }
+
+    const result: MatchingResult = {
+      matches: matches.slice(0, 10), // Top 10 matches
+      recommendations
+    };
+
+    logStep('Matching completed', { matchCount: result.matches.length });
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     });
 
   } catch (error) {
-    console.error('Erro no AI Matching:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false 
-    }), {
-      status: 500,
+    logStep('ERROR', { message: error.message });
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
     });
   }
 });
