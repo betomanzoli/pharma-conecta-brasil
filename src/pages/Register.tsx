@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Network } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/ui/logo";
 
 const Register = () => {
   const { toast } = useToast();
@@ -67,9 +67,8 @@ const Register = () => {
     <div className="min-h-screen bg-muted flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Network className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold text-primary">PharmaNexus</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
             Crie sua Conta Profissional

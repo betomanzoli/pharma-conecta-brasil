@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Network, Building2, FlaskConical, Users, User } from "lucide-react";
+import { Building2, FlaskConical, Users, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import Logo from "@/components/ui/logo";
 
 const Auth = () => {
   const { signUp, signIn, resetPassword } = useAuth();
@@ -214,9 +214,8 @@ const Auth = () => {
     <div className="min-h-screen bg-muted flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Network className="h-10 w-10 text-[#1565C0]" />
-            <span className="text-3xl font-bold text-[#1565C0]">PharmaConnect</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
             Conecte-se com os melhores profissionais

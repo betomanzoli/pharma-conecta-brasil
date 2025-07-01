@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User, Network, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen, Search, Target, FlaskConical, Briefcase, Bell, ChevronDown, Menu, X, Plus, Phone, AlertTriangle } from "lucide-react";
+import { User, Building2, Users, Calendar, FileText, Shield, GraduationCap, MessageCircle, BookOpen, Search, Target, FlaskConical, Briefcase, Bell, ChevronDown, Menu, X, Plus, Phone, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import Logo from "@/components/ui/logo";
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -60,8 +61,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-2">
-              <Network className="h-8 w-8 text-primary" />
-              <span className="text-xl md:text-2xl font-bold text-primary">PharmaConnect Brasil</span>
+              <Logo size="md" />
             </Link>
           </div>
 
@@ -192,10 +192,7 @@ const Header = () => {
                   {/* Header */}
                   <div className="p-6 border-b">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-2">
-                        <Network className="h-6 w-6 text-primary" />
-                        <span className="text-lg font-bold text-primary">PharmaConnect Brasil</span>
-                      </div>
+                      <Logo size="sm" />
                     </div>
                     
                     {/* User Type Selector */}

@@ -1,11 +1,12 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Network } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ComplianceDisclaimer from "@/components/ComplianceDisclaimer";
+import Logo from "@/components/ui/logo";
 
 const Login = () => {
   const { toast } = useToast();
@@ -37,9 +38,8 @@ const Login = () => {
         <ComplianceDisclaimer />
         
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Network className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold text-primary">PharmaNexus</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
             Bem-vindo de Volta
