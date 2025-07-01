@@ -1,26 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Search, 
-  Filter, 
-  MapPin, 
-  Star, 
-  Users, 
-  Building, 
-  FlaskConical,
-  MessageCircle,
-  Calendar,
-  TrendingUp
-} from 'lucide-react';
+import { Search, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AIMatchingEngine from '@/components/marketplace/AIMatchingEngine';
-import { supabase } from '@/integrations/supabase/client';
+import ServiceProviderCard from '@/components/marketplace/ServiceProviderCard';
+import MarketplaceFilters from '@/components/marketplace/MarketplaceFilters';
 import { useToast } from '@/hooks/use-toast';
 
 interface ServiceProvider {
@@ -54,7 +42,7 @@ const Marketplace = () => {
 
   const fetchProviders = async () => {
     try {
-      // Simular dados de provedores de serviços
+      // Mock data - em produção, viria do Supabase
       const mockProviders: ServiceProvider[] = [
         {
           id: '1',
@@ -88,28 +76,6 @@ const Marketplace = () => {
           description: 'Empresa de biotecnologia focada em desenvolvimento de medicamentos inovadores.',
           verified: true,
           price_range: 'Sob consulta'
-        },
-        {
-          id: '4',
-          name: 'Instituto de Pesquisas Farmacêuticas',
-          type: 'laboratory',
-          location: 'Belo Horizonte, MG',
-          rating: 4.6,
-          specialties: ['Bioequivalência', 'Farmacocinética', 'Estudos Clínicos'],
-          description: 'Instituto de pesquisa com foco em estudos de bioequivalência e farmacocinética.',
-          verified: true,
-          price_range: 'R$ 1.000 - R$ 5.000'
-        },
-        {
-          id: '5',
-          name: 'Consultoria Regulatória Avançada',
-          type: 'consultant',
-          location: 'Brasília, DF',
-          rating: 4.5,
-          specialties: ['Assuntos Regulatórios', 'Farmacovigilância', 'Inspeções'],
-          description: 'Consultoria especializada em assuntos regulatórios e farmacovigilância.',
-          verified: false,
-          price_range: 'R$ 150 - R$ 600/hora'
         }
       ];
 
@@ -145,24 +111,6 @@ const Marketplace = () => {
     }
 
     setFilteredProviders(filtered);
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'laboratory': return <FlaskConical className="h-4 w-4" />;
-      case 'consultant': return <Users className="h-4 w-4" />;
-      case 'company': return <Building className="h-4 w-4" />;
-      default: return <Users className="h-4 w-4" />;
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'laboratory': return 'Laboratório';
-      case 'consultant': return 'Consultor';
-      case 'company': return 'Empresa';
-      default: return 'Provedor';
-    }
   };
 
   const handleContact = (providerId: string) => {
@@ -206,37 +154,13 @@ const Marketplace = () => {
             </TabsList>
 
             <TabsContent value="browse" className="space-y-6">
-              {/* Filtros e Busca */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Filter className="h-5 w-5" />
-                    <span>Filtros de Busca</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input
-                      placeholder="Buscar por nome, especialidade ou localização..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="md:col-span-2"
-                    />
-                    <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">Todos os tipos</option>
-                      <option value="laboratory">Laboratórios</option>
-                      <option value="consultant">Consultores</option>
-                      <option value="company">Empresas</option>
-                    </select>
-                  </div>
-                </CardContent>
-              </Card>
+              <MarketplaceFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                selectedType={selectedType}
+                setSelectedType={setSelectedType}
+              />
 
-              {/* Lista de Provedores */}
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[...Array(6)].map((_, i) => (
@@ -265,82 +189,12 @@ const Marketplace = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredProviders.map((provider) => (
-                    <Card key={provider.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            {getTypeIcon(provider.type)}
-                            <Badge variant="outline">
-                              {getTypeLabel(provider.type)}
-                            </Badge>
-                            {provider.verified && (
-                              <Badge variant="default" className="bg-green-100 text-green-800">
-                                Verificado
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                            <span className="text-sm font-medium">{provider.rating}</span>
-                          </div>
-                        </div>
-
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          {provider.name}
-                        </h3>
-
-                        <div className="flex items-center space-x-1 text-gray-600 mb-3">
-                          <MapPin className="h-4 w-4" />
-                          <span className="text-sm">{provider.location}</span>
-                        </div>
-
-                        <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-                          {provider.description}
-                        </p>
-
-                        <div className="mb-4">
-                          <p className="text-xs font-medium text-gray-700 mb-2">Especialidades:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {provider.specialties.slice(0, 3).map((specialty, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {specialty}
-                              </Badge>
-                            ))}
-                            {provider.specialties.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{provider.specialties.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-900">
-                            {provider.price_range}
-                          </p>
-                        </div>
-
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleContact(provider.id)}
-                            className="flex-1 flex items-center justify-center space-x-1"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            <span>Contatar</span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleSchedule(provider.id)}
-                            className="flex-1 flex items-center justify-center space-x-1 bg-[#1565C0] hover:bg-[#1565C0]/90"
-                          >
-                            <Calendar className="h-4 w-4" />
-                            <span>Agendar</span>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ServiceProviderCard
+                      key={provider.id}
+                      provider={provider}
+                      onContact={handleContact}
+                      onSchedule={handleSchedule}
+                    />
                   ))}
                 </div>
               )}

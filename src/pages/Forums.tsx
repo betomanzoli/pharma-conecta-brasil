@@ -1,10 +1,170 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MessageSquare, TrendingUp, Pin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ForumCard from '@/components/forums/ForumCard';
+import ForumFilters from '@/components/forums/ForumFilters';
+import { useToast } from '@/hooks/use-toast';
+
+interface ForumTopic {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  author: {
+    name: string;
+    avatar_url?: string;
+  };
+  replies_count: number;
+  views_count: number;
+  is_pinned: boolean;
+  is_trending: boolean;
+  last_activity: string;
+  created_at: string;
+}
 
 const Forums = () => {
   const { profile } = useAuth();
+  const { toast } = useToast();
+  const [topics, setTopics] = useState<ForumTopic[]>([]);
+  const [filteredTopics, setFilteredTopics] = useState<ForumTopic[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTopics();
+  }, []);
+
+  useEffect(() => {
+    filterAndSortTopics();
+  }, [searchTerm, categoryFilter, sortBy, topics]);
+
+  const fetchTopics = async () => {
+    try {
+      // Mock data - em produção, viria do Supabase
+      const mockTopics: ForumTopic[] = [
+        {
+          id: '1',
+          title: 'Novas diretrizes da ANVISA para medicamentos genéricos',
+          description: 'Discussão sobre as recentes mudanças nas diretrizes da ANVISA para registro de medicamentos genéricos e seus impactos na indústria.',
+          category: 'regulatory',
+          author: {
+            name: 'Dr. João Silva',
+            avatar_url: undefined
+          },
+          replies_count: 15,
+          views_count: 245,
+          is_pinned: true,
+          is_trending: true,
+          last_activity: '2024-01-15T10:30:00Z',
+          created_at: '2024-01-10T08:00:00Z'
+        },
+        {
+          id: '2',
+          title: 'Boas práticas em estudos de bioequivalência',
+          description: 'Compartilhamento de experiências e melhores práticas para condução de estudos de bioequivalência.',
+          category: 'clinical',
+          author: {
+            name: 'Dra. Maria Santos',
+            avatar_url: undefined
+          },
+          replies_count: 8,
+          views_count: 156,
+          is_pinned: false,
+          is_trending: false,
+          last_activity: '2024-01-14T16:45:00Z',
+          created_at: '2024-01-12T14:20:00Z'
+        },
+        {
+          id: '3',
+          title: 'Controle de qualidade: validação de métodos analíticos',
+          description: 'Discussão sobre métodos de validação analítica e desafios enfrentados nos laboratórios.',
+          category: 'quality',
+          author: {
+            name: 'Carlos Mendes',
+            avatar_url: undefined
+          },
+          replies_count: 12,
+          views_count: 189,
+          is_pinned: false,
+          is_trending: true,
+          last_activity: '2024-01-13T11:15:00Z',
+          created_at: '2024-01-11T09:30:00Z'
+        }
+      ];
+
+      setTopics(mockTopics);
+      setFilteredTopics(mockTopics);
+    } catch (error) {
+      console.error('Error fetching topics:', error);
+      toast({
+        title: "Erro ao carregar tópicos",
+        description: "Não foi possível carregar os tópicos do fórum",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterAndSortTopics = () => {
+    let filtered = topics;
+
+    if (searchTerm) {
+      filtered = filtered.filter(topic =>
+        topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        topic.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(topic => topic.category === categoryFilter);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          return new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime();
+        case 'popular':
+          return b.views_count - a.views_count;
+        case 'trending':
+          if (a.is_trending && !b.is_trending) return -1;
+          if (!a.is_trending && b.is_trending) return 1;
+          return b.views_count - a.views_count;
+        case 'replies':
+          return b.replies_count - a.replies_count;
+        default:
+          return 0;
+      }
+    });
+
+    // Pinned topics always on top
+    const pinned = filtered.filter(topic => topic.is_pinned);
+    const regular = filtered.filter(topic => !topic.is_pinned);
+    
+    setFilteredTopics([...pinned, ...regular]);
+  };
+
+  const handleTopicClick = (topicId: string) => {
+    toast({
+      title: "Abrindo tópico",
+      description: "Redirecionando para a discussão completa",
+    });
+  };
+
+  const handleCreateTopic = () => {
+    toast({
+      title: "Criar novo tópico",
+      description: "Funcionalidade de criação de tópicos será implementada",
+    });
+  };
 
   return (
     <ProtectedRoute>
@@ -16,9 +176,98 @@ const Forums = () => {
               Fóruns de Discussão
             </h1>
             <p className="text-gray-600 mt-2">
-              Participe de discussões sobre tendências e desafios do setor
+              Participe de discussões sobre tendências e desafios do setor farmacêutico
             </p>
           </div>
+
+          <Tabs defaultValue="all-topics" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all-topics" className="flex items-center space-x-2">
+                <MessageSquare className="h-4 w-4" />
+                <span>Todos os Tópicos</span>
+              </TabsTrigger>
+              <TabsTrigger value="trending" className="flex items-center space-x-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>Em Alta</span>
+              </TabsTrigger>
+              <TabsTrigger value="pinned" className="flex items-center space-x-2">
+                <Pin className="h-4 w-4" />
+                <span>Fixados</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all-topics" className="space-y-6">
+              <ForumFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                onCreateTopic={handleCreateTopic}
+              />
+
+              {loading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-6">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+                        <div className="h-16 bg-gray-200 rounded"></div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : filteredTopics.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Nenhum tópico encontrado
+                    </h3>
+                    <p className="text-gray-600">
+                      Tente ajustar os filtros de busca ou criar um novo tópico
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {filteredTopics.map((topic) => (
+                    <ForumCard
+                      key={topic.id}
+                      topic={topic}
+                      onClick={handleTopicClick}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="trending">
+              <div className="space-y-4">
+                {filteredTopics.filter(topic => topic.is_trending).map((topic) => (
+                  <ForumCard
+                    key={topic.id}
+                    topic={topic}
+                    onClick={handleTopicClick}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="pinned">
+              <div className="space-y-4">
+                {filteredTopics.filter(topic => topic.is_pinned).map((topic) => (
+                  <ForumCard
+                    key={topic.id}
+                    topic={topic}
+                    onClick={handleTopicClick}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </ProtectedRoute>
