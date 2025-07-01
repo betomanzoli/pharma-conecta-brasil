@@ -44,10 +44,12 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
     expertise_areas: [] as string[],
     
     lab_name: '',
+    lab_location: '',
     certifications: [] as string[],
     equipment_list: [] as string[],
     
     consultant_expertise: [] as string[],
+    consultant_location: '',
     hourly_rate: '',
     availability: 'Disponível'
   });
@@ -156,6 +158,7 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
         await supabase.from('laboratories').insert({
           profile_id: profile.id,
           name: formData.lab_name,
+          location: formData.lab_location || 'Brasil',
           certifications: formData.certifications,
           equipment_list: formData.equipment_list,
           description: formData.company_description
@@ -166,6 +169,7 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
           expertise: formData.consultant_expertise,
           hourly_rate: parseFloat(formData.hourly_rate) || 0,
           availability: formData.availability,
+          location: formData.consultant_location || 'Brasil',
           description: formData.company_description,
           certifications: formData.certifications
         });
@@ -335,6 +339,16 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Localização
+                        </label>
+                        <Input
+                          value={formData.lab_location}
+                          onChange={(e) => handleInputChange('lab_location', e.target.value)}
+                          placeholder="Cidade, Estado"
+                        />
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Certificações
                         </label>
@@ -357,7 +371,18 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
                         </label>
                         <Input
                           placeholder="Ex: HPLC, GC-MS, UV-Vis (separados por vírgula)"
-                          onChange={(e) => handleInputChange('equipment_list', e.target.value.split(',').map(s => s.trim()))}
+                          onChange={(e) => handleInputChange('equipment_list', e.target.value.split(',').map(s => s.trim()).filter(s => s))}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Descrição do Laboratório
+                        </label>
+                        <Textarea
+                          value={formData.company_description}
+                          onChange={(e) => handleInputChange('company_description', e.target.value)}
+                          placeholder="Descreva seu laboratório e principais serviços..."
+                          rows={3}
                         />
                       </div>
                     </>
@@ -381,6 +406,16 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Localização
+                        </label>
+                        <Input
+                          value={formData.consultant_location}
+                          onChange={(e) => handleInputChange('consultant_location', e.target.value)}
+                          placeholder="Cidade, Estado"
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -409,6 +444,17 @@ const OnboardingWizard = ({ onComplete }: { onComplete: () => void }) => {
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Sobre Você
+                        </label>
+                        <Textarea
+                          value={formData.company_description}
+                          onChange={(e) => handleInputChange('company_description', e.target.value)}
+                          placeholder="Descreva sua experiência e especialidades..."
+                          rows={3}
+                        />
                       </div>
                     </>
                   )}
