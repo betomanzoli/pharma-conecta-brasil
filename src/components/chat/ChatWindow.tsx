@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreHorizontal } from 'lucide-react';
+import { Send, Phone, Video, MoreHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,9 +14,8 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  timestamp: string;
+  created_at: string;
   sender_name: string;
-  sender_avatar?: string;
 }
 
 interface ChatWindowProps {
@@ -54,11 +53,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const { data, error } = await supabase
         .from('messages')
         .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey(first_name, last_name)
+          id,
+          sender_id,
+          receiver_id,
+          content,
+          created_at
         `)
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .or(`sender_id.eq.${receiverId},receiver_id.eq.${receiverId}`)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -68,8 +69,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         sender_id: msg.sender_id,
         receiver_id: msg.receiver_id,
         content: msg.content,
-        timestamp: msg.created_at,
-        sender_name: `${msg.sender?.first_name} ${msg.sender?.last_name}`.trim()
+        created_at: msg.created_at,
+        sender_name: msg.sender_id === user.id ? 'Você' : receiverName
       })) || [];
 
       setMessages(formattedMessages);
@@ -87,17 +88,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: `or(sender_id.eq.${user.id},receiver_id.eq.${user.id})`
+        filter: `or(and(sender_id.eq.${user.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${user.id}))`
       }, (payload) => {
         const newMsg = payload.new as any;
-        setMessages(prev => [...prev, {
+        const formattedMsg: Message = {
           id: newMsg.id,
           sender_id: newMsg.sender_id,
           receiver_id: newMsg.receiver_id,
           content: newMsg.content,
-          timestamp: newMsg.created_at,
+          created_at: newMsg.created_at,
           sender_name: newMsg.sender_id === user.id ? 'Você' : receiverName
-        }]);
+        };
+        setMessages(prev => [...prev, formattedMsg]);
       })
       .subscribe();
 
@@ -141,7 +143,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   return (
-    <Card className="w-80 h-96 flex flex-col">
+    <Card className="w-80 h-96 flex flex-col shadow-lg">
       <CardHeader className="p-3 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -150,7 +152,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               <AvatarFallback>{receiverName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-sm">{receiverName}</CardTitle>
+              <h3 className="text-sm font-semibold">{receiverName}</h3>
               <Badge variant="secondary" className="text-xs">Online</Badge>
             </div>
           </div>
@@ -165,7 +167,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               <MoreHorizontal className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
-              ×
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -188,7 +190,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             >
               <p className="text-sm">{message.content}</p>
               <span className="text-xs opacity-70">
-                {new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                {new Date(message.created_at).toLocaleTimeString('pt-BR', {
                   hour: '2-digit',
                   minute: '2-digit'
                 })}

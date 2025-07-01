@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,17 +34,16 @@ const ChatList: React.FC = () => {
     if (!user) return;
 
     try {
-      // Buscar perfis de usuários conectados
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, first_name, last_name, email')
         .neq('id', user.id);
 
       if (error) throw error;
 
       const contactsList: Contact[] = profiles?.map(profile => ({
         id: profile.id,
-        name: `${profile.first_name} ${profile.last_name}`.trim() || 'Usuário',
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
         avatar: undefined,
         lastMessage: 'Iniciar conversa',
         timestamp: '',
@@ -106,7 +104,7 @@ const ChatList: React.FC = () => {
               {filteredContacts.map((contact) => (
                 <div
                   key={contact.id}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer border"
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer border transition-colors"
                   onClick={() => openChat(contact)}
                 >
                   <div className="relative">
