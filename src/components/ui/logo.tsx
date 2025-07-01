@@ -29,7 +29,7 @@ const Logo: React.FC<LogoProps> = ({
   if (variant === 'icon') {
     return (
       <img
-        src="/lovable-uploads/cd4da4dc-de6b-4213-aa5f-dd60e3f5c047.png"
+        src="/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png"
         alt="PharmaConnect Brasil"
         className={`${sizeClasses[size]} w-auto ${className}`}
       />
@@ -47,7 +47,7 @@ const Logo: React.FC<LogoProps> = ({
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
       <img
-        src="/lovable-uploads/cd4da4dc-de6b-4213-aa5f-dd60e3f5c047.png"
+        src="/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png"
         alt="PharmaConnect Brasil"
         className={`${sizeClasses[size]} w-auto`}
       />
