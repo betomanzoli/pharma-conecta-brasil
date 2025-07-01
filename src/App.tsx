@@ -1,22 +1,23 @@
+
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { QueryClient } from 'react-query';
-import LandingPage from '@/pages/LandingPage';
-import SignUp from '@/pages/SignUp';
-import SignIn from '@/pages/SignIn';
+import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
 import Dashboard from '@/pages/Dashboard';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
-import ProfilePage from '@/pages/ProfilePage';
-import RegulatoryAlertsPage from '@/pages/RegulatoryAlertsPage';
+import Profile from '@/pages/Profile';
+import Regulatory from '@/pages/Regulatory';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
+// Create a client
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationProvider>
           <Toaster />
@@ -24,20 +25,17 @@ function App() {
           <Suspense fallback={<div>Loading...</div>}>
             <Router>
               <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/signin" element={<SignIn />} />
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/auth/reset-password" element={<ResetPassword />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/regulatory-alerts" element={<RegulatoryAlertsPage />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/regulatory" element={<Regulatory />} />
               </Routes>
             </Router>
           </Suspense>
         </NotificationProvider>
       </AuthProvider>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 
