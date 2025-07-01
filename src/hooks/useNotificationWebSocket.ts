@@ -17,14 +17,21 @@ export const useNotificationWebSocket = (
   onNotificationReceived: (notification: Omit<Notification, 'id' | 'created_at' | 'read'>) => void
 ) => {
   const { user } = useAuth();
-  const { lastMessage, isConnected } = useWebSocket(
-    process.env.NODE_ENV === 'development' 
-      ? 'ws://localhost:3001/ws' 
-      : 'wss://your-websocket-server.com/ws'
-  );
+  const [wsUrl, setWsUrl] = useState<string | undefined>(undefined);
+
+  // Só definir URL se estiver em ambiente de desenvolvimento com servidor WebSocket real
+  useEffect(() => {
+    // Por enquanto, desabilitar WebSocket até configurar servidor real
+    // if (process.env.NODE_ENV === 'development') {
+    //   setWsUrl('ws://localhost:3001/ws');
+    // }
+    setWsUrl(undefined);
+  }, []);
+
+  const { lastMessage, isConnected } = useWebSocket(wsUrl);
 
   useEffect(() => {
-    if (lastMessage) {
+    if (lastMessage && user) {
       const wsNotification = lastMessage as WebSocketNotification;
       
       switch (wsNotification.type) {
@@ -60,7 +67,7 @@ export const useNotificationWebSocket = (
           break;
       }
     }
-  }, [lastMessage, onNotificationReceived]);
+  }, [lastMessage, onNotificationReceived, user]);
 
   return { isConnected };
 };

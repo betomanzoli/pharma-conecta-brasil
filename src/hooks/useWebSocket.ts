@@ -15,18 +15,28 @@ export const useWebSocket = (url?: string) => {
   const [error, setError] = useState<string | null>(null);
   const websocket = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 3; // Reduzir tentativas
+  const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const connect = () => {
-    if (!user || !session || !url) return;
+    // Não conectar se não há URL válida ou se já está conectado
+    if (!user || !session || !url || websocket.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    // Verificar se a URL é válida
+    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+      console.warn('Invalid WebSocket URL provided:', url);
+      setError('Invalid WebSocket URL');
+      return;
+    }
 
     try {
-      // In a real implementation, this would connect to your WebSocket server
-      // For now, we'll simulate the connection
+      console.log('Attempting WebSocket connection to:', url);
       const ws = new WebSocket(url);
       
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         setIsConnected(true);
         setError(null);
         reconnectAttempts.current = 0;
@@ -48,22 +58,33 @@ export const useWebSocket = (url?: string) => {
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         
-        // Attempt to reconnect
-        if (reconnectAttempts.current < maxReconnectAttempts) {
+        // Limpar timeout anterior
+        if (reconnectTimeout.current) {
+          clearTimeout(reconnectTimeout.current);
+        }
+        
+        // Tentar reconectar apenas se não foi fechamento intencional
+        if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current++;
-          setTimeout(() => {
+          const delay = Math.pow(2, reconnectAttempts.current) * 1000;
+          console.log(`Attempting reconnect ${reconnectAttempts.current}/${maxReconnectAttempts} in ${delay}ms`);
+          
+          reconnectTimeout.current = setTimeout(() => {
             connect();
-          }, Math.pow(2, reconnectAttempts.current) * 1000);
+          }, delay);
+        } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+          setError('Max reconnection attempts reached');
         }
       };
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setError('Connection error');
+        setIsConnected(false);
       };
 
       websocket.current = ws;
@@ -74,8 +95,13 @@ export const useWebSocket = (url?: string) => {
   };
 
   const disconnect = () => {
+    if (reconnectTimeout.current) {
+      clearTimeout(reconnectTimeout.current);
+      reconnectTimeout.current = null;
+    }
+    
     if (websocket.current) {
-      websocket.current.close();
+      websocket.current.close(1000, 'Intentional disconnect');
       websocket.current = null;
     }
   };
@@ -83,11 +109,14 @@ export const useWebSocket = (url?: string) => {
   const sendMessage = (message: any) => {
     if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {
       websocket.current.send(JSON.stringify(message));
+    } else {
+      console.warn('WebSocket not connected, cannot send message');
     }
   };
 
   useEffect(() => {
-    if (user && session && url) {
+    // Só conectar se há dados válidos e URL válida
+    if (user && session && url && (url.startsWith('ws://') || url.startsWith('wss://'))) {
       connect();
     }
 
