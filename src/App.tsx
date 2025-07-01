@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import Dashboard from '@/pages/Dashboard';
+import EnhancedDashboard from '@/pages/EnhancedDashboard';
 import Profile from '@/pages/Profile';
 import Regulatory from '@/pages/Regulatory';
 import NotificationsPage from '@/pages/NotificationsPage';
@@ -62,7 +63,8 @@ function App() {
                 <Route path="/contact" element={<Contact />} />
                 
                 {/* Protected Routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<EnhancedDashboard />} />
+                <Route path="/dashboard-legacy" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/network" element={<Network />} />
                 <Route path="/marketplace" element={<Marketplace />} />
