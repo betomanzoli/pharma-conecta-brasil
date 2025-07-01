@@ -28,6 +28,9 @@ import Terms from '@/pages/Terms';
 import About from '@/pages/About';
 import Contact from '@/pages/Contact';
 import NotFound from '@/pages/NotFound';
+import ChatPage from '@/pages/ChatPage';
+import PaymentsPage from '@/pages/PaymentsPage';
+import AdvancedAnalyticsPage from '@/pages/AdvancedAnalyticsPage';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -69,9 +72,12 @@ function App() {
                 <Route path="/regulatory" element={<Regulatory />} />
                 <Route path="/integrations" element={<IntegrationsPage />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/payments" element={<PaymentsPage />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
