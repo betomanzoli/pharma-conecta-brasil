@@ -7,7 +7,7 @@ import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 import { NotificationService } from '@/services/notificationService';
 import { Notification, NotificationContextType } from '@/types/notification';
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();

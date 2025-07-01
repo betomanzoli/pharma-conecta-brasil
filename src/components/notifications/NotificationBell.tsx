@@ -3,7 +3,7 @@ import React from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const NotificationBell: React.FC = () => {
   const { unreadCount } = useNotifications();
