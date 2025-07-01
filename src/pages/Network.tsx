@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,13 +58,8 @@ const Network = () => {
           first_name,
           last_name,
           user_type,
-          city,
-          state,
-          expertise_area,
-          avatar_url,
-          companies (
-            name
-          )
+          phone,
+          linkedin_url
         `)
         .neq('id', profile.id)
         .limit(50);
@@ -75,16 +71,16 @@ const Network = () => {
 
       const formattedConnections: NetworkConnection[] = (data || []).map(user => ({
         id: user.id,
-        name: `${user.first_name} ${user.last_name}`,
+        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Nome não informado',
         title: user.user_type === 'company' ? 'Empresa' : 
                user.user_type === 'laboratory' ? 'Laboratório' :
                user.user_type === 'consultant' ? 'Consultor' : 'Profissional',
-        company: user.companies?.[0]?.name || 'Independente',
-        location: `${user.city || ''}, ${user.state || ''}`.trim().replace(/^,|,$/, ''),
-        expertise: user.expertise_area || [],
-        avatar: user.avatar_url,
+        company: 'Independente',
+        location: 'Brasil',
+        expertise: [],
+        avatar: undefined,
         connection_status: 'none',
-        user_type: user.user_type
+        user_type: user.user_type as 'company' | 'laboratory' | 'consultant' | 'individual'
       }));
 
       setConnections(formattedConnections);

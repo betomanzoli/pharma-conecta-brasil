@@ -85,7 +85,22 @@ const Projects = () => {
         return;
       }
 
-      setProjects(data || []);
+      // Convert data to match our Project interface
+      const formattedProjects: Project[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description || '',
+        service_type: item.service_type,
+        status: (item.status as 'open' | 'in_progress' | 'completed' | 'cancelled') || 'open',
+        budget_min: item.budget_min || 0,
+        budget_max: item.budget_max || 0,
+        deadline: item.deadline || '',
+        created_at: item.created_at,
+        requester_id: item.requester_id,
+        assigned_to: item.provider_id || undefined
+      }));
+
+      setProjects(formattedProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -129,7 +144,22 @@ const Projects = () => {
         return;
       }
 
-      setProjects(prev => [data, ...prev]);
+      // Convert to our Project interface
+      const newProjectData: Project = {
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        service_type: data.service_type,
+        status: (data.status as 'open' | 'in_progress' | 'completed' | 'cancelled') || 'open',
+        budget_min: data.budget_min || 0,
+        budget_max: data.budget_max || 0,
+        deadline: data.deadline || '',
+        created_at: data.created_at,
+        requester_id: data.requester_id,
+        assigned_to: data.provider_id || undefined
+      };
+
+      setProjects(prev => [newProjectData, ...prev]);
       setIsCreateDialogOpen(false);
       setNewProject({
         title: '',
@@ -578,7 +608,7 @@ const Projects = () => {
                   <div>
                     <h4 className="font-medium mb-1">Criado em</h4>
                     <p className="text-gray-600">
-                      {new Date(selectedProject.created_at).toLocaleString('pt-BR')}
+                      {new Date(selectedProject.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                 </div>
