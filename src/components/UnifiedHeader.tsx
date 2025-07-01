@@ -58,28 +58,38 @@ const UnifiedHeader = () => {
     { title: "Fornecedores", path: "/suppliers", icon: Building2 },
     { title: "Regulatório", path: "/regulatory", icon: Shield },
     { title: "Carreiras", path: "/careers", icon: Users },
+    { title: "Eventos", path: "/events", icon: Calendar },
     { title: "Contato", path: "/contact", icon: MessageCircle },
   ];
 
-  // Navegação para usuários LOGADOS
-  const privateNavigationItems = [
-    { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
-    { title: "Rede", path: "/network", icon: Network },
-    { title: "Marketplace", path: "/marketplace", icon: ShoppingCart },
-    { title: "Projetos", path: "/projects", icon: FolderOpen },
-    { title: "Mentoria", path: "/mentorship", icon: UserCheck },
-    { title: "Fóruns", path: "/forums", icon: MessageCircle },
-    { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
-    { title: "Integrações", path: "/integrations", icon: Plug },
-  ];
+  // Navegação para usuários LOGADOS (baseada no tipo de usuário)
+  const getPrivateNavigationItems = () => {
+    const baseItems = [
+      { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
+      { title: "Rede", path: "/network", icon: Network },
+      { title: "Marketplace", path: "/marketplace", icon: ShoppingCart },
+      { title: "Projetos", path: "/projects", icon: FolderOpen },
+      { title: "Mentoria", path: "/mentorship", icon: UserCheck },
+      { title: "Fóruns", path: "/forums", icon: MessageCircle },
+      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
+    ];
 
-  const navigationItems = user ? privateNavigationItems : publicNavigationItems;
+    // Adicionar Integrações apenas para administradores
+    if (profile?.user_type === 'admin') {
+      baseItems.push({ title: "Integrações", path: "/integrations", icon: Plug });
+    }
+
+    return baseItems;
+  };
+
+  const navigationItems = user ? getPrivateNavigationItems() : publicNavigationItems;
 
   const userTypes = [
     { id: "individual", label: "Profissional", icon: User },
     { id: "company", label: "Empresa", icon: Building2 },
     { id: "laboratory", label: "Laboratório", icon: FlaskConical },
     { id: "consultant", label: "Consultor", icon: GraduationCap },
+    { id: "admin", label: "Administrador", icon: Shield },
   ];
 
   const currentUserType = userTypes.find(type => type.id === profile?.user_type) || userTypes[0];
@@ -150,13 +160,13 @@ const UnifiedHeader = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/regulatory" className="cursor-pointer flex items-center">
+                    <Link to="/anvisa-alerts" className="cursor-pointer flex items-center">
                       <Shield className="h-4 w-4 mr-2" />
                       Alertas ANVISA
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/marketplace" className="cursor-pointer flex items-center">
+                    <Link to="/opportunities" className="cursor-pointer flex items-center">
                       <Target className="h-4 w-4 mr-2" />
                       Oportunidades
                     </Link>
@@ -212,6 +222,12 @@ const UnifiedHeader = () => {
                       <Link to="/analytics" className="cursor-pointer flex items-center">
                         <BarChart3 className="h-4 w-4 mr-2" />
                         Analytics
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/reports" className="cursor-pointer flex items-center">
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Relatórios
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

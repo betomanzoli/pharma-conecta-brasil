@@ -1,155 +1,340 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Star, Package, Truck } from "lucide-react";
-import Header from "@/components/Header";
-import ComplianceFooter from "@/components/ComplianceFooter";
-import ComplianceDisclaimer from "@/components/ComplianceDisclaimer";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Building2, MapPin, Phone, Globe, Star, Search, Filter, Package } from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Supplier {
+  id: string;
+  name: string;
+  cnpj?: string;
+  expertise_area: string[];
+  compliance_status: string;
+  description?: string;
+  website?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+}
 
 const Suppliers = () => {
-  const suppliers = [
-    {
-      id: 1,
-      name: "PharmaEquip Brasil",
-      category: "Equipamentos Analíticos",
-      location: "São Paulo, SP",
-      rating: 4.9,
-      products: ["HPLC", "Espectrômetros", "Balanças Analíticas"],
-      delivery: "3-5 dias úteis",
-      certifications: ["ISO 9001", "ANVISA"],
-      description: "Fornecedor líder em equipamentos analíticos para laboratórios farmacêuticos."
-    },
-    {
-      id: 2,
-      name: "MatPrima Farmacêutica",
-      category: "Matérias-Primas",
-      location: "Rio de Janeiro, RJ",
-      rating: 4.8,
-      products: ["APIs", "Excipientes", "Solventes"],
-      delivery: "7-10 dias úteis",
-      certifications: ["GMP", "FDA", "ANVISA"],
-      description: "Distribuidor especializado em matérias-primas farmacêuticas de alta qualidade."
-    },
-    {
-      id: 3,
-      name: "CleanRoom Solutions",
-      category: "Sistemas de Controle Ambiental",
-      location: "Campinas, SP",
-      rating: 4.7,
-      products: ["Salas Limpas", "HVAC", "Sistemas de Purificação"],
-      delivery: "15-30 dias úteis",
-      certifications: ["ISO 14644", "GMP"],
-      description: "Especialistas em projetos e instalação de salas limpas para a indústria farmacêutica."
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [areaFilter, setAreaFilter] = useState('all');
+  const [complianceFilter, setComplianceFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  useEffect(() => {
+    filterSuppliers();
+  }, [searchTerm, areaFilter, complianceFilter, locationFilter, suppliers]);
+
+  const fetchSuppliers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      
+      setSuppliers(data || []);
+      setFilteredSuppliers(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar fornecedores:', error);
+      toast({
+        title: "Erro ao carregar fornecedores",
+        description: "Não foi possível carregar os dados dos fornecedores",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const filterSuppliers = () => {
+    let filtered = suppliers;
+
+    if (searchTerm) {
+      filtered = filtered.filter(supplier =>
+        supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        supplier.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        supplier.city?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (areaFilter !== 'all') {
+      filtered = filtered.filter(supplier => 
+        supplier.expertise_area?.includes(areaFilter)
+      );
+    }
+
+    if (complianceFilter !== 'all') {
+      filtered = filtered.filter(supplier => supplier.compliance_status === complianceFilter);
+    }
+
+    if (locationFilter !== 'all') {
+      filtered = filtered.filter(supplier => supplier.state === locationFilter);
+    }
+
+    setFilteredSuppliers(filtered);
+  };
+
+  const getComplianceColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+      case 'compliant':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'non_compliant':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getComplianceText = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+      case 'compliant':
+        return 'Aprovado';
+      case 'pending':
+        return 'Pendente';
+      case 'non_compliant':
+        return 'Não Conforme';
+      default:
+        return 'Não Informado';
+    }
+  };
+
+  const handleContact = (supplier: Supplier) => {
+    toast({
+      title: "Entrando em contato",
+      description: `Iniciando contato com ${supplier.name}`,
+    });
+  };
+
+  const getUniqueAreas = () => {
+    const areas = suppliers.flatMap(supplier => supplier.expertise_area || []);
+    return [...new Set(areas)];
+  };
+
+  const getUniqueStates = () => {
+    const states = suppliers.map(supplier => supplier.state).filter(Boolean);
+    return [...new Set(states)];
+  };
+
+  // Simular rating baseado no status de compliance
+  const getSupplierRating = (supplier: Supplier) => {
+    let rating = 3;
+    if (supplier.compliance_status === 'approved' || supplier.compliance_status === 'compliant') {
+      rating = 5;
+    } else if (supplier.compliance_status === 'pending') {
+      rating = 4;
+    }
+    
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <ComplianceDisclaimer />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
+      <Navigation />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-gray-900">
             Fornecedores Farmacêuticos
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
-            Encontre fornecedores qualificados para equipamentos, matérias-primas e serviços
+          <p className="text-gray-600 mt-2">
+            Encontre fornecedores certificados e verificados
           </p>
-          
-          {/* Search and Filters */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <Button className="bg-primary">
-              <Package className="h-4 w-4 mr-2" />
-              Buscar por Categoria
-            </Button>
-            <Button variant="outline">Por Certificação</Button>
-            <Button variant="outline">Por Localização</Button>
-            <Button variant="outline">Tempo de Entrega</Button>
+        </div>
+
+        {/* Filtros */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar fornecedores..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={areaFilter} onValueChange={setAreaFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Área de Expertise" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Áreas</SelectItem>
+                  {getUniqueAreas().map(area => (
+                    <SelectItem key={area} value={area}>{area}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={complianceFilter} onValueChange={setComplianceFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status de Compliance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="approved">Aprovado</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="non_compliant">Não Conforme</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Estados</SelectItem>
+                  {getUniqueStates().map(state => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resultados */}
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        ) : filteredSuppliers.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhum fornecedor encontrado
+              </h3>
+              <p className="text-gray-600">
+                Tente ajustar os filtros de busca
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <p className="text-gray-600">
+                {filteredSuppliers.length} fornecedor{filteredSuppliers.length !== 1 ? 'es' : ''} encontrado{filteredSuppliers.length !== 1 ? 's' : ''}
+              </p>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros Avançados
+              </Button>
+            </div>
 
-        {/* Suppliers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {suppliers.map((supplier) => (
-            <Card key={supplier.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{supplier.name}</CardTitle>
-                    <p className="text-sm text-primary font-medium mt-1">{supplier.category}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">{supplier.location}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {filteredSuppliers.map((supplier) => (
+                <Card key={supplier.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl text-primary flex items-center">
+                          <Building2 className="h-5 w-5 mr-2" />
+                          {supplier.name}
+                        </CardTitle>
+                        {supplier.city && supplier.state && (
+                          <div className="flex items-center text-gray-600 mt-2">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            <span>{supplier.city}, {supplier.state}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center mt-1">
+                          {getSupplierRating(supplier)}
+                          <span className="ml-2 text-sm text-gray-600">
+                            Fornecedor Verificado
+                          </span>
+                        </div>
+                      </div>
+                      <Badge variant={getComplianceColor(supplier.compliance_status)}>
+                        {getComplianceText(supplier.compliance_status)}
+                      </Badge>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium">{supplier.rating}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <p className="text-gray-600 text-sm mb-4">{supplier.description}</p>
-                
-                {/* Products */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Produtos:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {supplier.products.map((product) => (
-                      <Badge key={product} variant="secondary" className="text-xs">
-                        {product}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                  </CardHeader>
+                  <CardContent>
+                    {supplier.description && (
+                      <p className="text-gray-600 mb-4">{supplier.description}</p>
+                    )}
+                    
+                    {supplier.expertise_area && supplier.expertise_area.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Áreas de Expertise:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {supplier.expertise_area.map((area, index) => (
+                            <Badge key={index} variant="secondary">{area}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Delivery Time */}
-                <div className="flex items-center space-x-2 mb-4">
-                  <Truck className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-gray-600">{supplier.delivery}</span>
-                </div>
-
-                {/* Certifications */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Certificações:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {supplier.certifications.map((cert) => (
-                      <Badge key={cert} className="text-xs bg-primary-100 text-primary-800">
-                        {cert}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button className="flex-1" size="sm">
-                    Ver Catálogo
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Solicitar Cotação
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Load More */}
-        <div className="text-center mt-8">
-          <Button variant="outline" size="lg">
-            Carregar Mais Fornecedores
-          </Button>
-        </div>
-      </div>
-
-      <ComplianceFooter />
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        {supplier.phone && (
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 mr-1" />
+                            <span>{supplier.phone}</span>
+                          </div>
+                        )}
+                        {supplier.cnpj && (
+                          <div className="flex items-center">
+                            <Package className="h-4 w-4 mr-1" />
+                            <span>CNPJ: {supplier.cnpj}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        {supplier.website && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={supplier.website} target="_blank" rel="noopener noreferrer">
+                              <Globe className="h-4 w-4 mr-1" />
+                              Site
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" onClick={() => handleContact(supplier)}>
+                          Entrar em Contato
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
