@@ -8,6 +8,7 @@ import Auth from '@/pages/Auth';
 import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Regulatory from '@/pages/Regulatory';
+import NotificationsPage from '@/pages/NotificationsPage';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/regulatory" element={<Regulatory />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
               </Routes>
             </Router>
           </Suspense>
