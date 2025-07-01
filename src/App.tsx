@@ -9,6 +9,25 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Regulatory from '@/pages/Regulatory';
 import NotificationsPage from '@/pages/NotificationsPage';
+import Network from '@/pages/Network';
+import Marketplace from '@/pages/Marketplace';
+import Projects from '@/pages/Projects';
+import MentorshipHub from '@/pages/MentorshipHub';
+import Forums from '@/pages/Forums';
+import KnowledgeLibrary from '@/pages/KnowledgeLibrary';
+import IntegrationsPage from '@/pages/IntegrationsPage';
+import Analytics from '@/pages/Analytics';
+import Reports from '@/pages/Reports';
+import Subscription from '@/pages/Subscription';
+import Companies from '@/pages/Companies';
+import Laboratories from '@/pages/Laboratories';
+import Consultants from '@/pages/Consultants';
+import Careers from '@/pages/Careers';
+import Privacy from '@/pages/Privacy';
+import Terms from '@/pages/Terms';
+import About from '@/pages/About';
+import Contact from '@/pages/Contact';
+import NotFound from '@/pages/NotFound';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -26,12 +45,36 @@ function App() {
           <Suspense fallback={<div>Loading...</div>}>
             <Router>
               <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/companies" element={<Companies />} />
+                <Route path="/laboratories" element={<Laboratories />} />
+                <Route path="/consultants" element={<Consultants />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                
+                {/* Protected Routes */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/network" element={<Network />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/mentorship" element={<MentorshipHub />} />
+                <Route path="/forums" element={<Forums />} />
+                <Route path="/knowledge" element={<KnowledgeLibrary />} />
                 <Route path="/regulatory" element={<Regulatory />} />
+                <Route path="/integrations" element={<IntegrationsPage />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/subscription" element={<Subscription />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Router>
           </Suspense>

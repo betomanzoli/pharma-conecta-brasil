@@ -1,240 +1,529 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Plus, 
+  Search, 
+  Filter,
+  Calendar,
+  Users,
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Eye,
+  Edit,
+  Trash2
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import Navigation from '@/components/Navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Users, Calendar, Target, Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
-import Header from "@/components/Header";
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  service_type: string;
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  budget_min: number;
+  budget_max: number;
+  deadline: string;
+  created_at: string;
+  requester_id: string;
+  assigned_to?: string;
+}
 
 const Projects = () => {
-  const activeProjects = [
-    {
-      id: 1,
-      title: "Desenvolvimento de Formulação Oral",
-      description: "Projeto colaborativo para desenvolvimento de comprimido de liberação prolongada",
-      status: "Em Andamento",
-      progress: 65,
-      participants: [
-        { name: "FarmaTech", type: "company", role: "Patrocinador" },
-        { name: "LabAnalítica SP", type: "laboratory", role: "Análises" },
-        { name: "Dr. Carlos Mendes", type: "consultant", role: "Regulatório" },
-        { name: "UNICAMP", type: "university", role: "Pesquisa" }
-      ],
-      deadline: "2024-12-15",
-      budget: "R$ 250.000",
-      priority: "Alta"
-    },
-    {
-      id: 2,
-      title: "Estudo de Estabilidade Acelerado",
-      description: "Validação de condições de armazenamento para nova linha de produtos",
-      status: "Planejamento",
-      progress: 25,
-      participants: [
-        { name: "BioNova S.A.", type: "company", role: "Patrocinador" },
-        { name: "BioTest Laboratórios", type: "laboratory", role: "Execução" }
-      ],
-      deadline: "2024-11-30",
-      budget: "R$ 85.000",
-      priority: "Média"
-    }
-  ];
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [serviceTypeFilter, setServiceTypeFilter] = useState('all');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const opportunityProjects = [
-    {
-      id: 3,
-      title: "Desenvolvimento de Biossimilar",
-      description: "Busca-se parceiros para desenvolvimento completo de produto biossimilar",
-      stakeholdersNeeded: ["Laboratório Analítico", "Consultor Regulatório", "Centro de Pesquisa"],
-      budget: "R$ 500.000 - R$ 1.000.000",
-      timeline: "18 meses",
-      sponsor: "BioPharma Internacional",
-      requirements: ["Certificação ISO 17025", "Experiência com biológicos", "Capacidade para estudos clínicos"]
-    }
-  ];
+  const [newProject, setNewProject] = useState({
+    title: '',
+    description: '',
+    service_type: '',
+    budget_min: '',
+    budget_max: '',
+    deadline: ''
+  });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em Andamento":
-        return "bg-blue-100 text-blue-800";
-      case "Planejamento":
-        return "bg-yellow-100 text-yellow-800";
-      case "Concluído":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  useEffect(() => {
+    fetchProjects();
+  }, [profile]);
+
+  const fetchProjects = async () => {
+    if (!profile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('project_requests')
+        .select('*')
+        .eq('requester_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching projects:', error);
+        toast({
+          title: "Erro ao carregar projetos",
+          description: "Não foi possível carregar seus projetos",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "Alta":
-        return "bg-red-100 text-red-800";
-      case "Média":
-        return "bg-yellow-100 text-yellow-800";
-      case "Baixa":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const createProject = async () => {
+    if (!profile || !newProject.title || !newProject.service_type) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha pelo menos o título e tipo de serviço",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('project_requests')
+        .insert({
+          title: newProject.title,
+          description: newProject.description,
+          service_type: newProject.service_type,
+          budget_min: parseFloat(newProject.budget_min) || 0,
+          budget_max: parseFloat(newProject.budget_max) || 0,
+          deadline: newProject.deadline || null,
+          requester_id: profile.id,
+          status: 'open'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating project:', error);
+        toast({
+          title: "Erro ao criar projeto",
+          description: "Não foi possível criar o projeto",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setProjects(prev => [data, ...prev]);
+      setIsCreateDialogOpen(false);
+      setNewProject({
+        title: '',
+        description: '',
+        service_type: '',
+        budget_min: '',
+        budget_max: '',
+        deadline: ''
+      });
+
+      toast({
+        title: "Projeto criado!",
+        description: "Seu projeto foi criado com sucesso",
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+  };
+
+  const deleteProject = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('project_requests')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) {
+        console.error('Error deleting project:', error);
+        toast({
+          title: "Erro ao excluir projeto",
+          description: "Não foi possível excluir o projeto",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      toast({
+        title: "Projeto excluído",
+        description: "O projeto foi excluído com sucesso",
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Em Andamento":
-        return <Clock className="h-4 w-4" />;
-      case "Planejamento":
-        return <AlertCircle className="h-4 w-4" />;
-      case "Concluído":
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
+      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'in_progress': return <Clock className="h-4 w-4 text-blue-500" />;
+      case 'cancelled': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default: return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'in_progress': return 'secondary';
+      case 'cancelled': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'open': return 'Aberto';
+      case 'in_progress': return 'Em Andamento';
+      case 'completed': return 'Concluído';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
+  };
+
+  const getServiceTypeLabel = (serviceType: string) => {
+    switch (serviceType) {
+      case 'laboratory_analysis': return 'Análise Laboratorial';
+      case 'regulatory_consulting': return 'Consultoria Regulatória';
+      case 'clinical_research': return 'Pesquisa Clínica';
+      case 'manufacturing': return 'Fabricação';
+      case 'quality_control': return 'Controle de Qualidade';
+      default: return serviceType;
+    }
+  };
+
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    const matchesServiceType = serviceTypeFilter === 'all' || project.service_type === serviceTypeFilter;
+    
+    return matchesSearch && matchesStatus && matchesServiceType;
+  });
+
+  const projectStats = {
+    total: projects.length,
+    open: projects.filter(p => p.status === 'open').length,
+    inProgress: projects.filter(p => p.status === 'in_progress').length,
+    completed: projects.filter(p => p.status === 'completed').length
+  };
+
   return (
-    <div className="min-h-screen bg-muted">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Projetos Colaborativos</h1>
-            <p className="text-gray-600">Gerencie projetos multi-stakeholder e descubra oportunidades</p>
-          </div>
-          <Button className="bg-primary hover:bg-primary-600">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Projeto
-          </Button>
-        </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Gestão de Projetos
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Gerencie seus projetos e colaborações
+                </p>
+              </div>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#1565C0] hover:bg-[#1565C0]/90">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Projeto
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Projeto</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Título do Projeto</label>
+                      <Input
+                        value={newProject.title}
+                        onChange={(e) => setNewProject({...newProject, title: e.target.value})}
+                        placeholder="Digite o título do projeto"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Tipo de Serviço</label>
+                      <Select value={newProject.service_type} onValueChange={(value) => setNewProject({...newProject, service_type: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo de serviço" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="laboratory_analysis">Análise Laboratorial</SelectItem>
+                          <SelectItem value="regulatory_consulting">Consultoria Regulatória</SelectItem>
+                          <SelectItem value="clinical_research">Pesquisa Clínica</SelectItem>
+                          <SelectItem value="manufacturing">Fabricação</SelectItem>
+                          <SelectItem value="quality_control">Controle de Qualidade</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        {/* Project Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Target className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Projetos Ativos</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Colaboradores</p>
-                  <p className="text-2xl font-bold text-gray-900">48</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Concluídos</p>
-                  <p className="text-2xl font-bold text-gray-900">7</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <AlertCircle className="h-8 w-8 text-orange-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Oportunidades</p>
-                  <p className="text-2xl font-bold text-gray-900">15</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    <div>
+                      <label className="text-sm font-medium">Descrição</label>
+                      <Textarea
+                        value={newProject.description}
+                        onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                        placeholder="Descreva os detalhes do projeto"
+                        rows={4}
+                      />
+                    </div>
 
-        {/* Project Tabs */}
-        <Tabs defaultValue="active" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="active">Ativos</TabsTrigger>
-            <TabsTrigger value="opportunities">Oportunidades</TabsTrigger>
-            <TabsTrigger value="completed">Concluídos</TabsTrigger>
-          </TabsList>
-
-          {/* Active Projects */}
-          <TabsContent value="active" className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              {activeProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl text-primary mb-2">{project.title}</CardTitle>
-                        <p className="text-gray-600 mb-4">{project.description}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Orçamento Mínimo (R$)</label>
+                        <Input
+                          type="number"
+                          value={newProject.budget_min}
+                          onChange={(e) => setNewProject({...newProject, budget_min: e.target.value})}
+                          placeholder="0"
+                        />
                       </div>
-                      <div className="flex space-x-2 ml-4">
-                        <Badge className={getStatusColor(project.status)}>
-                          {getStatusIcon(project.status)}
-                          <span className="ml-1">{project.status}</span>
-                        </Badge>
-                        <Badge className={getPriorityColor(project.priority)}>
-                          {project.priority}
-                        </Badge>
+                      <div>
+                        <label className="text-sm font-medium">Orçamento Máximo (R$)</label>
+                        <Input
+                          type="number"
+                          value={newProject.budget_max}
+                          onChange={(e) => setNewProject({...newProject, budget_max: e.target.value})}
+                          placeholder="0"
+                        />
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Progress and Details */}
-                      <div className="lg:col-span-2 space-y-4">
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">Progresso</span>
-                            <span className="text-sm text-gray-600">{project.progress}%</span>
-                          </div>
-                          <Progress value={project.progress} className="h-2" />
+
+                    <div>
+                      <label className="text-sm font-medium">Prazo</label>
+                      <Input
+                        type="date"
+                        value={newProject.deadline}
+                        onChange={(e) => setNewProject({...newProject, deadline: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={createProject} className="bg-[#1565C0] hover:bg-[#1565C0]/90">
+                        Criar Projeto
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Projetos</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{projectStats.total}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Projetos Abertos</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{projectStats.open}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">{projectStats.inProgress}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{projectStats.completed}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filtros */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Buscar projetos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="open">Aberto</SelectItem>
+                    <SelectItem value="in_progress">Em Andamento</SelectItem>
+                    <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue placeholder="Tipo de Serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Tipos</SelectItem>
+                    <SelectItem value="laboratory_analysis">Análise Laboratorial</SelectItem>
+                    <SelectItem value="regulatory_consulting">Consultoria Regulatória</SelectItem>
+                    <SelectItem value="clinical_research">Pesquisa Clínica</SelectItem>
+                    <SelectItem value="manufacturing">Fabricação</SelectItem>
+                    <SelectItem value="quality_control">Controle de Qualidade</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Lista de Projetos */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1565C0]"></div>
+              <span className="ml-2 text-gray-600">Carregando projetos...</span>
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {projects.length === 0 ? 'Nenhum projeto criado' : 'Nenhum projeto encontrado'}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {projects.length === 0 
+                    ? 'Crie seu primeiro projeto para começar a colaborar'
+                    : 'Tente ajustar os filtros de busca'
+                  }
+                </p>
+                {projects.length === 0 && (
+                  <Button 
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="bg-[#1565C0] hover:bg-[#1565C0]/90"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeiro Projeto
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredProjects.map((project) => (
+                <Card key={project.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          {getStatusIcon(project.status)}
+                          <h3 className="text-lg font-semibold">{project.title}</h3>
+                          <Badge variant={getStatusColor(project.status)}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                          <Badge variant="outline">
+                            {getServiceTypeLabel(project.service_type)}
+                          </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="flex items-center text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Prazo: {new Date(project.deadline).toLocaleDateString('pt-BR')}
-                          </div>
-                          <div className="flex items-center text-gray-600">
-                            <Target className="h-4 w-4 mr-2" />
-                            Orçamento: {project.budget}
-                          </div>
-                        </div>
+                        <p className="text-gray-600 mb-3 line-clamp-2">{project.description}</p>
                         
-                        <div>
-                          <h4 className="font-medium text-gray-700 mb-2">Participantes:</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {project.participants.map((participant, index) => (
-                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <span className="text-sm font-medium">{participant.name}</span>
-                                <Badge variant="outline" className="text-xs">{participant.role}</Badge>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="flex items-center space-x-6 text-sm text-gray-500">
+                          {(project.budget_min > 0 || project.budget_max > 0) && (
+                            <span>
+                              Orçamento: R$ {project.budget_min.toLocaleString()} - R$ {project.budget_max.toLocaleString()}
+                            </span>
+                          )}
+                          {project.deadline && (
+                            <span className="flex items-center space-x-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>Prazo: {new Date(project.deadline).toLocaleDateString('pt-BR')}</span>
+                            </span>
+                          )}
+                          <span>
+                            Criado: {new Date(project.created_at).toLocaleDateString('pt-BR')}
+                          </span>
                         </div>
                       </div>
                       
-                      {/* Actions */}
-                      <div className="space-y-3">
-                        <Button className="w-full">Ver Detalhes</Button>
-                        <Button variant="outline" className="w-full">Atualizar Status</Button>
-                        <Button variant="outline" className="w-full">
-                          <Users className="h-4 w-4 mr-2" />
-                          Gerenciar Equipe
+                      <div className="flex items-center space-x-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedProject(project);
+                            setIsViewDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Implementar edição
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir este projeto?')) {
+                              deleteProject(project.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -242,94 +531,63 @@ const Projects = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+          )}
 
-          {/* Opportunity Projects */}
-          <TabsContent value="opportunities" className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              {opportunityProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow border-green-200">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl text-primary mb-2">{project.title}</CardTitle>
-                        <p className="text-gray-600 mb-2">{project.description}</p>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium">Patrocinador:</span>
-                          <span className="ml-2">{project.sponsor}</span>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-100 text-green-800">
-                        Nova Oportunidade
+          {/* Dialog de Visualização */}
+          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Detalhes do Projeto</DialogTitle>
+              </DialogHeader>
+              {selectedProject && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg">{selectedProject.title}</h3>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Badge variant={getStatusColor(selectedProject.status)}>
+                        {getStatusLabel(selectedProject.status)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {getServiceTypeLabel(selectedProject.service_type)}
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-medium text-gray-700 mb-2">Stakeholders Necessários:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {project.stakeholdersNeeded.map((stakeholder, index) => (
-                              <Badge key={index} variant="secondary">{stakeholder}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-medium text-gray-700 mb-2">Requisitos:</h4>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {project.requirements.map((req, index) => (
-                              <li key={index} className="flex items-center">
-                                <CheckCircle className="h-3 w-3 text-green-600 mr-2" />
-                                {req}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-gray-700">Orçamento:</span>
-                            <p className="text-green-600 font-medium">{project.budget}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Prazo:</span>
-                            <p className="text-gray-600">{project.timeline}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Button className="w-full bg-green-600 hover:bg-green-700">
-                            Manifestar Interesse
-                          </Button>
-                          <Button variant="outline" className="w-full">
-                            Saber Mais
-                          </Button>
-                        </div>
-                      </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Descrição</h4>
+                    <p className="text-gray-600">{selectedProject.description}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-1">Orçamento</h4>
+                      <p className="text-gray-600">
+                        R$ {selectedProject.budget_min.toLocaleString()} - R$ {selectedProject.budget_max.toLocaleString()}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Completed Projects placeholder */}
-          <TabsContent value="completed" className="space-y-6">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Projetos Concluídos</h3>
-                <p className="text-gray-600">Histórico de projetos finalizados aparecerá aqui</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    {selectedProject.deadline && (
+                      <div>
+                        <h4 className="font-medium mb-1">Prazo</h4>
+                        <p className="text-gray-600">
+                          {new Date(selectedProject.deadline).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-1">Criado em</h4>
+                    <p className="text-gray-600">
+                      {new Date(selectedProject.created_at).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </main>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

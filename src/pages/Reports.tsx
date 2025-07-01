@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-const KnowledgeLibrary = () => {
+const Reports = () => {
   const { profile } = useAuth();
 
   return (
@@ -13,10 +14,10 @@ const KnowledgeLibrary = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">
-              Biblioteca de Conhecimento
+              Relatórios
             </h1>
             <p className="text-gray-600 mt-2">
-              Acesse recursos educacionais e documentação técnica
+              Gere relatórios personalizados sobre suas atividades
             </p>
           </div>
           {/* Content will be implemented */}
@@ -26,4 +27,4 @@ const KnowledgeLibrary = () => {
   );
 };
 
-export default KnowledgeLibrary;
+export default Reports;
