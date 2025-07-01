@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 
 interface AnalyticsData {
   overview: {
