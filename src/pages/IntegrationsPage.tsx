@@ -1,19 +1,19 @@
 
 import React from 'react';
 import Navigation from '@/components/Navigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import APIIntegrationPanel from '@/components/integration/APIIntegrationPanel';
+import AdminRoute from '@/components/AdminRoute';
+import RealAPIIntegrationPanel from '@/components/integration/RealAPIIntegrationPanel';
 
 const IntegrationsPage = () => {
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <APIIntegrationPanel />
+          <RealAPIIntegrationPanel />
         </div>
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 };
 

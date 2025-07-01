@@ -1,20 +1,15 @@
 
 import React from 'react';
 import Navigation from '@/components/Navigation';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import PlatformDemo from '@/components/demo/PlatformDemo';
+import CompletePlatformDemo from '@/components/demo/CompletePlatformDemo';
 
-const PlatformDemoPage = () => {
+const PlatformDemo = () => {
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PlatformDemo />
-        </div>
-      </div>
-    </ProtectedRoute>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <CompletePlatformDemo />
+    </div>
   );
 };
 
-export default PlatformDemoPage;
+export default PlatformDemo;

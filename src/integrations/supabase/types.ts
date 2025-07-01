@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_configurations: {
+        Row: {
+          api_key: string | null
+          base_url: string | null
+          created_at: string | null
+          id: string
+          integration_name: string
+          is_active: boolean | null
+          last_sync: string | null
+          sync_frequency_hours: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          base_url?: string | null
+          created_at?: string | null
+          id?: string
+          integration_name: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          sync_frequency_hours?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          base_url?: string | null
+          created_at?: string | null
+          id?: string
+          integration_name?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          sync_frequency_hours?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           address: string | null
@@ -185,6 +221,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integration_data: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          data_type: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          published_at: string | null
+          source: string
+          title: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          data_type: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          published_at?: string | null
+          source: string
+          title: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          data_type?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          published_at?: string | null
+          source?: string
+          title?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
       }
       laboratories: {
         Row: {
@@ -843,7 +921,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type:
+        | "company"
+        | "laboratory"
+        | "consultant"
+        | "individual"
+        | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -958,6 +1041,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_type: ["company", "laboratory", "consultant", "individual", "admin"],
+    },
   },
 } as const
