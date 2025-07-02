@@ -15,6 +15,7 @@ import Marketplace from '@/pages/Marketplace';
 import Projects from '@/pages/Projects';
 import MentorshipHub from '@/pages/MentorshipHub';
 import Forums from '@/pages/Forums';
+import ForumTopic from '@/pages/ForumTopic';
 import KnowledgeLibrary from '@/pages/KnowledgeLibrary';
 import IntegrationsPage from '@/pages/IntegrationsPage';
 import Analytics from '@/pages/Analytics';
@@ -79,6 +80,7 @@ function App() {
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/mentorship" element={<MentorshipHub />} />
                 <Route path="/forums" element={<Forums />} />
+                <Route path="/forums/:topicId" element={<ForumTopic />} />
                 <Route path="/knowledge" element={<KnowledgeLibrary />} />
                 <Route path="/regulatory" element={<Regulatory />} />
                 <Route path="/integrations" element={<IntegrationsPage />} />

@@ -9,6 +9,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ForumCard from '@/components/forums/ForumCard';
 import ForumFilters from '@/components/forums/ForumFilters';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface ForumTopic {
   id: string;
@@ -30,6 +32,7 @@ interface ForumTopic {
 const Forums = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [filteredTopics, setFilteredTopics] = useState<ForumTopic[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,60 +50,36 @@ const Forums = () => {
 
   const fetchTopics = async () => {
     try {
-      // Mock data - em produção, viria do Supabase
-      const mockTopics: ForumTopic[] = [
-        {
-          id: '1',
-          title: 'Novas diretrizes da ANVISA para medicamentos genéricos',
-          description: 'Discussão sobre as recentes mudanças nas diretrizes da ANVISA para registro de medicamentos genéricos e seus impactos na indústria.',
-          category: 'regulatory',
-          author: {
-            name: 'Dr. João Silva',
-            avatar_url: undefined
-          },
-          replies_count: 15,
-          views_count: 245,
-          is_pinned: true,
-          is_trending: true,
-          last_activity: '2024-01-15T10:30:00Z',
-          created_at: '2024-01-10T08:00:00Z'
-        },
-        {
-          id: '2',
-          title: 'Boas práticas em estudos de bioequivalência',
-          description: 'Compartilhamento de experiências e melhores práticas para condução de estudos de bioequivalência.',
-          category: 'clinical',
-          author: {
-            name: 'Dra. Maria Santos',
-            avatar_url: undefined
-          },
-          replies_count: 8,
-          views_count: 156,
-          is_pinned: false,
-          is_trending: false,
-          last_activity: '2024-01-14T16:45:00Z',
-          created_at: '2024-01-12T14:20:00Z'
-        },
-        {
-          id: '3',
-          title: 'Controle de qualidade: validação de métodos analíticos',
-          description: 'Discussão sobre métodos de validação analítica e desafios enfrentados nos laboratórios.',
-          category: 'quality',
-          author: {
-            name: 'Carlos Mendes',
-            avatar_url: undefined
-          },
-          replies_count: 12,
-          views_count: 189,
-          is_pinned: false,
-          is_trending: true,
-          last_activity: '2024-01-13T11:15:00Z',
-          created_at: '2024-01-11T09:30:00Z'
-        }
-      ];
+      const { data, error } = await supabase
+        .from('forum_topics')
+        .select(`
+          *,
+          author:profiles!forum_topics_author_id_fkey(first_name, last_name)
+        `)
+        .order('is_pinned', { ascending: false })
+        .order('last_activity_at', { ascending: false });
 
-      setTopics(mockTopics);
-      setFilteredTopics(mockTopics);
+      if (error) throw error;
+
+      const formattedTopics: ForumTopic[] = data.map(topic => ({
+        id: topic.id,
+        title: topic.title,
+        description: topic.description,
+        category: topic.category,
+        author: {
+          name: `${topic.author?.first_name || ''} ${topic.author?.last_name || ''}`.trim() || 'Usuário',
+          avatar_url: undefined
+        },
+        replies_count: topic.replies_count,
+        views_count: topic.views_count,
+        is_pinned: topic.is_pinned,
+        is_trending: topic.views_count > 150, // Define trending como mais de 150 visualizações
+        last_activity: topic.last_activity_at,
+        created_at: topic.created_at
+      }));
+
+      setTopics(formattedTopics);
+      setFilteredTopics(formattedTopics);
     } catch (error) {
       console.error('Error fetching topics:', error);
       toast({
@@ -152,11 +131,22 @@ const Forums = () => {
     setFilteredTopics([...pinned, ...regular]);
   };
 
-  const handleTopicClick = (topicId: string) => {
-    toast({
-      title: "Abrindo tópico",
-      description: "Redirecionando para a discussão completa",
-    });
+  const handleTopicClick = async (topicId: string) => {
+    try {
+      // Incrementar contador de visualizações
+      await supabase
+        .from('forum_topics')
+        .update({ 
+          views_count: topics.find(t => t.id === topicId)?.views_count + 1 || 1 
+        })
+        .eq('id', topicId);
+      
+      // Navegar para a página do tópico
+      navigate(`/forums/${topicId}`);
+    } catch (error) {
+      console.error('Error updating views:', error);
+      navigate(`/forums/${topicId}`);
+    }
   };
 
   const handleCreateTopic = () => {
