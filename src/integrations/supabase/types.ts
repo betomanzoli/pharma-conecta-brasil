@@ -401,6 +401,155 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_downloads: {
+        Row: {
+          downloaded_at: string
+          id: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          downloaded_at?: string
+          id?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          downloaded_at?: string
+          id?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_downloads_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_downloads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_items: {
+        Row: {
+          author_id: string
+          category: string
+          content_type: string
+          created_at: string
+          description: string
+          downloads_count: number
+          duration: string | null
+          file_size: string | null
+          file_url: string | null
+          id: string
+          is_featured: boolean
+          is_premium: boolean
+          rating: number | null
+          ratings_count: number
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          content_type: string
+          created_at?: string
+          description: string
+          downloads_count?: number
+          duration?: string | null
+          file_size?: string | null
+          file_url?: string | null
+          id?: string
+          is_featured?: boolean
+          is_premium?: boolean
+          rating?: number | null
+          ratings_count?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          content_type?: string
+          created_at?: string
+          description?: string
+          downloads_count?: number
+          duration?: string | null
+          file_size?: string | null
+          file_url?: string | null
+          id?: string
+          is_featured?: boolean
+          is_premium?: boolean
+          rating?: number | null
+          ratings_count?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          rating: number
+          review: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          rating: number
+          review?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          rating?: number
+          review?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       laboratories: {
         Row: {
           address: string | null

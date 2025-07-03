@@ -9,6 +9,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import KnowledgeCard from '@/components/knowledge/KnowledgeCard';
 import KnowledgeFilters from '@/components/knowledge/KnowledgeFilters';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface KnowledgeItem {
   id: string;
@@ -46,68 +47,35 @@ const KnowledgeLibrary = () => {
 
   const fetchKnowledgeItems = async () => {
     try {
-      // Mock data - em produção, viria do Supabase
-      const mockItems: KnowledgeItem[] = [
-        {
-          id: '1',
-          title: 'Guia Completo de Registro na ANVISA',
-          description: 'Manual completo com todos os procedimentos necessários para registro de medicamentos na ANVISA.',
-          type: 'guide',
-          category: 'regulatory',
-          author: 'ANVISA',
-          downloads: 1250,
-          views: 3400,
-          rating: 4.8,
-          created_at: '2024-01-10T00:00:00Z',
-          file_size: '2.5 MB',
-          is_premium: false
-        },
-        {
-          id: '2',
-          title: 'Webinar: Novas Diretrizes de Farmacovigilância',
-          description: 'Apresentação sobre as recentes mudanças nas diretrizes de farmacovigilância.',
-          type: 'video',
-          category: 'regulatory',
-          author: 'Dr. Maria Silva',
-          downloads: 890,
-          views: 2100,
-          rating: 4.6,
-          created_at: '2024-01-08T00:00:00Z',
-          duration: '45 min',
-          is_premium: true
-        },
-        {
-          id: '3',
-          title: 'Template de Protocolo de Bioequivalência',
-          description: 'Template padronizado para elaboração de protocolos de estudos de bioequivalência.',
-          type: 'template',
-          category: 'clinical',
-          author: 'Instituto de Pesquisas',
-          downloads: 2100,
-          views: 4800,
-          rating: 4.9,
-          created_at: '2024-01-05T00:00:00Z',
-          file_size: '1.2 MB',
-          is_premium: false
-        },
-        {
-          id: '4',
-          title: 'Manual de Boas Práticas de Laboratório',
-          description: 'Documento técnico sobre implementação de boas práticas em laboratórios farmacêuticos.',
-          type: 'document',
-          category: 'quality',
-          author: 'Conselho Regional de Farmácia',
-          downloads: 1670,
-          views: 3200,
-          rating: 4.7,
-          created_at: '2024-01-03T00:00:00Z',
-          file_size: '3.8 MB',
-          is_premium: false
-        }
-      ];
+      const { data, error } = await supabase
+        .from('knowledge_items')
+        .select(`
+          *,
+          author:profiles!knowledge_items_author_id_fkey(first_name, last_name)
+        `)
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      setItems(mockItems);
-      setFilteredItems(mockItems);
+      if (error) throw error;
+
+      const formattedItems: KnowledgeItem[] = data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        type: item.content_type as 'document' | 'video' | 'guide' | 'template',
+        category: item.category,
+        author: `${item.author?.first_name || ''} ${item.author?.last_name || ''}`.trim() || 'Autor',
+        downloads: item.downloads_count,
+        views: item.views_count,
+        rating: Number(item.rating) || 0,
+        created_at: item.created_at,
+        file_size: item.file_size || undefined,
+        duration: item.duration || undefined,
+        is_premium: item.is_premium
+      }));
+
+      setItems(formattedItems);
+      setFilteredItems(formattedItems);
     } catch (error) {
       console.error('Error fetching knowledge items:', error);
       toast({
@@ -142,25 +110,82 @@ const KnowledgeLibrary = () => {
     setFilteredItems(filtered);
   };
 
-  const handleView = (itemId: string) => {
-    toast({
-      title: "Visualizando recurso",
-      description: "Abrindo o recurso selecionado",
-    });
+  const handleView = async (itemId: string) => {
+    try {
+      // Incrementar contador de visualizações
+      await supabase
+        .from('knowledge_items')
+        .update({ 
+          views_count: items.find(item => item.id === itemId)?.views + 1 || 1 
+        })
+        .eq('id', itemId);
+
+      // Simular abertura do recurso
+      toast({
+        title: "Recurso aberto",
+        description: "Visualizando o recurso selecionado",
+      });
+
+      // Atualizar dados locais
+      setItems(prev => prev.map(item => 
+        item.id === itemId 
+          ? { ...item, views: item.views + 1 }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error updating views:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir o recurso",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDownload = (itemId: string) => {
-    toast({
-      title: "Download iniciado",
-      description: "O download do recurso foi iniciado",
-    });
+  const handleDownload = async (itemId: string) => {
+    if (!profile?.id) {
+      toast({
+        title: "Acesso necessário",
+        description: "Faça login para fazer download dos recursos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Registrar download
+      await supabase
+        .from('knowledge_downloads')
+        .insert({
+          item_id: itemId,
+          user_id: profile.id
+        });
+
+      toast({
+        title: "Download iniciado",
+        description: "O download do recurso foi iniciado com sucesso",
+      });
+
+      // Atualizar dados locais (o trigger no banco já incrementa automaticamente)
+      setTimeout(() => {
+        setItems(prev => prev.map(item => 
+          item.id === itemId 
+            ? { ...item, downloads: item.downloads + 1 }
+            : item
+        ));
+      }, 500);
+    } catch (error) {
+      console.error('Error downloading:', error);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível iniciar o download",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleUpload = () => {
-    toast({
-      title: "Upload de recurso",
-      description: "Funcionalidade de upload será implementada",
-    });
+  const handleRefresh = () => {
+    fetchKnowledgeItems();
   };
 
   return (
@@ -205,7 +230,7 @@ const KnowledgeLibrary = () => {
                 setTypeFilter={setTypeFilter}
                 categoryFilter={categoryFilter}
                 setCategoryFilter={setCategoryFilter}
-                onUpload={handleUpload}
+                onRefresh={handleRefresh}
               />
 
               {loading ? (

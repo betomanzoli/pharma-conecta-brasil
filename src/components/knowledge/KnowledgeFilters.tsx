@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, Upload } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
+import CreateKnowledgeDialog from './CreateKnowledgeDialog';
 
 interface KnowledgeFiltersProps {
   searchTerm: string;
@@ -12,7 +12,7 @@ interface KnowledgeFiltersProps {
   setTypeFilter: (type: string) => void;
   categoryFilter: string;
   setCategoryFilter: (category: string) => void;
-  onUpload: () => void;
+  onRefresh: () => void;
 }
 
 const KnowledgeFilters = ({
@@ -22,7 +22,7 @@ const KnowledgeFilters = ({
   setTypeFilter,
   categoryFilter,
   setCategoryFilter,
-  onUpload
+  onRefresh
 }: KnowledgeFiltersProps) => {
   return (
     <Card className="mb-6">
@@ -66,13 +66,7 @@ const KnowledgeFilters = ({
               </select>
             </div>
           </div>
-          <Button 
-            onClick={onUpload}
-            className="bg-[#1565C0] hover:bg-[#1565C0]/90"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Recurso
-          </Button>
+          <CreateKnowledgeDialog onSuccess={onRefresh} />
         </div>
       </CardContent>
     </Card>
