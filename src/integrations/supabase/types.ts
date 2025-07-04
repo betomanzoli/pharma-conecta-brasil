@@ -628,6 +628,100 @@ export type Database = {
           },
         ]
       }
+      mentor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean
+          mentor_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          mentor_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          mentor_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_availability_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentors: {
+        Row: {
+          availability_schedule: Json | null
+          average_rating: number | null
+          bio: string | null
+          created_at: string
+          experience_years: number
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          profile_id: string
+          specialty: string[]
+          total_ratings: number
+          total_sessions: number
+          updated_at: string
+        }
+        Insert: {
+          availability_schedule?: Json | null
+          average_rating?: number | null
+          bio?: string | null
+          created_at?: string
+          experience_years?: number
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          profile_id: string
+          specialty?: string[]
+          total_ratings?: number
+          total_sessions?: number
+          updated_at?: string
+        }
+        Update: {
+          availability_schedule?: Json | null
+          average_rating?: number | null
+          bio?: string | null
+          created_at?: string
+          experience_years?: number
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          profile_id?: string
+          specialty?: string[]
+          total_ratings?: number
+          total_sessions?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentorship_sessions: {
         Row: {
           created_at: string | null
@@ -636,11 +730,16 @@ export type Database = {
           feedback: string | null
           id: string
           meeting_link: string | null
+          meeting_url: string | null
           mentee_id: string
+          mentee_notes: string | null
           mentee_rating: number | null
           mentor_id: string
+          mentor_notes: string | null
           mentor_rating: number | null
+          price: number | null
           scheduled_at: string
+          session_summary: string | null
           status: string
           title: string
         }
@@ -651,11 +750,16 @@ export type Database = {
           feedback?: string | null
           id?: string
           meeting_link?: string | null
+          meeting_url?: string | null
           mentee_id: string
+          mentee_notes?: string | null
           mentee_rating?: number | null
           mentor_id: string
+          mentor_notes?: string | null
           mentor_rating?: number | null
+          price?: number | null
           scheduled_at: string
+          session_summary?: string | null
           status?: string
           title: string
         }
@@ -666,11 +770,16 @@ export type Database = {
           feedback?: string | null
           id?: string
           meeting_link?: string | null
+          meeting_url?: string | null
           mentee_id?: string
+          mentee_notes?: string | null
           mentee_rating?: number | null
           mentor_id?: string
+          mentor_notes?: string | null
           mentor_rating?: number | null
+          price?: number | null
           scheduled_at?: string
+          session_summary?: string | null
           status?: string
           title?: string
         }
@@ -1212,6 +1321,26 @@ export type Database = {
           notification_type?: string
         }
         Returns: string
+      }
+      get_available_mentors: {
+        Args: {
+          specialty_filter?: string[]
+          min_rating?: number
+          max_hourly_rate?: number
+        }
+        Returns: {
+          mentor_id: string
+          profile_id: string
+          first_name: string
+          last_name: string
+          specialty: string[]
+          experience_years: number
+          hourly_rate: number
+          bio: string
+          average_rating: number
+          total_sessions: number
+          total_ratings: number
+        }[]
       }
       mark_all_notifications_read: {
         Args: Record<PropertyKey, never>

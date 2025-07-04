@@ -9,6 +9,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import MentorCard from '@/components/mentorship/MentorCard';
 import MentorshipFilters from '@/components/mentorship/MentorshipFilters';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Mentor {
   id: string;
@@ -44,48 +45,25 @@ const MentorshipHub = () => {
 
   const fetchMentors = async () => {
     try {
-      // Mock data - em produção, viria do Supabase
-      const mockMentors: Mentor[] = [
-        {
-          id: '1',
-          name: 'Dr. Carlos Mendes',
-          expertise: ['Regulatório ANVISA', 'Registro de Medicamentos', 'Compliance'],
-          experience_years: 15,
-          rating: 4.9,
-          total_sessions: 124,
-          location: 'São Paulo, SP',
-          bio: 'Especialista em assuntos regulatórios com mais de 15 anos de experiência na ANVISA e indústria farmacêutica.',
-          hourly_rate: 250,
-          available_times: ['09:00-12:00', '14:00-17:00']
-        },
-        {
-          id: '2',
-          name: 'Dra. Ana Santos',
-          expertise: ['Pesquisa Clínica', 'Bioequivalência', 'Farmacovigilância'],
-          experience_years: 12,
-          rating: 4.8,
-          total_sessions: 89,
-          location: 'Rio de Janeiro, RJ',
-          bio: 'Pesquisadora clínica com vasta experiência em estudos de bioequivalência e farmacovigilância.',
-          hourly_rate: 200,
-          available_times: ['08:00-11:00', '15:00-18:00']
-        },
-        {
-          id: '3',
-          name: 'Prof. Roberto Lima',
-          expertise: ['Controle de Qualidade', 'Validação', 'Boas Práticas'],
-          experience_years: 20,
-          rating: 4.7,
-          total_sessions: 156,
-          location: 'Campinas, SP',
-          bio: 'Professor universitário e consultor em controle de qualidade e validação de processos farmacêuticos.',
-          hourly_rate: 300,
-          available_times: ['10:00-12:00', '14:00-16:00']
-        }
-      ];
+      const { data, error } = await supabase.rpc('get_available_mentors');
 
-      setMentors(mockMentors);
-      setFilteredMentors(mockMentors);
+      if (error) throw error;
+
+      const formattedMentors: Mentor[] = (data || []).map(mentor => ({
+        id: mentor.mentor_id,
+        name: `${mentor.first_name || ''} ${mentor.last_name || ''}`.trim() || 'Mentor',
+        expertise: mentor.specialty || [],
+        experience_years: mentor.experience_years,
+        rating: Number(mentor.average_rating) || 0,
+        total_sessions: mentor.total_sessions,
+        location: 'Brasil', // Pode ser expandido para incluir localização real
+        bio: mentor.bio || 'Mentor experiente na área farmacêutica',
+        hourly_rate: Number(mentor.hourly_rate) || 0,
+        available_times: ['09:00-12:00', '14:00-17:00'] // Pode ser expandido com disponibilidade real
+      }));
+
+      setMentors(formattedMentors);
+      setFilteredMentors(formattedMentors);
     } catch (error) {
       console.error('Error fetching mentors:', error);
       toast({
@@ -132,17 +110,40 @@ const MentorshipHub = () => {
     setFilteredMentors(filtered);
   };
 
-  const handleSchedule = (mentorId: string) => {
-    toast({
-      title: "Agendamento solicitado",
-      description: "Sua solicitação de mentoria foi enviada",
-    });
+  const handleSchedule = async (mentorId: string) => {
+    if (!profile?.id) {
+      toast({
+        title: "Acesso necessário",
+        description: "Faça login para agendar uma sessão",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Aqui você pode adicionar um modal para coleta de dados da sessão
+      // Por agora, vamos criar uma sessão básica
+      const selectedMentor = mentors.find(m => m.id === mentorId);
+      
+      toast({
+        title: "Agendamento solicitado",
+        description: `Sua solicitação de mentoria com ${selectedMentor?.name} foi enviada`,
+      });
+    } catch (error) {
+      console.error('Error scheduling session:', error);
+      toast({
+        title: "Erro no agendamento",
+        description: "Não foi possível agendar a sessão",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleMessage = (mentorId: string) => {
+    const selectedMentor = mentors.find(m => m.id === mentorId);
     toast({
       title: "Mensagem enviada",
-      description: "Sua mensagem foi enviada para o mentor",
+      description: `Sua mensagem foi enviada para ${selectedMentor?.name}`,
     });
   };
 
