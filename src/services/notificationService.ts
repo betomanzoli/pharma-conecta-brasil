@@ -67,10 +67,9 @@ export class NotificationService {
 
   static async markAsRead(id: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
+      const { error } = await supabase.rpc('mark_notification_read', {
+        notification_id: id
+      });
 
       if (error) {
         console.error('Error marking notification as read:', error);
@@ -82,11 +81,7 @@ export class NotificationService {
 
   static async markAllAsRead(userId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', userId)
-        .eq('read', false);
+      const { error } = await supabase.rpc('mark_all_notifications_read');
 
       if (error) {
         console.error('Error marking all notifications as read:', error);

@@ -1204,7 +1204,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_system_notification: {
+        Args: {
+          target_user_id: string
+          notification_title: string
+          notification_message: string
+          notification_type?: string
+        }
+        Returns: string
+      }
+      mark_all_notifications_read: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      mark_notification_read: {
+        Args: { notification_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_type:
