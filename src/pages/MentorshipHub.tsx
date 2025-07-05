@@ -8,6 +8,7 @@ import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MentorCard from '@/components/mentorship/MentorCard';
 import MentorshipFilters from '@/components/mentorship/MentorshipFilters';
+import SessionCard from '@/components/mentorship/SessionCard';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,10 +26,27 @@ interface Mentor {
   available_times: string[];
 }
 
+interface MentorshipSession {
+  id: string;
+  mentor_id: string;
+  mentee_id: string;
+  title: string;
+  description: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  status: string;
+  price: number;
+  mentor_rating?: number;
+  mentee_rating?: number;
+  mentor_notes?: string;
+  mentee_notes?: string;
+}
+
 const MentorshipHub = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [sessions, setSessions] = useState<MentorshipSession[]>([]);
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('all');
@@ -37,11 +55,56 @@ const MentorshipHub = () => {
 
   useEffect(() => {
     fetchMentors();
-  }, []);
+    if (profile?.id) {
+      fetchSessions();
+    }
+  }, [profile?.id]);
 
   useEffect(() => {
     filterMentors();
   }, [searchTerm, experienceFilter, specialtyFilter, mentors]);
+
+  const fetchSessions = async () => {
+    if (!profile?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('mentorship_sessions')
+        .select(`
+          *,
+          mentor:mentors!mentorship_sessions_mentor_id_mentors_fkey(
+            profile_id,
+            specialty,
+            hourly_rate,
+            profiles!mentors_profile_id_fkey(first_name, last_name)
+          )
+        `)
+        .or(`mentor_id.eq.${profile.id},mentee_id.eq.${profile.id}`)
+        .order('scheduled_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedSessions: MentorshipSession[] = (data || []).map(session => ({
+        id: session.id,
+        mentor_id: session.mentor_id,
+        mentee_id: session.mentee_id,
+        title: session.title,
+        description: session.description || '',
+        scheduled_at: session.scheduled_at,
+        duration_minutes: session.duration_minutes,
+        status: session.status,
+        price: Number(session.price) || 0,
+        mentor_rating: session.mentor_rating,
+        mentee_rating: session.mentee_rating,
+        mentor_notes: session.mentor_notes,
+        mentee_notes: session.mentee_notes
+      }));
+
+      setSessions(formattedSessions);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
 
   const fetchMentors = async () => {
     try {
@@ -110,33 +173,9 @@ const MentorshipHub = () => {
     setFilteredMentors(filtered);
   };
 
-  const handleSchedule = async (mentorId: string) => {
-    if (!profile?.id) {
-      toast({
-        title: "Acesso necessário",
-        description: "Faça login para agendar uma sessão",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Aqui você pode adicionar um modal para coleta de dados da sessão
-      // Por agora, vamos criar uma sessão básica
-      const selectedMentor = mentors.find(m => m.id === mentorId);
-      
-      toast({
-        title: "Agendamento solicitado",
-        description: `Sua solicitação de mentoria com ${selectedMentor?.name} foi enviada`,
-      });
-    } catch (error) {
-      console.error('Error scheduling session:', error);
-      toast({
-        title: "Erro no agendamento",
-        description: "Não foi possível agendar a sessão",
-        variant: "destructive"
-      });
-    }
+  const handleSchedule = () => {
+    // Refresh sessions after scheduling
+    fetchSessions();
   };
 
   const handleMessage = (mentorId: string) => {
@@ -225,18 +264,43 @@ const MentorshipHub = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="my-sessions">
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Nenhuma sessão agendada
-                  </h3>
-                  <p className="text-gray-600">
-                    Suas sessões de mentoria aparecerão aqui
-                  </p>
-                </CardContent>
-              </Card>
+            <TabsContent value="my-sessions" className="space-y-4">
+              {sessions.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Nenhuma sessão agendada
+                    </h3>
+                    <p className="text-gray-600">
+                      Suas sessões de mentoria aparecerão aqui
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {sessions.map((session) => (
+                    <SessionCard
+                      key={session.id}
+                      session={session}
+                      currentUserId={profile?.id || ''}
+                      mentorName="Mentor" // Pode ser expandido para incluir nome real
+                      onJoin={(sessionId) => {
+                        toast({
+                          title: "Iniciando sessão",
+                          description: "Redirecionando para a sala de videoconferência...",
+                        });
+                      }}
+                      onRate={(sessionId, rating) => {
+                        toast({
+                          title: "Avaliação registrada",
+                          description: "Obrigado pelo seu feedback!",
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="messages">

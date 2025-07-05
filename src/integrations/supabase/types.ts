@@ -792,10 +792,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "mentorship_sessions_mentor_id_fkey"
+            foreignKeyName: "mentorship_sessions_mentor_id_mentors_fkey"
             columns: ["mentor_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "mentors"
             referencedColumns: ["id"]
           },
         ]

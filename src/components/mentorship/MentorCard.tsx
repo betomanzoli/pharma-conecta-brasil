@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Clock
 } from 'lucide-react';
+import ScheduleSessionDialog from './ScheduleSessionDialog';
 
 interface Mentor {
   id: string;
@@ -97,14 +98,17 @@ const MentorCard = ({ mentor, onSchedule, onMessage }: MentorCardProps) => {
                   <MessageCircle className="h-4 w-4 mr-1" />
                   Mensagem
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => onSchedule(mentor.id)}
-                  className="bg-[#1565C0] hover:bg-[#1565C0]/90"
-                >
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Agendar
-                </Button>
+          <ScheduleSessionDialog
+            mentorId={mentor.id}
+            mentorName={mentor.name}
+            hourlyRate={mentor.hourly_rate}
+            onSuccess={() => onSchedule(mentor.id)}
+          >
+            <Button size="sm" className="bg-[#1565C0] hover:bg-[#1565C0]/90">
+              <Calendar className="h-4 w-4 mr-1" />
+              Agendar
+            </Button>
+          </ScheduleSessionDialog>
               </div>
             </div>
           </div>
