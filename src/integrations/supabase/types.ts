@@ -1322,6 +1322,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_analytics_data: {
+        Args: { start_date?: string; end_date?: string; user_filter?: string }
+        Returns: Json
+      }
       get_available_mentors: {
         Args: {
           specialty_filter?: string[]
