@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { Bell, MessageCircle, Award, AlertCircle } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -12,80 +13,146 @@ interface Notification {
   created_at: string;
 }
 
-interface UseRealTimeNotificationsProps {
-  onNotificationReceived: (notification: Notification) => void;
-  onNotificationUpdated: (notification: Notification) => void;
-}
-
-export const useRealTimeNotifications = ({
-  onNotificationReceived,
-  onNotificationUpdated
-}: UseRealTimeNotificationsProps) => {
+export const useRealTimeNotifications = () => {
   const { profile } = useAuth();
-  const { toast } = useToast();
-  const channelRef = useRef<any>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
+  // Buscar notificações iniciais
+  const fetchNotifications = async () => {
+    if (!profile?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.read).length || 0);
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Marcar notificação como lida
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const { error } = await supabase.rpc('mark_notification_read', {
+        notification_id: notificationId
+      });
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  };
+
+  // Marcar todas como lidas
+  const markAllAsRead = async () => {
+    try {
+      const { data, error } = await supabase.rpc('mark_all_notifications_read');
+      
+      if (error) throw error;
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+      
+      return data;
+    } catch (error) {
+      console.error('Erro ao marcar todas notificações como lidas:', error);
+      return 0;
+    }
+  };
+
+  // Configurar escuta em tempo real
   useEffect(() => {
     if (!profile?.id) return;
 
-    const setupChannel = () => {
-      // Cleanup existing channel
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+    fetchNotifications();
 
-      const channel = supabase
-        .channel(`notifications-${profile.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${profile.id}`
-          },
-          (payload) => {
-            const notification = payload.new as Notification;
-            onNotificationReceived(notification);
-            
-            // Show toast notification
-            toast({
-              title: notification.title,
-              description: notification.message,
-              variant: notification.type === 'error' ? 'destructive' : 'default'
-            });
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          const newNotification = payload.new as Notification;
+          
+          setNotifications(prev => [newNotification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+
+          // Mostrar toast para nova notificação
+          const getIcon = (type: string) => {
+            switch (type) {
+              case 'mentorship': return Award;
+              case 'forum': return MessageCircle;
+              case 'system': return AlertCircle;
+              default: return Bell;
+            }
+          };
+
+          const Icon = getIcon(newNotification.type);
+
+          toast(newNotification.title, {
+            description: newNotification.message,
+            action: {
+              label: 'Ver',
+              onClick: () => markAsRead(newNotification.id)
+            }
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          const updatedNotification = payload.new as Notification;
+          
+          setNotifications(prev => 
+            prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+          );
+          
+          if (updatedNotification.read) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
           }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${profile.id}`
-          },
-          (payload) => {
-            const notification = payload.new as Notification;
-            onNotificationUpdated(notification);
-          }
-        )
-        .subscribe();
+        }
+      )
+      .subscribe();
 
-      channelRef.current = channel;
-    };
-
-    setupChannel();
-
-    // Cleanup on unmount
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      supabase.removeChannel(channel);
     };
-  }, [profile?.id, onNotificationReceived, onNotificationUpdated, toast]);
+  }, [profile?.id]);
 
   return {
-    isConnected: !!channelRef.current
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    refetch: fetchNotifications
   };
 };

@@ -43,7 +43,7 @@ import {
   Plug
 } from 'lucide-react';
 import Logo from '@/components/ui/logo';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const UnifiedHeader = () => {
   const { user, profile, signOut } = useAuth();
@@ -176,7 +176,7 @@ const UnifiedHeader = () => {
             )}
 
             {/* Notifications for logged users */}
-            {user && <NotificationCenter />}
+            {user && <NotificationBell />}
 
             {/* User Controls */}
             {!user ? (
@@ -222,6 +222,12 @@ const UnifiedHeader = () => {
                       <Link to="/analytics" className="cursor-pointer flex items-center">
                         <BarChart3 className="h-4 w-4 mr-2" />
                         Analytics
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/notifications" className="cursor-pointer flex items-center">
+                        <Bell className="h-4 w-4 mr-2" />
+                        Notificações
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

@@ -1,37 +1,34 @@
-
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import NotificationHistory from '@/components/notifications/NotificationHistory';
-import SystemAlerts from '@/components/notifications/SystemAlerts';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import TestNotificationButton from '@/components/notifications/TestNotificationButton';
+import { Separator } from '@/components/ui/separator';
 
 const NotificationsPage = () => {
-  const { profile } = useAuth();
-
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Central de Notificações
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Gerencie todas as suas notificações e alertas do sistema
+            <h1 className="text-3xl font-bold text-foreground mb-2">Central de Notificações</h1>
+            <p className="text-muted-foreground mb-4">
+              Acompanhe todas as suas notificações em tempo real
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <NotificationHistory />
-            </div>
-            <div className="lg:col-span-1">
-              <SystemAlerts />
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-muted-foreground">Testar notificações:</span>
+              <TestNotificationButton />
             </div>
           </div>
-        </main>
+          
+          <Separator className="mb-8" />
+          
+          <div className="max-w-2xl">
+            <NotificationCenter />
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   );
