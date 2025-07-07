@@ -67,6 +67,7 @@ const UnifiedHeader = () => {
     const baseItems = [
       { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
       { title: "Rede", path: "/network", icon: Network },
+      { title: "Chat", path: "/chat", icon: MessageCircle },
       { title: "Marketplace", path: "/marketplace", icon: ShoppingCart },
       { title: "Projetos", path: "/projects", icon: FolderOpen },
       { title: "Mentoria", path: "/mentorship", icon: UserCheck },
