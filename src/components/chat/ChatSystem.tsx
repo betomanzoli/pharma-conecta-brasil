@@ -70,48 +70,62 @@ const ChatSystem: React.FC = () => {
 
   const fetchContacts = async () => {
     try {
-      // Buscar todos os usuários que já trocaram mensagens ou são potenciais contatos
+      // Buscar mensagens do usuário
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select(`
-          sender_id,
-          receiver_id,
-          created_at,
-          content,
-          sender:profiles!messages_sender_id_fkey(first_name, last_name, user_type),
-          receiver:profiles!messages_receiver_id_fkey(first_name, last_name, user_type)
-        `)
+        .select('sender_id, receiver_id, created_at, content')
         .or(`sender_id.eq.${profile?.id},receiver_id.eq.${profile?.id}`)
         .order('created_at', { ascending: false });
 
       if (messagesError) throw messagesError;
 
-      // Processar contatos únicos
+      // Coletar IDs únicos de contatos
+      const contactIds = new Set<string>();
+      messagesData?.forEach((message) => {
+        const contactId = message.sender_id === profile?.id ? message.receiver_id : message.sender_id;
+        contactIds.add(contactId);
+      });
+
+      if (contactIds.size === 0) {
+        setContacts([]);
+        return;
+      }
+
+      // Buscar perfis dos contatos
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, user_type')
+        .in('id', Array.from(contactIds));
+
+      if (profilesError) throw profilesError;
+
+      // Processar contatos com última mensagem
       const contactsMap = new Map<string, Contact>();
       
-      messagesData?.forEach((message) => {
-        const isReceived = message.receiver_id === profile?.id;
-        const contactId = isReceived ? message.sender_id : message.receiver_id;
-        const contactData = isReceived ? message.sender : message.receiver;
+      profilesData?.forEach((profile) => {
+        const lastMessage = messagesData?.find(msg => 
+          msg.sender_id === profile.id || msg.receiver_id === profile.id
+        );
 
-        if (!contactsMap.has(contactId)) {
-          contactsMap.set(contactId, {
-            id: contactId,
-            first_name: contactData.first_name || '',
-            last_name: contactData.last_name || '',
-            user_type: contactData.user_type || '',
-            last_message: {
-              id: '',
-              content: message.content,
-              sender_id: message.sender_id,
-              receiver_id: message.receiver_id,
-              created_at: message.created_at,
-              sender: message.sender,
-            },
-            unread_count: 0,
-            is_online: Math.random() > 0.5, // Simulado por enquanto
-          });
-        }
+        contactsMap.set(profile.id, {
+          id: profile.id,
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
+          user_type: profile.user_type || '',
+          last_message: lastMessage ? {
+            id: '',
+            content: lastMessage.content,
+            sender_id: lastMessage.sender_id,
+            receiver_id: lastMessage.receiver_id,
+            created_at: lastMessage.created_at,
+            sender: {
+              first_name: profile.first_name || '',
+              last_name: profile.last_name || ''
+            }
+          } : undefined,
+          unread_count: 0,
+          is_online: Math.random() > 0.5, // Simulado por enquanto
+        });
       });
 
       setContacts(Array.from(contactsMap.values()));
@@ -125,22 +139,40 @@ const ChatSystem: React.FC = () => {
 
   const fetchMessages = async (contactId: string) => {
     try {
-      const { data, error } = await supabase
+      // Buscar mensagens da conversa
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select(`
-          id,
-          content,
-          sender_id,
-          receiver_id,
-          created_at,
-          sender:profiles!messages_sender_id_fkey(first_name, last_name)
-        `)
+        .select('id, content, sender_id, receiver_id, created_at')
         .or(`and(sender_id.eq.${profile?.id},receiver_id.eq.${contactId}),and(sender_id.eq.${contactId},receiver_id.eq.${profile?.id})`)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (messagesError) throw messagesError;
 
-      setMessages(data || []);
+      // Buscar perfis dos usuários envolvidos
+      const userIds = [profile?.id, contactId].filter(Boolean) as string[];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Montar mensagens com dados dos remetentes
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+      
+      const formattedMessages: Message[] = messagesData?.map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        sender_id: msg.sender_id,
+        receiver_id: msg.receiver_id,
+        created_at: msg.created_at,
+        sender: {
+          first_name: profilesMap.get(msg.sender_id)?.first_name || '',
+          last_name: profilesMap.get(msg.sender_id)?.last_name || ''
+        }
+      })) || [];
+
+      setMessages(formattedMessages);
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error);
       toast.error('Erro ao carregar mensagens');
