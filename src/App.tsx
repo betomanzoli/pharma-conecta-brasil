@@ -42,6 +42,7 @@ import ANVISAAlerts from '@/pages/ANVISAAlerts';
 import Opportunities from '@/pages/Opportunities';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
+import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
 // Create a client
@@ -54,6 +55,7 @@ function App() {
         <NotificationProvider>
           <Toaster />
           <NotificationContainer />
+          <PushNotificationPrompt />
           <Suspense fallback={<div>Loading...</div>}>
             <Router>
               <Routes>

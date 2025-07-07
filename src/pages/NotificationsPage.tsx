@@ -2,6 +2,7 @@ import React from 'react';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import NotificationSettings from '@/components/notifications/NotificationSettings';
 import TestNotificationButton from '@/components/notifications/TestNotificationButton';
 import { Separator } from '@/components/ui/separator';
 
@@ -25,8 +26,13 @@ const NotificationsPage = () => {
           
           <Separator className="mb-8" />
           
-          <div className="max-w-2xl">
-            <NotificationCenter />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <NotificationCenter />
+            </div>
+            <div>
+              <NotificationSettings />
+            </div>
           </div>
         </div>
       </div>

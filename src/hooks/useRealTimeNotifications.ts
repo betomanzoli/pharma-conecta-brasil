@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Bell, MessageCircle, Award, AlertCircle } from 'lucide-react';
+import { usePushNotifications } from './usePushNotifications';
 
 interface Notification {
   id: string;
@@ -15,6 +16,7 @@ interface Notification {
 
 export const useRealTimeNotifications = () => {
   const { profile } = useAuth();
+  const { showNotification: showPushNotification, isSubscribed } = usePushNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -118,6 +120,15 @@ export const useRealTimeNotifications = () => {
               onClick: () => markAsRead(newNotification.id)
             }
           });
+
+          // Mostrar notificação push se habilitada e usuário não estiver na aba
+          if (isSubscribed && document.hidden) {
+            showPushNotification(newNotification.title, {
+              body: newNotification.message,
+              icon: '/favicon.ico',
+              tag: `notification-${newNotification.id}`,
+            });
+          }
         }
       )
       .on(
