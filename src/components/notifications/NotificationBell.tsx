@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
-import NotificationCenter from './NotificationCenter';
+import RealTimeNotifications from './RealTimeNotifications';
 
 const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,7 @@ const NotificationBell: React.FC = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
-        <NotificationCenter isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <RealTimeNotifications isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </PopoverContent>
     </Popover>
   );

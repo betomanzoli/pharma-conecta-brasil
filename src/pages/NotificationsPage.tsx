@@ -2,6 +2,7 @@ import React from 'react';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import SystemAlerts from '@/components/notifications/SystemAlerts';
 import NotificationSettings from '@/components/notifications/NotificationSettings';
 import TestNotificationButton from '@/components/notifications/TestNotificationButton';
 import { Separator } from '@/components/ui/separator';
