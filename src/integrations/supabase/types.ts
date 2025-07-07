@@ -227,6 +227,42 @@ export type Database = {
           },
         ]
       }
+      cron_jobs: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          is_active: boolean | null
+          job_name: string
+          last_run: string | null
+          next_run: string | null
+          schedule: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          is_active?: boolean | null
+          job_name: string
+          last_run?: string | null
+          next_run?: string | null
+          schedule: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          is_active?: boolean | null
+          job_name?: string
+          last_run?: string | null
+          next_run?: string | null
+          schedule?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       forum_replies: {
         Row: {
           author_id: string
@@ -1125,6 +1161,36 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          measured_at: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          tags: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          tags?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          tags?: Json | null
+        }
+        Relationships: []
+      }
       pharmaceutical_products: {
         Row: {
           active_ingredient: string
@@ -1538,6 +1604,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clean_old_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_system_notification: {
         Args: {
           target_user_id: string
