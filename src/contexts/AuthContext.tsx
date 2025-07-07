@@ -16,15 +16,24 @@ interface Profile {
   updated_at: string;
 }
 
+interface Subscription {
+  subscribed: boolean;
+  subscription_tier?: string;
+  subscription_end?: string;
+  cancel_at_period_end?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  subscription: Subscription | null;
   loading: boolean;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -45,9 +55,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           setTimeout(async () => {
             await fetchProfile(session.user.id);
+            await checkSubscription();
           }, 0);
         } else {
           setProfile(null);
+          setSubscription(null);
         }
         setLoading(false);
       }
@@ -58,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        checkSubscription();
       }
       setLoading(false);
     });
@@ -186,15 +199,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const checkSubscription = async () => {
+    if (!session?.user) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+
+      if (data) {
+        setSubscription({
+          subscribed: data.subscribed || false,
+          subscription_tier: data.subscription_tier,
+          subscription_end: data.subscription_end,
+          cancel_at_period_end: data.cancel_at_period_end || false,
+        });
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
+
   const value = {
     user,
     session,
     profile,
+    subscription,
     loading,
     signUp,
     signIn,
     signOut,
     resetPassword,
+    checkSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
