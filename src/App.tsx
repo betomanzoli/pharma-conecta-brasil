@@ -20,6 +20,7 @@ import KnowledgeLibrary from '@/pages/KnowledgeLibrary';
 import IntegrationsPage from '@/pages/IntegrationsPage';
 import Analytics from '@/pages/Analytics';
 import Reports from '@/pages/Reports';
+import ReportsPage from '@/pages/ReportsPage';
 import Subscription from '@/pages/Subscription';
 import Companies from '@/pages/Companies';
 import Laboratories from '@/pages/Laboratories';
@@ -88,7 +89,8 @@ function App() {
                 <Route path="/integrations" element={<IntegrationsPage />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
-                <Route path="/reports" element={<Reports />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/reports-legacy" element={<Reports />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
