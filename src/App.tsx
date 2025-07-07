@@ -44,6 +44,9 @@ import Opportunities from '@/pages/Opportunities';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
+import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
+import OfflineIndicator from '@/components/pwa/OfflineIndicator';
+import UpdatePrompt from '@/components/pwa/UpdatePrompt';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
 // Create a client
@@ -57,6 +60,9 @@ function App() {
           <Toaster />
           <NotificationContainer />
           <PushNotificationPrompt />
+          <PWAInstallPrompt />
+          <OfflineIndicator />
+          <UpdatePrompt />
           <Suspense fallback={<div>Loading...</div>}>
             <Router>
               <Routes>
