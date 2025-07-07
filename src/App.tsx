@@ -41,6 +41,7 @@ import SearchLaboratories from '@/pages/SearchLaboratories';
 import SearchConsultants from '@/pages/SearchConsultants';
 import ANVISAAlerts from '@/pages/ANVISAAlerts';
 import Opportunities from '@/pages/Opportunities';
+import AIPage from '@/pages/AIPage';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
@@ -108,6 +109,7 @@ function App() {
                 <Route path="/search/consultants" element={<SearchConsultants />} />
                 <Route path="/anvisa-alerts" element={<ANVISAAlerts />} />
                 <Route path="/opportunities" element={<Opportunities />} />
+                <Route path="/ai" element={<AIPage />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
