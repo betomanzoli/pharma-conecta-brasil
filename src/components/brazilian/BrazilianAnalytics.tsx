@@ -1,25 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area
-} from 'recharts';
 import { 
   TrendingUp, 
   Users, 
@@ -274,39 +258,7 @@ const BrazilianAnalytics = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={metrics.geographic_distribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="region" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="companies" fill="#10B981" name="Empresas" />
-                    <Bar dataKey="matches" fill="#3B82F6" name="Matches" />
-                  </BarChart>
-                </ResponsiveContainer>
-
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={metrics.geographic_distribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ region, market_share }) => `${region}: ${market_share}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="market_share"
-                    >
-                      {metrics.geographic_distribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
                 {metrics.geographic_distribution.map((region, index) => (
