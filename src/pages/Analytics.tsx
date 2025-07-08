@@ -3,6 +3,8 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import BrazilianAnalytics from '@/components/brazilian/BrazilianAnalytics';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 
 const Analytics = () => {
   const { profile } = useAuth();
@@ -20,7 +22,12 @@ const Analytics = () => {
               Analise dados e métricas da sua atividade na plataforma
             </p>
           </div>
-          {/* Content will be implemented */}
+          
+          {profile?.user_type === 'company' ? (
+            <BrazilianAnalytics />
+          ) : (
+            <AnalyticsDashboard />
+          )}
         </main>
       </div>
     </ProtectedRoute>

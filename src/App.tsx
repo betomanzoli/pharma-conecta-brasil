@@ -43,6 +43,11 @@ import ANVISAAlerts from '@/pages/ANVISAAlerts';
 import Opportunities from '@/pages/Opportunities';
 import AIPage from '@/pages/AIPage';
 import AdminPage from '@/pages/AdminPage';
+import DashboardCompany from '@/pages/DashboardCompany';
+import DashboardConsultant from '@/pages/DashboardConsultant';
+import DashboardLaboratory from '@/pages/DashboardLaboratory';
+import AnalyticsPage from '@/pages/AnalyticsPage';
+import SubscriptionPage from '@/pages/SubscriptionPage';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
@@ -112,6 +117,13 @@ function App() {
                 <Route path="/opportunities" element={<Opportunities />} />
                 <Route path="/ai" element={<AIPage />} />
                 <Route path="/admin" element={<AdminPage />} />
+                
+                {/* Brazilian Specific Routes */}
+                <Route path="/dashboard/company" element={<DashboardCompany />} />
+                <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
+                <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
+                <Route path="/analytics/brazilian" element={<AnalyticsPage />} />
+                <Route path="/subscription/brazilian" element={<SubscriptionPage />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
