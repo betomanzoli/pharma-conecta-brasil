@@ -16,8 +16,21 @@ import {
   Eye,
   MessageCircle,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  BarChart
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  BarChart as RechartsBarChart, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  Bar,
+  AreaChart,
+  Area
+} from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -259,8 +272,6 @@ const BrazilianAnalytics = () => {
             </CardHeader>
             <CardContent>
               <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
-
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
                 {metrics.geographic_distribution.map((region, index) => (
                   <Card key={region.region} className="bg-gray-50">
                     <CardContent className="p-4 text-center">
@@ -285,7 +296,7 @@ const BrazilianAnalytics = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={metrics.sector_analysis} layout="horizontal">
+                <RechartsBarChart data={metrics.sector_analysis} layout="horizontal">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis dataKey="sector" type="category" width={150} />
@@ -300,7 +311,7 @@ const BrazilianAnalytics = () => {
                   <Legend />
                   <Bar dataKey="companies" fill="#10B981" name="Empresas" />
                   <Bar dataKey="growth_rate" fill="#3B82F6" name="Taxa de Crescimento %" />
-                </BarChart>
+                </RechartsBarChart>
               </ResponsiveContainer>
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
