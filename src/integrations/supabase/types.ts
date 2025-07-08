@@ -50,6 +50,74 @@ export type Database = {
         }
         Relationships: []
       }
+      brazilian_content: {
+        Row: {
+          author_id: string | null
+          category: string
+          content: string
+          created_at: string | null
+          difficulty_level: string | null
+          downloads_count: number | null
+          estimated_read_time: number | null
+          id: string
+          is_featured: boolean | null
+          last_updated: string | null
+          publication_date: string | null
+          source_url: string | null
+          subcategory: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string
+          content: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          downloads_count?: number | null
+          estimated_read_time?: number | null
+          id?: string
+          is_featured?: boolean | null
+          last_updated?: string | null
+          publication_date?: string | null
+          source_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          content?: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          downloads_count?: number | null
+          estimated_read_time?: number | null
+          id?: string
+          is_featured?: boolean | null
+          last_updated?: string | null
+          publication_date?: string | null
+          source_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brazilian_content_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -163,6 +231,63 @@ export type Database = {
             columns: ["company_b_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_tracking: {
+        Row: {
+          company_id: string | null
+          compliance_type: string
+          created_at: string | null
+          details: Json | null
+          expires_at: string | null
+          id: string
+          last_check: string | null
+          profile_id: string | null
+          score: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          compliance_type: string
+          created_at?: string | null
+          details?: Json | null
+          expires_at?: string | null
+          id?: string
+          last_check?: string | null
+          profile_id?: string | null
+          score?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          compliance_type?: string
+          created_at?: string | null
+          details?: Json | null
+          expires_at?: string | null
+          id?: string
+          last_check?: string | null
+          profile_id?: string | null
+          score?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_tracking_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tracking_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1477,6 +1602,45 @@ export type Database = {
           source?: string
           title?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      regulatory_api_logs: {
+        Row: {
+          api_source: string
+          created_at: string | null
+          data_updated: boolean | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          records_processed: number | null
+          response_time_ms: number | null
+          status_code: number | null
+          success: boolean | null
+        }
+        Insert: {
+          api_source: string
+          created_at?: string | null
+          data_updated?: boolean | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          records_processed?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          success?: boolean | null
+        }
+        Update: {
+          api_source?: string
+          created_at?: string | null
+          data_updated?: boolean | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          records_processed?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          success?: boolean | null
         }
         Relationships: []
       }

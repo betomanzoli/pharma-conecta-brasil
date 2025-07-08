@@ -73,6 +73,7 @@ const UnifiedHeader = () => {
       { title: "Mentoria", path: "/mentorship", icon: UserCheck },
       { title: "Fóruns", path: "/forums", icon: MessageCircle },
       { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
+      { title: "Conhecimento BR", path: "/conhecimento-brasileiro", icon: Globe },
     ];
 
     // Adicionar Integrações apenas para administradores

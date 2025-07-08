@@ -48,6 +48,7 @@ import DashboardConsultant from '@/pages/DashboardConsultant';
 import DashboardLaboratory from '@/pages/DashboardLaboratory';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import SubscriptionPage from '@/pages/SubscriptionPage';
+import ConhecimentoBrasileiro from '@/pages/ConhecimentoBrasileiro';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
@@ -124,6 +125,7 @@ function App() {
                 <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
                 <Route path="/analytics/brazilian" element={<AnalyticsPage />} />
                 <Route path="/subscription/brazilian" element={<SubscriptionPage />} />
+                <Route path="/conhecimento-brasileiro" element={<ConhecimentoBrasileiro />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
