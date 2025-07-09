@@ -14,6 +14,679 @@ export type Database = {
   }
   public: {
     Tables: {
+      anvisa_conjunto_detalhe: {
+        Row: {
+          conjunto_id: string | null
+          created_at: string
+          dados: Json | null
+          external_id: string | null
+          formato: string | null
+          id: string
+          nome: string
+          tamanho: string | null
+          ultima_modificacao: string | null
+          updated_at: string
+          url_download: string | null
+        }
+        Insert: {
+          conjunto_id?: string | null
+          created_at?: string
+          dados?: Json | null
+          external_id?: string | null
+          formato?: string | null
+          id?: string
+          nome: string
+          tamanho?: string | null
+          ultima_modificacao?: string | null
+          updated_at?: string
+          url_download?: string | null
+        }
+        Update: {
+          conjunto_id?: string | null
+          created_at?: string
+          dados?: Json | null
+          external_id?: string | null
+          formato?: string | null
+          id?: string
+          nome?: string
+          tamanho?: string | null
+          ultima_modificacao?: string | null
+          updated_at?: string
+          url_download?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anvisa_conjunto_detalhe_conjunto_id_fkey"
+            columns: ["conjunto_id"]
+            isOneToOne: false
+            referencedRelation: "anvisa_conjuntos_dados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anvisa_conjuntos_dados: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_atualizacao: string | null
+          data_criacao: string | null
+          descricao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          organizacao: string | null
+          recursos_count: number | null
+          status: string | null
+          tags: string[] | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_atualizacao?: string | null
+          data_criacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          organizacao?: string | null
+          recursos_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_atualizacao?: string | null
+          data_criacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          organizacao?: string | null
+          recursos_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_formatos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          extensao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          mime_type: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          extensao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          mime_type?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          extensao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          mime_type?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_observancia_legal: {
+        Row: {
+          created_at: string
+          data_vigencia: string | null
+          descricao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          norma_legal: string | null
+          status: string | null
+          tipo_observancia: string | null
+          titulo: string
+          updated_at: string
+          url_norma: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_vigencia?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          norma_legal?: string | null
+          status?: string | null
+          tipo_observancia?: string | null
+          titulo: string
+          updated_at?: string
+          url_norma?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_vigencia?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          norma_legal?: string | null
+          status?: string | null
+          tipo_observancia?: string | null
+          titulo?: string
+          updated_at?: string
+          url_norma?: string | null
+        }
+        Relationships: []
+      }
+      anvisa_ods: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          external_id: string | null
+          id: string
+          indicadores: string[] | null
+          metadados: Json | null
+          metas: string[] | null
+          nome: string
+          numero_ods: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          indicadores?: string[] | null
+          metadados?: Json | null
+          metas?: string[] | null
+          nome: string
+          numero_ods?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          indicadores?: string[] | null
+          metadados?: Json | null
+          metas?: string[] | null
+          nome?: string
+          numero_ods?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_organizacao_detalhe: {
+        Row: {
+          area_atuacao: string | null
+          cargo_responsavel: string | null
+          conjuntos_dados_count: number | null
+          created_at: string
+          dados_adicionais: Json | null
+          external_id: string | null
+          id: string
+          organizacao_id: string | null
+          responsavel: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_atuacao?: string | null
+          cargo_responsavel?: string | null
+          conjuntos_dados_count?: number | null
+          created_at?: string
+          dados_adicionais?: Json | null
+          external_id?: string | null
+          id?: string
+          organizacao_id?: string | null
+          responsavel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_atuacao?: string | null
+          cargo_responsavel?: string | null
+          conjuntos_dados_count?: number | null
+          created_at?: string
+          dados_adicionais?: Json | null
+          external_id?: string | null
+          id?: string
+          organizacao_id?: string | null
+          responsavel?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anvisa_organizacao_detalhe_organizacao_id_fkey"
+            columns: ["organizacao_id"]
+            isOneToOne: false
+            referencedRelation: "anvisa_organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anvisa_organizacoes: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          email: string | null
+          endereco: string | null
+          esfera: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          nome: string
+          sigla: string | null
+          site: string | null
+          status: string | null
+          telefone: string | null
+          tipo_organizacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          esfera?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          nome: string
+          sigla?: string | null
+          site?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_organizacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          esfera?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          nome?: string
+          sigla?: string | null
+          site?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_organizacao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_recurso: {
+        Row: {
+          conjunto_id: string | null
+          created_at: string
+          descricao: string | null
+          external_id: string | null
+          formato: string | null
+          hash_arquivo: string | null
+          id: string
+          metadados: Json | null
+          nome: string
+          status: string | null
+          tamanho_bytes: number | null
+          ultima_modificacao: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          conjunto_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          formato?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          metadados?: Json | null
+          nome: string
+          status?: string | null
+          tamanho_bytes?: number | null
+          ultima_modificacao?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          conjunto_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          formato?: string | null
+          hash_arquivo?: string | null
+          id?: string
+          metadados?: Json | null
+          nome?: string
+          status?: string | null
+          tamanho_bytes?: number | null
+          ultima_modificacao?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anvisa_recurso_conjunto_id_fkey"
+            columns: ["conjunto_id"]
+            isOneToOne: false
+            referencedRelation: "anvisa_conjuntos_dados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anvisa_resposta_solicitacao: {
+        Row: {
+          anexos: string[] | null
+          created_at: string
+          data_resposta: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          respondente: string | null
+          resposta: string
+          solicitacao_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          anexos?: string[] | null
+          created_at?: string
+          data_resposta?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          respondente?: string | null
+          resposta: string
+          solicitacao_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anexos?: string[] | null
+          created_at?: string
+          data_resposta?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          respondente?: string | null
+          resposta?: string
+          solicitacao_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anvisa_resposta_solicitacao_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "anvisa_solicitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anvisa_reuso_detalhe: {
+        Row: {
+          created_at: string
+          external_id: string | null
+          feedback_usuarios: Json | null
+          id: string
+          impacto_estimado: string | null
+          metricas: Json | null
+          publico_alvo: string | null
+          reuso_id: string | null
+          tecnologias_utilizadas: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_id?: string | null
+          feedback_usuarios?: Json | null
+          id?: string
+          impacto_estimado?: string | null
+          metricas?: Json | null
+          publico_alvo?: string | null
+          reuso_id?: string | null
+          tecnologias_utilizadas?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_id?: string | null
+          feedback_usuarios?: Json | null
+          id?: string
+          impacto_estimado?: string | null
+          metricas?: Json | null
+          publico_alvo?: string | null
+          reuso_id?: string | null
+          tecnologias_utilizadas?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anvisa_reuso_detalhe_reuso_id_fkey"
+            columns: ["reuso_id"]
+            isOneToOne: false
+            referencedRelation: "anvisa_reusos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anvisa_reusos: {
+        Row: {
+          autor: string | null
+          categoria: string | null
+          conjuntos_utilizados: string[] | null
+          created_at: string
+          data_criacao: string | null
+          descricao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          organizacao_autor: string | null
+          status: string | null
+          tipo_reuso: string | null
+          titulo: string
+          updated_at: string
+          url_reuso: string | null
+        }
+        Insert: {
+          autor?: string | null
+          categoria?: string | null
+          conjuntos_utilizados?: string[] | null
+          created_at?: string
+          data_criacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          organizacao_autor?: string | null
+          status?: string | null
+          tipo_reuso?: string | null
+          titulo: string
+          updated_at?: string
+          url_reuso?: string | null
+        }
+        Update: {
+          autor?: string | null
+          categoria?: string | null
+          conjuntos_utilizados?: string[] | null
+          created_at?: string
+          data_criacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          organizacao_autor?: string | null
+          status?: string | null
+          tipo_reuso?: string | null
+          titulo?: string
+          updated_at?: string
+          url_reuso?: string | null
+        }
+        Relationships: []
+      }
+      anvisa_reusos_pendentes: {
+        Row: {
+          autor: string | null
+          avaliador: string | null
+          created_at: string
+          data_avaliacao: string | null
+          data_submissao: string | null
+          descricao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          observacoes_avaliacao: string | null
+          status_homologacao: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          autor?: string | null
+          avaliador?: string | null
+          created_at?: string
+          data_avaliacao?: string | null
+          data_submissao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          observacoes_avaliacao?: string | null
+          status_homologacao?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          autor?: string | null
+          avaliador?: string | null
+          created_at?: string
+          data_avaliacao?: string | null
+          data_submissao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          observacoes_avaliacao?: string | null
+          status_homologacao?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_solicitacoes: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_solicitacao: string | null
+          descricao: string | null
+          external_id: string | null
+          id: string
+          metadados: Json | null
+          prazo_resposta: string | null
+          protocolo: string | null
+          solicitante: string | null
+          status: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_solicitacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          prazo_resposta?: string | null
+          protocolo?: string | null
+          solicitante?: string | null
+          status?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_solicitacao?: string | null
+          descricao?: string | null
+          external_id?: string | null
+          id?: string
+          metadados?: Json | null
+          prazo_resposta?: string | null
+          protocolo?: string | null
+          solicitante?: string | null
+          status?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_temas: {
+        Row: {
+          categoria_pai: string | null
+          conjuntos_count: number | null
+          cor_hexadecimal: string | null
+          created_at: string
+          descricao: string | null
+          external_id: string | null
+          icone: string | null
+          id: string
+          metadados: Json | null
+          nivel: number | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          categoria_pai?: string | null
+          conjuntos_count?: number | null
+          cor_hexadecimal?: string | null
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          icone?: string | null
+          id?: string
+          metadados?: Json | null
+          nivel?: number | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          categoria_pai?: string | null
+          conjuntos_count?: number | null
+          cor_hexadecimal?: string | null
+          created_at?: string
+          descricao?: string | null
+          external_id?: string | null
+          icone?: string | null
+          id?: string
+          metadados?: Json | null
+          nivel?: number | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_configurations: {
         Row: {
           api_key: string | null
