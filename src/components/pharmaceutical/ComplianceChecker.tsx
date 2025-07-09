@@ -3,105 +3,58 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Shield, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Shield, 
+  Search, 
+  CheckCircle, 
+  AlertTriangle, 
+  Building2,
+  Clock,
+  FileCheck,
+  Info
+} from 'lucide-react';
+import { brazilianRegulatoryService, ComplianceStatus } from '@/services/brazilianRegulatoryService';
 import { useToast } from '@/hooks/use-toast';
 
-interface ComplianceResult {
-  score: number;
-  status: 'compliant' | 'partial' | 'non-compliant';
-  checks: ComplianceCheck[];
-}
-
-interface ComplianceCheck {
-  id: string;
-  category: string;
-  description: string;
-  status: 'passed' | 'failed' | 'warning';
-  details?: string;
-}
-
-const ComplianceChecker = () => {
-  const { toast } = useToast();
+const ComplianceChecker: React.FC = () => {
   const [cnpj, setCnpj] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ComplianceResult | null>(null);
+  const [complianceData, setComplianceData] = useState<ComplianceStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    setCnpj(brazilianRegulatoryService.formatCNPJ(value));
+  };
 
   const checkCompliance = async () => {
-    if (!cnpj.trim()) {
-      toast({
-        title: "CNPJ obrigatório",
-        description: "Por favor, insira um CNPJ válido",
-        variant: "destructive"
-      });
+    if (!brazilianRegulatoryService.validateCNPJ(cnpj)) {
+      setError('CNPJ inválido. Verifique o formato.');
       return;
     }
 
-    setLoading(true);
     try {
-      // Simular verificação de compliance
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const mockResult: ComplianceResult = {
-        score: 85,
-        status: 'partial',
-        checks: [
-          {
-            id: '1',
-            category: 'ANVISA',
-            description: 'Autorização de Funcionamento',
-            status: 'passed',
-            details: 'Válida até 15/12/2025'
-          },
-          {
-            id: '2',
-            category: 'ANVISA',
-            description: 'Licença Sanitária',
-            status: 'passed',
-            details: 'Renovada em 03/2024'
-          },
-          {
-            id: '3',
-            category: 'Tributário',
-            description: 'Regularidade Fiscal Federal',
-            status: 'warning',
-            details: 'Pendência menor identificada'
-          },
-          {
-            id: '4',
-            category: 'Trabalhista',
-            description: 'Certificado de Regularidade do FGTS',
-            status: 'passed'
-          },
-          {
-            id: '5',
-            category: 'Ambiental',
-            description: 'Licença Ambiental',
-            status: 'failed',
-            details: 'Licença vencida em 10/2024'
-          },
-          {
-            id: '6',
-            category: 'Qualidade',
-            description: 'Certificação ISO 9001',
-            status: 'passed',
-            details: 'Válida até 08/2025'
-          }
-        ]
-      };
-
-      setResult(mockResult);
+      setLoading(true);
+      setError(null);
+      
+      const compliance = await brazilianRegulatoryService.checkCompanyCompliance(cnpj);
+      setComplianceData(compliance);
       
       toast({
         title: "Verificação concluída",
-        description: `Score de compliance: ${mockResult.score}%`,
+        description: "Status de compliance verificado com sucesso",
       });
     } catch (error) {
       console.error('Error checking compliance:', error);
+      setError('Erro ao verificar compliance. Tente novamente.');
       toast({
         title: "Erro na verificação",
-        description: "Não foi possível verificar o compliance",
+        description: "Não foi possível verificar o compliance da empresa",
         variant: "destructive"
       });
     } finally {
@@ -109,103 +62,189 @@ const ComplianceChecker = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'passed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed': return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      default: return null;
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    checkCompliance();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'passed': return 'bg-green-100 text-green-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getOverallStatusColor = (status: string, score: number) => {
-    if (status === 'compliant') return 'text-green-600';
-    if (status === 'partial') return 'text-yellow-600';
+  const getScoreColor = (score: number) => {
+    if (score >= 0.8) return 'text-green-600';
+    if (score >= 0.6) return 'text-yellow-600';
     return 'text-red-600';
   };
 
+  const getScoreDescription = (score: number) => {
+    if (score >= 0.8) return 'Excelente compliance regulatório';
+    if (score >= 0.6) return 'Compliance adequado com pontos de atenção';
+    return 'Compliance inadequado - requer ações imediatas';
+  };
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Shield className="h-6 w-6 text-blue-600" />
-          <span>Verificação de Compliance</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div className="flex space-x-4">
-            <Input
-              placeholder="Digite o CNPJ da empresa"
-              value={cnpj}
-              onChange={(e) => setCnpj(e.target.value)}
-              className="flex-1"
-            />
-            <Button 
-              onClick={checkCompliance}
-              disabled={loading}
-              className="flex items-center space-x-2"
-            >
-              <Search className="h-4 w-4" />
-              <span>{loading ? 'Verificando...' : 'Verificar'}</span>
-            </Button>
-          </div>
-
-          {result && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className={`text-3xl font-bold mb-2 ${getOverallStatusColor(result.status, result.score)}`}>
-                  {result.score}%
-                </div>
-                <Progress value={result.score} className="w-full h-3 mb-2" />
-                <Badge 
-                  variant={result.status === 'compliant' ? 'default' : result.status === 'partial' ? 'secondary' : 'destructive'}
-                  className="text-sm"
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Verificador de Compliance ANVISA
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cnpj">CNPJ da Empresa</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="cnpj"
+                  placeholder="00.000.000/0000-00"
+                  value={cnpj}
+                  onChange={handleCNPJChange}
+                  maxLength={18}
+                  className="flex-1"
+                />
+                <Button 
+                  type="submit" 
+                  disabled={loading || !cnpj}
+                  className="flex items-center gap-2"
                 >
-                  {result.status === 'compliant' ? 'Totalmente Conforme' : 
-                   result.status === 'partial' ? 'Parcialmente Conforme' : 'Não Conforme'}
-                </Badge>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Detalhamento por Categoria</h3>
-                {result.checks.map((check) => (
-                  <div key={check.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        {getStatusIcon(check.status)}
-                        <div>
-                          <h4 className="font-medium">{check.description}</h4>
-                          <Badge variant="outline" className="text-xs mt-1">
-                            {check.category}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(check.status)}`}>
-                        {check.status === 'passed' ? 'Aprovado' : 
-                         check.status === 'failed' ? 'Reprovado' : 'Atenção'}
-                      </div>
-                    </div>
-                    {check.details && (
-                      <p className="text-sm text-gray-600 mt-2">{check.details}</p>
-                    )}
-                  </div>
-                ))}
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  Verificar
+                </Button>
               </div>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      {loading && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {complianceData && !loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Resultado da Verificação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Status geral */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-center mb-2">
+                  {complianceData.status === 'compliant' ? (
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-8 w-8 text-yellow-600" />
+                  )}
+                </div>
+                <Badge 
+                  variant={brazilianRegulatoryService.getComplianceStatusColor(complianceData.status) as any}
+                  className="mb-2"
+                >
+                  {brazilianRegulatoryService.getComplianceStatusLabel(complianceData.status)}
+                </Badge>
+                <p className="text-sm text-muted-foreground">Status Geral</p>
+              </div>
+
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className={`text-2xl font-bold mb-2 ${getScoreColor(complianceData.score)}`}>
+                  {Math.round(complianceData.score * 100)}%
+                </div>
+                <p className="text-sm text-muted-foreground">Score de Compliance</p>
+              </div>
+
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium">
+                  {new Date(complianceData.last_check).toLocaleDateString('pt-BR')}
+                </p>
+                <p className="text-sm text-muted-foreground">Última Verificação</p>
+              </div>
+            </div>
+
+            {/* Descrição do score */}
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                {getScoreDescription(complianceData.score)}
+              </AlertDescription>
+            </Alert>
+
+            {/* Itens regulatórios verificados */}
+            {complianceData.details.regulatory_items && complianceData.details.regulatory_items.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <FileCheck className="h-4 w-4" />
+                  Itens Regulatórios Verificados
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {complianceData.details.regulatory_items.map((item, index) => (
+                    <Badge key={index} variant="outline">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Análise detalhada */}
+            <div>
+              <h4 className="font-medium mb-3">Análise Detalhada</h4>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm leading-relaxed">
+                  {complianceData.details.analysis}
+                </p>
+              </div>
+            </div>
+
+            {/* Informações técnicas */}
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>CNPJ verificado: {complianceData.details.cnpj}</p>
+              <p>Método de verificação: {complianceData.details.checked_via}</p>
+              <p>Válido até: {new Date(complianceData.expires_at).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && !complianceData && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">Verificador de Compliance</h3>
+            <p className="text-muted-foreground mb-4">
+              Digite o CNPJ da empresa para verificar seu status de compliance com a ANVISA
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
