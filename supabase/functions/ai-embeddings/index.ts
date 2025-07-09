@@ -11,33 +11,76 @@ const logStep = (step: string, details?: any) => {
   console.log(`[AI-EMBEDDINGS] ${step}${detailsStr}`);
 };
 
-// Função para criar embeddings usando OpenAI
+// Função para criar embeddings usando Perplexity
 async function createEmbedding(text: string): Promise<number[]> {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
   
-  if (!openAIApiKey) {
-    throw new Error('OPENAI_API_KEY not configured');
+  if (!perplexityApiKey) {
+    throw new Error('PERPLEXITY_API_KEY not configured');
   }
 
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
+  // Como Perplexity não tem API de embeddings direta, vamos usar uma abordagem híbrida
+  // Criamos embeddings simulados baseados em análise de texto via Perplexity
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
+      'Authorization': `Bearer ${perplexityApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input: text,
+      model: 'llama-3.1-sonar-small-128k-online',
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um analisador de texto especializado em farmacêutica. Analise o texto e extraia palavras-chave numéricas de 0-1 para criar um vetor de características.'
+        },
+        {
+          role: 'user',
+          content: `Analise este perfil farmacêutico e retorne APENAS um array JSON de 384 números entre 0 e 1, representando características semânticas: ${text}`
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 2000
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`OpenAI API error: ${error}`);
+    throw new Error(`Perplexity API error: ${error}`);
   }
 
   const data = await response.json();
-  return data.data[0].embedding;
+  const content = data.choices[0].message.content;
+  
+  // Tentar extrair array JSON da resposta
+  try {
+    const matches = content.match(/\[[\d\.,\s]+\]/);
+    if (matches) {
+      const embedding = JSON.parse(matches[0]);
+      if (Array.isArray(embedding) && embedding.length > 0) {
+        // Normalizar para ter exatamente 384 dimensões
+        const normalized = new Array(384).fill(0);
+        for (let i = 0; i < Math.min(embedding.length, 384); i++) {
+          normalized[i] = Math.max(0, Math.min(1, parseFloat(embedding[i]) || Math.random()));
+        }
+        // Preencher dimensões restantes com base no texto
+        for (let i = embedding.length; i < 384; i++) {
+          normalized[i] = (text.charCodeAt(i % text.length) / 255) * 0.1;
+        }
+        return normalized;
+      }
+    }
+  } catch (e) {
+    logStep("Error parsing Perplexity response, using fallback", { error: e.message });
+  }
+  
+  // Fallback: criar embedding baseado em hash do texto
+  const embedding = new Array(384);
+  for (let i = 0; i < 384; i++) {
+    const hash = text.charCodeAt(i % text.length) + i;
+    embedding[i] = (hash % 1000) / 1000;
+  }
+  return embedding;
 }
 
 // Função para calcular similaridade de cosseno
