@@ -50,7 +50,7 @@ export const usePWA = () => {
         installPrompt: null
       }));
       
-      toast.success('PharmaNet instalado com sucesso! 🎉', {
+      toast.success('PharmaConnect instalado com sucesso! 🎉', {
         description: 'Agora você pode usar o app diretamente da sua tela inicial.'
       });
     };
@@ -98,7 +98,7 @@ export const usePWA = () => {
       
       if (choiceResult.outcome === 'accepted') {
         toast.success('Instalação iniciada! ⬇️', {
-          description: 'O PharmaNet está sendo instalado...'
+          description: 'O PharmaConnect está sendo instalado...'
         });
         return true;
       } else {
@@ -123,7 +123,7 @@ export const usePWA = () => {
         await registration.update();
         
         toast.success('App atualizado! ✨', {
-          description: 'A versão mais recente do PharmaNet está disponível.'
+          description: 'A versão mais recente do PharmaConnect está disponível.'
         });
       } catch (error) {
         console.error('Erro ao verificar atualizações:', error);

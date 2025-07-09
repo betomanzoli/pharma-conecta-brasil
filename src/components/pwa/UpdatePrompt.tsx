@@ -92,7 +92,7 @@ const UpdatePrompt = () => {
             </Button>
           </div>
           <CardDescription>
-            Uma nova versão do PharmaNet está disponível com melhorias e correções.
+            Uma nova versão do PharmaConnect está disponível com melhorias e correções.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">

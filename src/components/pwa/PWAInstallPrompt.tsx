@@ -41,7 +41,7 @@ const PWAInstallPrompt = () => {
               ) : (
                 <Monitor className="h-5 w-5 text-primary" />
               )}
-              <CardTitle className="text-lg">Instalar PharmaNet</CardTitle>
+              <CardTitle className="text-lg">Instalar PharmaConnect</CardTitle>
             </div>
             <Button
               variant="ghost"
