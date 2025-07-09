@@ -31,6 +31,35 @@ serve(async (req) => {
 
     logStep("Processing enhanced matching", { userType, userId, preferences });
 
+    // Get user profile for real matching
+    let userProfile;
+    if (userType === 'pharmaceutical_company') {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('profile_id', userId)
+        .single();
+      userProfile = company;
+    } else if (userType === 'laboratory') {
+      const { data: lab } = await supabase
+        .from('laboratories')
+        .select('*')
+        .eq('profile_id', userId)
+        .single();
+      userProfile = lab;
+    } else if (userType === 'consultant') {
+      const { data: consultant } = await supabase
+        .from('consultants')
+        .select('*')
+        .eq('profile_id', userId)
+        .single();
+      userProfile = consultant;
+    }
+
+    if (!userProfile) {
+      throw new Error('User profile not found');
+    }
+
     let matches = [];
 
     // Enhanced matching logic based on user type
@@ -53,28 +82,51 @@ serve(async (req) => {
           `)
           .limit(10);
 
-        matches = [
-          ...(labData?.map(lab => ({
-            id: lab.id,
-            type: 'laboratory',
-            name: lab.name || `${lab.profiles.first_name} ${lab.profiles.last_name}`,
-            score: calculateCompatibilityScore(userType, 'laboratory', preferences),
-            specialties: lab.certifications || [],
-            location: lab.location,
-            verified: lab.anvisa_certified || false,
-            profile: lab.profiles
-          })) || []),
-          ...(consultantData?.map(consultant => ({
-            id: consultant.id,
-            type: 'consultant',
-            name: `${consultant.profiles.first_name} ${consultant.profiles.last_name}`,
-            score: calculateCompatibilityScore(userType, 'consultant', preferences),
-            specialties: consultant.expertise || [],
-            location: consultant.location,
-            hourlyRate: consultant.hourly_rate,
-            profile: consultant.profiles
-          })) || [])
-        ];
+        // Calculate real compatibility scores for laboratories
+        const labMatches = [];
+        if (labData) {
+          for (const lab of labData) {
+            const compatibility = await calculateRealCompatibilityScore(
+              userType, 'laboratory', preferences, userProfile, lab, supabase
+            );
+            
+            labMatches.push({
+              id: lab.id,
+              type: 'laboratory',
+              name: lab.name || `${lab.profiles.first_name} ${lab.profiles.last_name}`,
+              score: compatibility.score,
+              specialties: lab.certifications || [],
+              location: lab.location,
+              verified: lab.anvisa_certified || false,
+              profile: lab.profiles,
+              compatibility_factors: compatibility.factors
+            });
+          }
+        }
+
+        // Calculate real compatibility scores for consultants
+        const consultantMatches = [];
+        if (consultantData) {
+          for (const consultant of consultantData) {
+            const compatibility = await calculateRealCompatibilityScore(
+              userType, 'consultant', preferences, userProfile, consultant, supabase
+            );
+            
+            consultantMatches.push({
+              id: consultant.id,
+              type: 'consultant',
+              name: `${consultant.profiles.first_name} ${consultant.profiles.last_name}`,
+              score: compatibility.score,
+              specialties: consultant.expertise || [],
+              location: consultant.location,
+              hourlyRate: consultant.hourly_rate,
+              profile: consultant.profiles,
+              compatibility_factors: compatibility.factors
+            });
+          }
+        }
+
+        matches = [...labMatches, ...consultantMatches];
         break;
 
       case 'laboratory':
@@ -87,16 +139,26 @@ serve(async (req) => {
           `)
           .limit(10);
 
-        matches = companyData?.map(company => ({
-          id: company.id,
-          type: 'company',
-          name: company.name,
-          score: calculateCompatibilityScore(userType, 'company', preferences),
-          specialties: company.expertise_area || [],
-          location: `${company.city}, ${company.state}`,
-          verified: company.compliance_status === 'compliant',
-          profile: company.profiles
-        })) || [];
+        // Calculate real compatibility scores for companies
+        if (companyData) {
+          for (const company of companyData) {
+            const compatibility = await calculateRealCompatibilityScore(
+              userType, 'company', preferences, userProfile, company, supabase
+            );
+            
+            matches.push({
+              id: company.id,
+              type: 'company',
+              name: company.name,
+              score: compatibility.score,
+              specialties: company.expertise_area || [],
+              location: `${company.city}, ${company.state}`,
+              verified: company.compliance_status === 'compliant',
+              profile: company.profiles,
+              compatibility_factors: compatibility.factors
+            });
+          }
+        }
         break;
 
       case 'consultant':
@@ -117,36 +179,60 @@ serve(async (req) => {
           `)
           .limit(10);
 
-        matches = [
-          ...(allCompanies?.map(company => ({
-            id: company.id,
-            type: 'company',
-            name: company.name,
-            score: calculateCompatibilityScore(userType, 'company', preferences),
-            specialties: company.expertise_area || [],
-            location: `${company.city}, ${company.state}`,
-            verified: company.compliance_status === 'compliant',
-            profile: company.profiles
-          })) || []),
-          ...(allLabs?.map(lab => ({
-            id: lab.id,
-            type: 'laboratory',
-            name: lab.name || `${lab.profiles.first_name} ${lab.profiles.last_name}`,
-            score: calculateCompatibilityScore(userType, 'laboratory', preferences),
-            specialties: lab.certifications || [],
-            location: lab.location,
-            verified: lab.anvisa_certified || false,
-            profile: lab.profiles
-          })) || [])
-        ];
+        // Calculate real compatibility scores for companies
+        const companyMatches = [];
+        if (allCompanies) {
+          for (const company of allCompanies) {
+            const compatibility = await calculateRealCompatibilityScore(
+              userType, 'company', preferences, userProfile, company, supabase
+            );
+            
+            companyMatches.push({
+              id: company.id,
+              type: 'company',
+              name: company.name,
+              score: compatibility.score,
+              specialties: company.expertise_area || [],
+              location: `${company.city}, ${company.state}`,
+              verified: company.compliance_status === 'compliant',
+              profile: company.profiles,
+              compatibility_factors: compatibility.factors
+            });
+          }
+        }
+
+        // Calculate real compatibility scores for laboratories
+        const labMatches = [];
+        if (allLabs) {
+          for (const lab of allLabs) {
+            const compatibility = await calculateRealCompatibilityScore(
+              userType, 'laboratory', preferences, userProfile, lab, supabase
+            );
+            
+            labMatches.push({
+              id: lab.id,
+              type: 'laboratory',
+              name: lab.name || `${lab.profiles.first_name} ${lab.profiles.last_name}`,
+              score: compatibility.score,
+              specialties: lab.certifications || [],
+              location: lab.location,
+              verified: lab.anvisa_certified || false,
+              profile: lab.profiles,
+              compatibility_factors: compatibility.factors
+            });
+          }
+        }
+
+        matches = [...companyMatches, ...labMatches];
         break;
 
       default:
         throw new Error("Invalid user type");
     }
 
-    // Sort by compatibility score
+    // Sort by compatibility score and filter out low scores
     matches = matches
+      .filter(match => match.score > 0.3) // Only show matches with > 30% compatibility
       .sort((a, b) => b.score - a.score)
       .slice(0, 20);
 
@@ -196,37 +282,116 @@ serve(async (req) => {
   }
 });
 
-function calculateCompatibilityScore(userType: string, targetType: string, preferences: any): number {
-  let baseScore = Math.random() * 0.3 + 0.5; // 0.5-0.8 base
+async function calculateRealCompatibilityScore(
+  userType: string, 
+  targetType: string, 
+  preferences: any,
+  userProfile: any,
+  targetProfile: any,
+  supabase: any
+): Promise<{score: number, factors: string[]}> {
+  
+  const factors: string[] = [];
+  let totalScore = 0;
+  let maxPossibleScore = 0;
 
-  // Type compatibility matrix
-  const compatibilityMatrix: Record<string, Record<string, number>> = {
-    'pharmaceutical_company': {
-      'laboratory': 0.9,
-      'consultant': 0.8,
-      'supplier': 0.85
-    },
-    'laboratory': {
-      'company': 0.9,
-      'supplier': 0.7,
-      'consultant': 0.75
-    },
-    'consultant': {
-      'company': 0.85,
-      'laboratory': 0.8,
-      'supplier': 0.6
+  // 1. Similaridade semântica via embeddings (peso 40%)
+  try {
+    const { data: embeddingResult } = await supabase.functions.invoke('ai-embeddings', {
+      body: {
+        action: 'calculate_similarities',
+        userEmbedding: null, // Will be generated internally
+        candidates: [{ ...targetProfile, type: targetType }]
+      }
+    });
+
+    if (embeddingResult?.success && embeddingResult.similarities?.length > 0) {
+      const semanticScore = embeddingResult.similarities[0].similarity_score * 0.4;
+      totalScore += semanticScore;
+      factors.push(`Similaridade semântica: ${Math.round(semanticScore * 100)}%`);
     }
+    maxPossibleScore += 0.4;
+  } catch (error) {
+    logStep("Semantic similarity calculation failed", { error: error.message });
+  }
+
+  // 2. Compatibilidade de localização (peso 20%)
+  if (userProfile.location && targetProfile.location) {
+    const userLocation = userProfile.location.toLowerCase();
+    const targetLocation = targetProfile.location.toLowerCase();
+    
+    if (userLocation.includes(targetLocation) || targetLocation.includes(userLocation)) {
+      totalScore += 0.2;
+      factors.push('Localização compatível');
+    } else if (userProfile.state && targetProfile.state && 
+               userProfile.state.toLowerCase() === targetProfile.state.toLowerCase()) {
+      totalScore += 0.1;
+      factors.push('Mesmo estado');
+    }
+  }
+  maxPossibleScore += 0.2;
+
+  // 3. Correspondência de especialidades (peso 25%)
+  let expertiseMatch = false;
+  if (userType === 'pharmaceutical_company' && targetType === 'laboratory') {
+    const companyExpertise = userProfile.expertise_area || [];
+    const labCertifications = targetProfile.certifications || [];
+    
+    const intersection = companyExpertise.filter(exp => 
+      labCertifications.some(cert => 
+        cert.toLowerCase().includes(exp.toLowerCase()) ||
+        exp.toLowerCase().includes(cert.toLowerCase())
+      )
+    );
+    
+    if (intersection.length > 0) {
+      const expertiseScore = Math.min(intersection.length / companyExpertise.length, 1) * 0.25;
+      totalScore += expertiseScore;
+      factors.push(`Especialidades compatíveis: ${intersection.join(', ')}`);
+      expertiseMatch = true;
+    }
+  } else if (userType === 'pharmaceutical_company' && targetType === 'consultant') {
+    const companyExpertise = userProfile.expertise_area || [];
+    const consultantExpertise = targetProfile.expertise || [];
+    
+    const intersection = companyExpertise.filter(exp => 
+      consultantExpertise.some(cons => 
+        cons.toLowerCase().includes(exp.toLowerCase()) ||
+        exp.toLowerCase().includes(cons.toLowerCase())
+      )
+    );
+    
+    if (intersection.length > 0) {
+      const expertiseScore = Math.min(intersection.length / companyExpertise.length, 1) * 0.25;
+      totalScore += expertiseScore;
+      factors.push(`Expertise compatível: ${intersection.join(', ')}`);
+      expertiseMatch = true;
+    }
+  }
+  maxPossibleScore += 0.25;
+
+  // 4. Fatores específicos do tipo (peso 15%)
+  if (targetType === 'laboratory' && targetProfile.available_capacity > 0) {
+    totalScore += 0.075;
+    factors.push('Capacidade disponível');
+  }
+  
+  if (targetType === 'consultant' && targetProfile.projects_completed > 5) {
+    totalScore += 0.075;
+    factors.push(`Experiência comprovada: ${targetProfile.projects_completed} projetos`);
+  }
+  
+  if (targetProfile.compliance_status === 'compliant' || targetProfile.anvisa_certified) {
+    totalScore += 0.075;
+    factors.push('Certificação ANVISA');
+  }
+  maxPossibleScore += 0.15;
+
+  // Normalizar score final
+  const finalScore = maxPossibleScore > 0 ? totalScore / maxPossibleScore : 0;
+  
+  return {
+    score: Math.round(finalScore * 100) / 100,
+    factors
   };
-
-  const typeBonus = compatibilityMatrix[userType]?.[targetType] || 0.5;
-  
-  // Preferences bonus
-  let preferencesBonus = 0;
-  if (preferences?.location && Math.random() > 0.5) preferencesBonus += 0.1;
-  if (preferences?.specialties && Math.random() > 0.6) preferencesBonus += 0.15;
-  if (preferences?.budget && Math.random() > 0.7) preferencesBonus += 0.1;
-
-  const finalScore = Math.min((baseScore * typeBonus) + preferencesBonus, 1.0);
-  
-  return Math.round(finalScore * 100) / 100;
 }

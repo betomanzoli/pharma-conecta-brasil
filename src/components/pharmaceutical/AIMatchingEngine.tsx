@@ -64,21 +64,42 @@ const AIMatchingEngine = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('ai-matching', {
+      const { data, error } = await supabase.functions.invoke('ai-matching-enhanced', {
         body: {
-          company_id: company.id,
-          search_criteria: searchCriteria
+          userType: 'pharmaceutical_company',
+          userId: profile.id,
+          preferences: {
+            location: searchCriteria.location,
+            specialties: [searchCriteria.expertise],
+            serviceType: searchCriteria.service_type
+          }
         }
       });
 
       if (error) throw error;
 
-      if (data.success) {
-        setMatches(data.matches);
+      if (data?.success && data?.matches) {
+        // Converter formato da resposta para o formato esperado
+        const formattedMatches = data.matches.map((match: any) => ({
+          company: {
+            name: match.name,
+            expertise_area: match.specialties,
+            city: match.location?.split(', ')[0] || '',
+            state: match.location?.split(', ')[1] || '',
+            description: `${match.type === 'laboratory' ? 'Laboratório' : 'Consultor'} especializado`
+          },
+          compatibility_score: match.score,
+          match_factors: match.compatibility_factors || [`Score: ${Math.round(match.score * 100)}%`],
+          recommended_actions: ['Enviar mensagem', 'Agendar reunião', 'Solicitar proposta']
+        }));
+
+        setMatches(formattedMatches);
         toast({
-          title: "Matching Completo!",
-          description: `Encontrados ${data.matches.length} matches potenciais`,
+          title: "Matching com IA Real Completo!",
+          description: `Encontrados ${formattedMatches.length} matches usando algoritmos de ML`,
         });
+      } else {
+        throw new Error('Nenhum match encontrado');
       }
     } catch (error) {
       console.error('Erro no AI Matching:', error);

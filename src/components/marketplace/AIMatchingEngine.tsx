@@ -35,63 +35,59 @@ const AIMatchingEngine = () => {
     
     setLoading(true);
     try {
-      // Simular chamada para IA de matching
-      const mockMatches: Match[] = [
-        {
-          id: '1',
-          score: 94,
-          company: {
-            name: 'FarmaTech Ltda',
-            expertise: ['Genéricos', 'Desenvolvimento']
-          },
-          provider: {
-            name: 'LabAnalyse',
-            type: 'laboratory',
-            specialties: ['Microbiológica', 'Físico-Química']
-          },
-          compatibility_factors: ['Localização próxima', 'Experiência em genéricos', 'Certificação ANVISA']
-        },
-        {
-          id: '2',
-          score: 87,
-          company: {
-            name: 'BioPharma Solutions',
-            expertise: ['Biotecnologia', 'Pesquisa']
-          },
-          provider: {
-            name: 'Dr. Maria Silva',
-            type: 'consultant',
-            specialties: ['Regulatório', 'Registro ANVISA']
-          },
-          compatibility_factors: ['Especialização em biotecnologia', 'Histórico de aprovações', 'Disponibilidade imediata']
-        },
-        {
-          id: '3',
-          score: 82,
-          company: {
-            name: 'MedGenesis',
-            expertise: ['Medicamentos Especiais']
-          },
-          provider: {
-            name: 'Instituto de Pesquisas Farmacêuticas',
-            type: 'laboratory',
-            specialties: ['Estabilidade', 'Bioequivalência']
-          },
-          compatibility_factors: ['Expertise em medicamentos especiais', 'Equipamentos avançados', 'Prazo compatível']
-        }
-      ];
-
-      setMatches(mockMatches);
+      // Determinar tipo de usuário (simplificado para este exemplo)
+      const { data: profile } = await supabase.from('profiles').select('user_type').eq('id', user.id).single();
       
-      toast({
-        title: "Matches gerados com sucesso",
-        description: `${mockMatches.length} oportunidades encontradas usando IA`,
+      if (!profile) {
+        throw new Error('Perfil do usuário não encontrado');
+      }
+
+      // Chamar edge function de AI matching real
+      const { data, error } = await supabase.functions.invoke('ai-matching-enhanced', {
+        body: {
+          userType: profile.user_type,
+          userId: user.id,
+          preferences: {
+            location: 'São Paulo',
+            specialties: ['Análise Microbiológica', 'Controle de Qualidade'],
+            budget: { min: 1000, max: 10000 }
+          }
+        }
       });
+
+      if (error) throw error;
+
+      if (data?.success && data?.matches) {
+        // Converter formato da resposta para o formato esperado pelo componente
+        const formattedMatches: Match[] = data.matches.map((match: any) => ({
+          id: match.id,
+          score: Math.round(match.score * 100), // Converter para porcentagem
+          company: {
+            name: 'Sua Empresa', // Placeholder - em produção seria dinâmico
+            expertise: ['Desenvolvimento', 'Pesquisa']
+          },
+          provider: {
+            name: match.name,
+            type: match.type,
+            specialties: match.specialties || []
+          },
+          compatibility_factors: match.compatibility_factors || [`Score: ${match.score}`, 'Análise por IA']
+        }));
+
+        setMatches(formattedMatches);
+        
+        toast({
+          title: "Matches gerados com IA real!",
+          description: `${formattedMatches.length} oportunidades encontradas usando algoritmos de ML`,
+        });
+      } else {
+        throw new Error('Nenhum match encontrado');
+      }
     } catch (error) {
       console.error('Error generating matches:', error);
       toast({
         title: "Erro ao gerar matches",
-        description: "Tente novamente em alguns minutos",
+        description: error instanceof Error ? error.message : "Tente novamente em alguns minutos",
         variant: "destructive"
       });
     } finally {
