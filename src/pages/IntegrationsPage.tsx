@@ -7,6 +7,8 @@ import RealAPIIntegrationPanel from '@/components/integration/RealAPIIntegration
 import FINEPIntegration from '@/components/integration/FINEPIntegration';
 import ExternalIntegrationsPanel from '@/components/integration/ExternalIntegrationsPanel';
 import IntegrationCategories from '@/components/integration/IntegrationCategories';
+import IntegrationDashboard from '@/components/integration/IntegrationDashboard';
+import IntegrationMonitor from '@/components/integration/IntegrationMonitor';
 
 const IntegrationsPage = () => {
   return (
@@ -22,13 +24,23 @@ const IntegrationsPage = () => {
               </p>
             </div>
 
-            <Tabs defaultValue="external" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+            <Tabs defaultValue="dashboard" className="w-full">
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="monitor">Monitor</TabsTrigger>
                 <TabsTrigger value="external">Integrações</TabsTrigger>
                 <TabsTrigger value="api">APIs Reais</TabsTrigger>
                 <TabsTrigger value="finep">FINEP</TabsTrigger>
                 <TabsTrigger value="categories">Categorias</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="dashboard">
+                <IntegrationDashboard />
+              </TabsContent>
+
+              <TabsContent value="monitor">
+                <IntegrationMonitor />
+              </TabsContent>
 
               <TabsContent value="external">
                 <ExternalIntegrationsPanel />
