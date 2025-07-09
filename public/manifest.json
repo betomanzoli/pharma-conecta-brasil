@@ -1,6 +1,6 @@
 {
-  "name": "PharmaNet Brasil",
-  "short_name": "PharmaNet",
+  "name": "PharmaConnect Brasil",
+  "short_name": "PharmaConnect",
   "description": "Plataforma completa para o setor farmacêutico brasileiro - conectando empresas, laboratórios, consultores e profissionais",
   "start_url": "/",
   "display": "standalone",
@@ -35,14 +35,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Dashboard principal do PharmaNet"
+      "label": "Dashboard principal do PharmaConnect"
     },
     {
       "src": "/lovable-uploads/cd4da4dc-de6b-4213-aa5f-dd60e3f5c047.png",
       "sizes": "720x1280",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Versão mobile do PharmaNet"
+      "label": "Versão mobile do PharmaConnect"
     }
   ],
   "shortcuts": [

@@ -1,6 +1,6 @@
-// Service Worker para PWA - PharmaNet Brasil
-const CACHE_NAME = 'pharmanet-v1.0.0';
-const API_CACHE = 'pharmanet-api-v1';
+// Service Worker para PWA - PharmaConnect Brasil
+const CACHE_NAME = 'pharmaconnect-v1.0.0';
+const API_CACHE = 'pharmaconnect-api-v1';
 
 // Recursos essenciais para cache
 const ESSENTIAL_RESOURCES = [
@@ -218,7 +218,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
   
   const options = {
-    body: event.data ? event.data.text() : 'Nova notificação do PharmaNet',
+    body: event.data ? event.data.text() : 'Nova notificação do PharmaConnect',
     icon: '/favicon.ico',
     badge: '/favicon.ico',
     vibrate: [100, 50, 100],
@@ -241,7 +241,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('PharmaNet Brasil', options)
+    self.registration.showNotification('PharmaConnect Brasil', options)
   );
 });
 
