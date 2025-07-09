@@ -43,6 +43,7 @@ import ANVISAAlerts from '@/pages/ANVISAAlerts';
 import Opportunities from '@/pages/Opportunities';
 import AIPage from '@/pages/AIPage';
 import AdminPage from '@/pages/AdminPage';
+import SearchPage from '@/pages/SearchPage';
 import DashboardCompany from '@/pages/DashboardCompany';
 import DashboardConsultant from '@/pages/DashboardConsultant';
 import DashboardLaboratory from '@/pages/DashboardLaboratory';
@@ -112,6 +113,7 @@ function App() {
                 <Route path="/demo" element={<PlatformDemoPage />} />
                 
                 {/* Search Routes */}
+                <Route path="/search" element={<SearchPage />} />
                 <Route path="/search/laboratories" element={<SearchLaboratories />} />
                 <Route path="/search/consultants" element={<SearchConsultants />} />
                 <Route path="/anvisa-alerts" element={<ANVISAAlerts />} />
