@@ -50,6 +50,8 @@ import DashboardLaboratory from '@/pages/DashboardLaboratory';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import SubscriptionPage from '@/pages/SubscriptionPage';
 import ConhecimentoBrasileiro from '@/pages/ConhecimentoBrasileiro';
+import AnvisaLegis from '@/pages/AnvisaLegis';
+import AllApisDashboard from '@/pages/AllApisDashboard';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
@@ -128,6 +130,10 @@ function App() {
                 <Route path="/analytics/brazilian" element={<AnalyticsPage />} />
                 <Route path="/subscription/brazilian" element={<SubscriptionPage />} />
                 <Route path="/conhecimento-brasileiro" element={<ConhecimentoBrasileiro />} />
+                
+                {/* API Integration Routes */}
+                <Route path="/anvisa-legis" element={<AnvisaLegis />} />
+                <Route path="/apis" element={<AllApisDashboard />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />

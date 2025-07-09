@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.anvisa-real-api]
 verify_jwt = false
+
+[functions.fda-api]
+verify_jwt = false

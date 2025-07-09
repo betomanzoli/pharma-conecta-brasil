@@ -1061,6 +1061,354 @@ export type Database = {
         }
         Relationships: []
       }
+      fda_adverse_events: {
+        Row: {
+          created_at: string
+          external_id: string | null
+          fda_data: Json | null
+          id: string
+          medicinalproduct: string | null
+          patientage: string | null
+          patientageunit: string | null
+          patientsex: string | null
+          primarysource: string | null
+          reaction_outcome: string | null
+          reaction_text: string | null
+          receiptdate: string | null
+          receivedate: string | null
+          reporttype: string | null
+          safetyreportid: string | null
+          safetyreportversion: string | null
+          serious: string | null
+          seriousnesscongenitalanomali: string | null
+          seriousnessdeath: string | null
+          seriousnessdisabling: string | null
+          seriousnesshospitalization: string | null
+          seriousnesslifethreatening: string | null
+          seriousnessother: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          medicinalproduct?: string | null
+          patientage?: string | null
+          patientageunit?: string | null
+          patientsex?: string | null
+          primarysource?: string | null
+          reaction_outcome?: string | null
+          reaction_text?: string | null
+          receiptdate?: string | null
+          receivedate?: string | null
+          reporttype?: string | null
+          safetyreportid?: string | null
+          safetyreportversion?: string | null
+          serious?: string | null
+          seriousnesscongenitalanomali?: string | null
+          seriousnessdeath?: string | null
+          seriousnessdisabling?: string | null
+          seriousnesshospitalization?: string | null
+          seriousnesslifethreatening?: string | null
+          seriousnessother?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          medicinalproduct?: string | null
+          patientage?: string | null
+          patientageunit?: string | null
+          patientsex?: string | null
+          primarysource?: string | null
+          reaction_outcome?: string | null
+          reaction_text?: string | null
+          receiptdate?: string | null
+          receivedate?: string | null
+          reporttype?: string | null
+          safetyreportid?: string | null
+          safetyreportversion?: string | null
+          serious?: string | null
+          seriousnesscongenitalanomali?: string | null
+          seriousnessdeath?: string | null
+          seriousnessdisabling?: string | null
+          seriousnesshospitalization?: string | null
+          seriousnesslifethreatening?: string | null
+          seriousnessother?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fda_device_adverse_events: {
+        Row: {
+          adverse_event_flag: string | null
+          created_at: string
+          date_of_event: string | null
+          date_received: string | null
+          date_report: string | null
+          device_class: string | null
+          device_date_of_manufacturer: string | null
+          device_name: string | null
+          event_date_format: string | null
+          event_description: string | null
+          event_location: string | null
+          event_type: string | null
+          external_id: string | null
+          fda_data: Json | null
+          id: string
+          implant_flag: string | null
+          lot_number: string | null
+          manufacturer_name: string | null
+          mdr_report_key: string | null
+          model_number: string | null
+          patient_sequence_number: string | null
+          previous_use_code: string | null
+          product_problem: string | null
+          product_problem_flag: string | null
+          remedial_action: string | null
+          removal_correction_number: string | null
+          report_number: string | null
+          report_source_code: string | null
+          report_to_fda: string | null
+          reprocessed_and_reused_flag: string | null
+          single_use_flag: string | null
+          updated_at: string
+        }
+        Insert: {
+          adverse_event_flag?: string | null
+          created_at?: string
+          date_of_event?: string | null
+          date_received?: string | null
+          date_report?: string | null
+          device_class?: string | null
+          device_date_of_manufacturer?: string | null
+          device_name?: string | null
+          event_date_format?: string | null
+          event_description?: string | null
+          event_location?: string | null
+          event_type?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          implant_flag?: string | null
+          lot_number?: string | null
+          manufacturer_name?: string | null
+          mdr_report_key?: string | null
+          model_number?: string | null
+          patient_sequence_number?: string | null
+          previous_use_code?: string | null
+          product_problem?: string | null
+          product_problem_flag?: string | null
+          remedial_action?: string | null
+          removal_correction_number?: string | null
+          report_number?: string | null
+          report_source_code?: string | null
+          report_to_fda?: string | null
+          reprocessed_and_reused_flag?: string | null
+          single_use_flag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adverse_event_flag?: string | null
+          created_at?: string
+          date_of_event?: string | null
+          date_received?: string | null
+          date_report?: string | null
+          device_class?: string | null
+          device_date_of_manufacturer?: string | null
+          device_name?: string | null
+          event_date_format?: string | null
+          event_description?: string | null
+          event_location?: string | null
+          event_type?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          implant_flag?: string | null
+          lot_number?: string | null
+          manufacturer_name?: string | null
+          mdr_report_key?: string | null
+          model_number?: string | null
+          patient_sequence_number?: string | null
+          previous_use_code?: string | null
+          product_problem?: string | null
+          product_problem_flag?: string | null
+          remedial_action?: string | null
+          removal_correction_number?: string | null
+          report_number?: string | null
+          report_source_code?: string | null
+          report_to_fda?: string | null
+          reprocessed_and_reused_flag?: string | null
+          single_use_flag?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fda_drugs: {
+        Row: {
+          active_ingredient: string | null
+          application_number: string | null
+          biologic_license_category: string | null
+          brand_name: string | null
+          created_at: string
+          dosage_form: string | null
+          external_id: string | null
+          fda_data: Json | null
+          generic_name: string
+          id: string
+          marketing_status: string | null
+          product_number: string | null
+          reference_drug: string | null
+          review_priority: string | null
+          rld: string | null
+          route: string | null
+          rs: string | null
+          strength: string | null
+          submission_classification: string | null
+          submission_date: string | null
+          submission_number: string | null
+          submission_status: string | null
+          submission_type: string | null
+          te_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_ingredient?: string | null
+          application_number?: string | null
+          biologic_license_category?: string | null
+          brand_name?: string | null
+          created_at?: string
+          dosage_form?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          generic_name: string
+          id?: string
+          marketing_status?: string | null
+          product_number?: string | null
+          reference_drug?: string | null
+          review_priority?: string | null
+          rld?: string | null
+          route?: string | null
+          rs?: string | null
+          strength?: string | null
+          submission_classification?: string | null
+          submission_date?: string | null
+          submission_number?: string | null
+          submission_status?: string | null
+          submission_type?: string | null
+          te_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_ingredient?: string | null
+          application_number?: string | null
+          biologic_license_category?: string | null
+          brand_name?: string | null
+          created_at?: string
+          dosage_form?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          generic_name?: string
+          id?: string
+          marketing_status?: string | null
+          product_number?: string | null
+          reference_drug?: string | null
+          review_priority?: string | null
+          rld?: string | null
+          route?: string | null
+          rs?: string | null
+          strength?: string | null
+          submission_classification?: string | null
+          submission_date?: string | null
+          submission_number?: string | null
+          submission_status?: string | null
+          submission_type?: string | null
+          te_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fda_food_enforcement: {
+        Row: {
+          city: string | null
+          classification: string | null
+          code_info: string | null
+          country: string | null
+          created_at: string
+          distribution_pattern: string | null
+          event_id: string | null
+          external_id: string | null
+          fda_data: Json | null
+          id: string
+          initial_firm_notification: string | null
+          more_code_info: string | null
+          product_description: string | null
+          product_quantity: string | null
+          product_type: string | null
+          reason_for_recall: string | null
+          recall_number: string | null
+          recalling_firm: string | null
+          report_date: string | null
+          state: string | null
+          status: string | null
+          updated_at: string
+          voluntary_mandated: string | null
+        }
+        Insert: {
+          city?: string | null
+          classification?: string | null
+          code_info?: string | null
+          country?: string | null
+          created_at?: string
+          distribution_pattern?: string | null
+          event_id?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          initial_firm_notification?: string | null
+          more_code_info?: string | null
+          product_description?: string | null
+          product_quantity?: string | null
+          product_type?: string | null
+          reason_for_recall?: string | null
+          recall_number?: string | null
+          recalling_firm?: string | null
+          report_date?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          voluntary_mandated?: string | null
+        }
+        Update: {
+          city?: string | null
+          classification?: string | null
+          code_info?: string | null
+          country?: string | null
+          created_at?: string
+          distribution_pattern?: string | null
+          event_id?: string | null
+          external_id?: string | null
+          fda_data?: Json | null
+          id?: string
+          initial_firm_notification?: string | null
+          more_code_info?: string | null
+          product_description?: string | null
+          product_quantity?: string | null
+          product_type?: string | null
+          reason_for_recall?: string | null
+          recall_number?: string | null
+          recalling_firm?: string | null
+          report_date?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          voluntary_mandated?: string | null
+        }
+        Relationships: []
+      }
       forum_replies: {
         Row: {
           author_id: string
