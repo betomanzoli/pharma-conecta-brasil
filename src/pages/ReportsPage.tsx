@@ -6,9 +6,11 @@ import ReportBuilder from '@/components/reports/ReportBuilder';
 import CustomReportBuilder from '@/components/reports/CustomReportBuilder';
 import ReportTemplates from '@/components/reports/ReportTemplates';
 import ReportInsights from '@/components/reports/ReportInsights';
+import EnhancedReportExporter from '@/components/reports/EnhancedReportExporter';
+import AIReportInsights from '@/components/reports/AIReportInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
-import { FileText, BarChart, Layout, Lightbulb, Settings } from 'lucide-react';
+import { FileText, BarChart, Layout, Lightbulb, Settings, Download, Brain } from 'lucide-react';
 
 const ReportsPage = () => {
   return (
@@ -24,7 +26,7 @@ const ReportsPage = () => {
           </div>
 
           <Tabs defaultValue="templates" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="templates" className="flex items-center space-x-2">
                 <Layout className="h-4 w-4" />
                 <span>Templates</span>
@@ -36,6 +38,14 @@ const ReportsPage = () => {
               <TabsTrigger value="builder" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
                 <span>Builder</span>
+              </TabsTrigger>
+              <TabsTrigger value="export" className="flex items-center space-x-2">
+                <Download className="h-4 w-4" />
+                <span>Exportar</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai-insights" className="flex items-center space-x-2">
+                <Brain className="h-4 w-4" />
+                <span>IA Insights</span>
               </TabsTrigger>
               <TabsTrigger value="insights" className="flex items-center space-x-2">
                 <Lightbulb className="h-4 w-4" />
@@ -57,6 +67,14 @@ const ReportsPage = () => {
 
             <TabsContent value="builder">
               <ReportBuilder />
+            </TabsContent>
+
+            <TabsContent value="export">
+              <EnhancedReportExporter />
+            </TabsContent>
+
+            <TabsContent value="ai-insights">
+              <AIReportInsights />
             </TabsContent>
 
             <TabsContent value="insights">
