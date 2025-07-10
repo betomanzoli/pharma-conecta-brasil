@@ -40,7 +40,8 @@ import {
   FolderOpen,
   UserCheck,
   Globe,
-  Plug
+  Plug,
+  Zap
 } from 'lucide-react';
 import Logo from '@/components/ui/logo';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -64,24 +65,34 @@ const UnifiedHeader = () => {
 
   // Navegação para usuários LOGADOS (baseada no tipo de usuário)
   const getPrivateNavigationItems = () => {
-    const baseItems = [
+    const coreItems = [
       { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
-      { title: "Rede", path: "/network", icon: Network },
+      { title: "IA & Analytics", path: "/ai", icon: Zap },
       { title: "Chat", path: "/chat", icon: MessageCircle },
+    ];
+
+    const businessItems = [
+      { title: "Rede", path: "/network", icon: Network },
       { title: "Marketplace", path: "/marketplace", icon: ShoppingCart },
       { title: "Projetos", path: "/projects", icon: FolderOpen },
       { title: "Mentoria", path: "/mentorship", icon: UserCheck },
-      { title: "Fóruns", path: "/forums", icon: MessageCircle },
-      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
-      { title: "Conhecimento BR", path: "/conhecimento-brasileiro", icon: Globe },
     ];
 
-    // Adicionar Integrações apenas para administradores
+    const knowledgeItems = [
+      { title: "Fóruns", path: "/forums", icon: MessageCircle },
+      { title: "Conhecimento", path: "/knowledge", icon: BookOpen },
+      { title: "ANVISA Legis", path: "/anvisa-legis", icon: Shield },
+      { title: "APIs Globais", path: "/apis", icon: Globe },
+    ];
+
+    let allItems = [...coreItems, ...businessItems, ...knowledgeItems];
+
+    // Adicionar funcionalidades especiais baseadas no tipo de usuário
     if (profile?.user_type === 'admin') {
-      baseItems.push({ title: "Integrações", path: "/integrations", icon: Plug });
+      allItems.push({ title: "Integrações", path: "/integrations", icon: Plug });
     }
 
-    return baseItems;
+    return allItems;
   };
 
   const navigationItems = user ? getPrivateNavigationItems() : publicNavigationItems;
@@ -115,25 +126,47 @@ const UnifiedHeader = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Compact for Better Space */}
           <nav className="hidden lg:flex items-center space-x-1">
-            {navigationItems.map((item) => {
+            {navigationItems.slice(0, 6).map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-md text-xs font-medium transition-colors ${
                     isActive
                       ? "text-primary bg-primary-50 border border-primary-200"
                       : "text-gray-700 hover:text-primary hover:bg-gray-50"
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
+                  <item.icon className="h-3 w-3" />
+                  <span className="hidden xl:inline">{item.title}</span>
                 </Link>
               );
             })}
+            
+            {/* More Menu for Additional Items */}
+            {user && navigationItems.length > 6 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs">
+                    <ChevronDown className="h-3 w-3" />
+                    <span className="hidden xl:inline ml-1">Mais</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {navigationItems.slice(6).map((item) => (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="cursor-pointer flex items-center">
+                        <item.icon className="h-4 w-4 mr-2" />
+                        {item.title}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </nav>
 
           {/* Right Side Controls */}

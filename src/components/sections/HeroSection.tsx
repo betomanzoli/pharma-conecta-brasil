@@ -95,12 +95,16 @@ const HeroSection = () => {
 
           {/* Mobile-optimized CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 justify-center px-4">
-            <Button size="lg" className="bg-primary hover:bg-primary-600 px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold">
-              Participar do Piloto Gratuito
-              <ArrowRight className="ml-2 h-4 w-4 lg:h-5 lg:w-5" />
+            <Button size="lg" className="bg-primary hover:bg-primary-600 px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold" asChild>
+              <a href="/auth">
+                Participar do Piloto Gratuito
+                <ArrowRight className="ml-2 h-4 w-4 lg:h-5 lg:w-5" />
+              </a>
             </Button>
-            <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg">
-              Ajudar a Validar o Conceito
+            <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary-50 px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg" asChild>
+              <a href="/apis">
+                Ver APIs e Integrações Reais
+              </a>
             </Button>
           </div>
           

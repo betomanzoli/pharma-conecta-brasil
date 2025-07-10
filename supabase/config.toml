@@ -24,3 +24,33 @@ verify_jwt = false
 
 [functions.fda-api]
 verify_jwt = false
+
+[functions.ai-matching-enhanced]
+verify_jwt = true
+
+[functions.roi-calculator-enhanced]
+verify_jwt = true
+
+[functions.system-monitor-enhanced]
+verify_jwt = true
+
+[functions.advanced-analytics]
+verify_jwt = true
+
+[functions.real-time-alerts]
+verify_jwt = true
+
+[functions.report-system]
+verify_jwt = true
+
+[functions.pics-api]
+verify_jwt = false
+
+[functions.ich-guidelines]
+verify_jwt = false
+
+[functions.ema-guidelines]
+verify_jwt = false
+
+[functions.who-guidelines]
+verify_jwt = false
