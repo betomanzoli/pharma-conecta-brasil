@@ -132,8 +132,9 @@ function App() {
                 <Route path="/conhecimento-brasileiro" element={<ConhecimentoBrasileiro />} />
                 
                 {/* API Integration Routes */}
-                <Route path="/anvisa-legis" element={<AnvisaLegis />} />
-                <Route path="/apis" element={<AllApisDashboard />} />
+          <Route path="/anvisa-legis" element={<AnvisaLegis />} />
+          <Route path="/apis" element={<AllApisDashboard />} />
+          <Route path="/ai" element={<AIPage />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />

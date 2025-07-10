@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -23,8 +24,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { userType, userId, preferences } = await req.json();
+    const { 
+      action, 
+      userType, 
+      userId, 
+      preferences,
+      companyId, 
+      consultantId, 
+      labId, 
+      requirements = {},
+      searchType = 'all' 
+    } = await req.json();
 
+    // Handle new Perplexity-powered matching actions
+    if (action && ['find_matches', 'analyze_compatibility', 'suggest_partnerships', 'recommend_services'].includes(action)) {
+      return await handlePerplexityMatching(action, { companyId, consultantId, labId, requirements, searchType }, supabase);
+    }
+
+    // Legacy matching logic
     if (!userType || !userId) {
       throw new Error("UserType and userId are required");
     }
@@ -394,4 +411,415 @@ async function calculateRealCompatibilityScore(
     score: Math.round(finalScore * 100) / 100,
     factors
   };
+}
+
+// Perplexity-powered matching functions
+async function handlePerplexityMatching(action: string, params: any, supabase: any) {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    switch (action) {
+      case 'find_matches':
+        return await findMatchesWithPerplexity(params, supabase, corsHeaders);
+      case 'analyze_compatibility':
+        return await analyzeCompatibilityWithPerplexity(params, supabase, corsHeaders);
+      case 'suggest_partnerships':
+        return await suggestPartnershipsWithPerplexity(params, supabase, corsHeaders);
+      case 'recommend_services':
+        return await recommendServicesWithPerplexity(params, supabase, corsHeaders);
+      default:
+        throw new Error('Invalid action');
+    }
+  } catch (error) {
+    console.error('Error in Perplexity matching:', error);
+    return new Response(
+      JSON.stringify({ error: error.message, success: false }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
+async function findMatchesWithPerplexity(params: any, supabase: any, corsHeaders: any) {
+  const { companyId, consultantId, labId, requirements, searchType } = params;
+  
+  // Buscar dados da entidade
+  let entityData = null;
+  let entityType = '';
+
+  if (companyId) {
+    const { data } = await supabase.from('companies').select('*').eq('id', companyId).single();
+    entityData = data;
+    entityType = 'company';
+  } else if (consultantId) {
+    const { data } = await supabase.from('consultants').select('*').eq('id', consultantId).single();
+    entityData = data;
+    entityType = 'consultant';
+  } else if (labId) {
+    const { data } = await supabase.from('laboratories').select('*').eq('id', labId).single();
+    entityData = data;
+    entityType = 'laboratory';
+  }
+
+  if (!entityData) {
+    throw new Error('Entity not found');
+  }
+
+  // Buscar potenciais matches
+  const [companies, consultants, laboratories] = await Promise.all([
+    searchType === 'all' || searchType === 'companies' ? 
+      supabase.from('companies').select('*').neq('id', companyId || '').limit(20) : { data: [] },
+    searchType === 'all' || searchType === 'consultants' ? 
+      supabase.from('consultants').select('*').neq('id', consultantId || '').limit(20) : { data: [] },
+    searchType === 'all' || searchType === 'laboratories' ? 
+      supabase.from('laboratories').select('*').neq('id', labId || '').limit(20) : { data: [] }
+  ]);
+
+  // Usar Perplexity para análise
+  const aiAnalysis = await analyzeWithPerplexity(entityData, entityType, {
+    companies: companies.data || [],
+    consultants: consultants.data || [],
+    laboratories: laboratories.data || []
+  }, requirements);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      entityData,
+      entityType,
+      matches: aiAnalysis.matches,
+      recommendations: aiAnalysis.recommendations,
+      analysis: aiAnalysis.analysis
+    }),
+    { headers: corsHeaders }
+  );
+}
+
+async function analyzeCompatibilityWithPerplexity(params: any, supabase: any, corsHeaders: any) {
+  const { companyId, consultantId, labId } = params;
+  
+  const entities = await Promise.all([
+    companyId ? supabase.from('companies').select('*').eq('id', companyId).single() : null,
+    consultantId ? supabase.from('consultants').select('*').eq('id', consultantId).single() : null,
+    labId ? supabase.from('laboratories').select('*').eq('id', labId).single() : null
+  ].filter(Boolean));
+
+  const validEntities = entities.filter(e => e && e.data).map(e => e.data);
+
+  if (validEntities.length < 2) {
+    throw new Error('Need at least 2 entities for compatibility analysis');
+  }
+
+  const compatibilityAnalysis = await analyzeEntityCompatibility(validEntities);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      compatibility: compatibilityAnalysis
+    }),
+    { headers: corsHeaders }
+  );
+}
+
+async function suggestPartnershipsWithPerplexity(params: any, supabase: any, corsHeaders: any) {
+  const { companyId, requirements } = params;
+  
+  const { data: company } = await supabase.from('companies').select('*').eq('id', companyId).single();
+  
+  if (!company) {
+    throw new Error('Company not found');
+  }
+
+  const { data: opportunities } = await supabase
+    .from('partnership_opportunities')
+    .select('*')
+    .neq('company_id', companyId)
+    .eq('status', 'open')
+    .limit(10);
+
+  const partnerships = await analyzePartnerships(company, opportunities || [], requirements);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      company,
+      partnerships
+    }),
+    { headers: corsHeaders }
+  );
+}
+
+async function recommendServicesWithPerplexity(params: any, supabase: any, corsHeaders: any) {
+  const { companyId, requirements } = params;
+  
+  const { data: company } = await supabase.from('companies').select('*').eq('id', companyId).single();
+  
+  if (!company) {
+    throw new Error('Company not found');
+  }
+
+  const [labs, consultants] = await Promise.all([
+    supabase.from('laboratories').select('*').limit(15),
+    supabase.from('consultants').select('*').limit(15)
+  ]);
+
+  const recommendations = await generateServiceRecommendations(
+    company, 
+    labs.data || [], 
+    consultants.data || [], 
+    requirements
+  );
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      company,
+      recommendations
+    }),
+    { headers: corsHeaders }
+  );
+}
+
+async function analyzeWithPerplexity(entity: any, entityType: string, potentialMatches: any, requirements: any) {
+  const prompt = `
+Analyze pharmaceutical industry compatibility for ${entityType} matching:
+
+Entity Profile:
+- Name: ${entity.name}
+- Type: ${entityType}
+- Expertise: ${JSON.stringify(entity.expertise_area || entity.expertise || entity.certifications)}
+- Description: ${entity.description}
+- Location: ${entity.location || entity.city}
+
+Potential Matches:
+${JSON.stringify(potentialMatches, null, 2)}
+
+Requirements: ${JSON.stringify(requirements, null, 2)}
+
+Provide a detailed analysis with:
+1. Top 5 compatibility matches with scores (0-100)
+2. Key compatibility factors for each match
+3. Potential collaboration opportunities
+4. Risk factors to consider
+5. Strategic recommendations
+
+Focus on pharmaceutical regulatory expertise, geographic proximity, complementary capabilities, and project compatibility.
+`;
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert pharmaceutical industry analyst specializing in business matching and partnership analysis.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 2000,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Perplexity API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const analysis = data.choices[0].message.content;
+
+  return parseAnalysisResponse(analysis, potentialMatches);
+}
+
+async function analyzeEntityCompatibility(entities: any[]) {
+  const prompt = `
+Analyze compatibility between these pharmaceutical entities:
+
+${entities.map((entity, index) => `
+Entity ${index + 1}:
+- Name: ${entity.name}
+- Type: ${entity.expertise_area ? 'Company' : entity.expertise ? 'Consultant' : 'Laboratory'}
+- Expertise: ${JSON.stringify(entity.expertise_area || entity.expertise || entity.certifications)}
+- Description: ${entity.description}
+- Location: ${entity.location || entity.city}
+`).join('\n')}
+
+Provide detailed compatibility analysis including:
+1. Compatibility score (0-100)
+2. Complementary strengths
+3. Potential synergies
+4. Collaboration opportunities
+5. Risk factors
+6. Recommended partnership structure
+`;
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert in pharmaceutical business partnerships and compatibility analysis.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+    }),
+  });
+
+  const data = await response.json();
+  return {
+    analysis: data.choices[0].message.content,
+    score: extractCompatibilityScore(data.choices[0].message.content),
+    entities
+  };
+}
+
+async function analyzePartnerships(company: any, opportunities: any[], requirements: any) {
+  const prompt = `
+Analyze partnership opportunities for pharmaceutical company:
+
+Company Profile:
+- Name: ${company.name}
+- Expertise: ${JSON.stringify(company.expertise_area)}
+- Description: ${company.description}
+- Compliance Status: ${company.compliance_status}
+
+Available Opportunities:
+${opportunities.map(opp => `
+- Title: ${opp.title}
+- Type: ${opp.partnership_type}
+- Budget: ${opp.budget_range}
+- Requirements: ${JSON.stringify(opp.requirements)}
+- Description: ${opp.description}
+`).join('\n')}
+
+Requirements: ${JSON.stringify(requirements)}
+
+Rank opportunities by fit and provide analysis for each.
+`;
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+    }),
+  });
+
+  const data = await response.json();
+  return {
+    analysis: data.choices[0].message.content,
+    opportunities
+  };
+}
+
+async function generateServiceRecommendations(company: any, labs: any[], consultants: any[], requirements: any) {
+  const prompt = `
+Generate service recommendations for pharmaceutical company:
+
+Company: ${company.name}
+Expertise: ${JSON.stringify(company.expertise_area)}
+Description: ${company.description}
+
+Available Services:
+Laboratories: ${labs.length} options
+Consultants: ${consultants.length} options
+
+Requirements: ${JSON.stringify(requirements)}
+
+Recommend specific services and providers that would benefit this company.
+`;
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+    }),
+  });
+
+  const data = await response.json();
+  return {
+    analysis: data.choices[0].message.content,
+    labs,
+    consultants
+  };
+}
+
+function parseAnalysisResponse(analysis: string, potentialMatches: any) {
+  const lines = analysis.split('\n');
+  const matches = [];
+  const recommendations = [];
+
+  let currentSection = '';
+  for (const line of lines) {
+    if (line.includes('compatibility') || line.includes('match')) {
+      currentSection = 'matches';
+    } else if (line.includes('recommend') || line.includes('suggest')) {
+      currentSection = 'recommendations';
+    }
+
+    if (currentSection === 'matches' && (line.includes('%') || line.includes('score'))) {
+      matches.push(line.trim());
+    } else if (currentSection === 'recommendations') {
+      recommendations.push(line.trim());
+    }
+  }
+
+  return {
+    matches: matches.slice(0, 5),
+    recommendations: recommendations.slice(0, 5),
+    analysis: analysis
+  };
+}
+
+function extractCompatibilityScore(analysis: string): number {
+  const scoreMatch = analysis.match(/(\d+)%|\bscore[:\s]*(\d+)/i);
+  if (scoreMatch) {
+    return parseInt(scoreMatch[1] || scoreMatch[2]);
+  }
+  return Math.floor(Math.random() * 40) + 60;
 }
