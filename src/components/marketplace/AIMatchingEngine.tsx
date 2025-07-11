@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Users, TrendingUp, CheckCircle } from 'lucide-react';
+import { Brain, Users, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -172,16 +172,56 @@ const AIMatchingEngine = () => {
 
   const acceptMatch = async (matchId: string) => {
     try {
-      // Simular aceitar match
+      // Registrar feedback positivo para aprendizado
+      await supabase.from('performance_metrics').insert({
+        metric_name: 'ai_matching_feedback',
+        metric_value: 1, // Aceito = 1
+        metric_unit: 'feedback',
+        tags: {
+          match_id: matchId,
+          user_id: user?.id,
+          feedback_type: 'accepted',
+          timestamp: new Date().toISOString()
+        }
+      });
+
       toast({
-        title: "Match aceito!",
-        description: "O provedor foi notificado e entrará em contato em breve",
+        title: "Match aceito! 🎉",
+        description: "O provedor foi notificado e entrará em contato em breve. Seu feedback melhora nosso AI!",
       });
       
       // Remover match da lista
       setMatches(prev => prev.filter(m => m.id !== matchId));
     } catch (error) {
       console.error('Error accepting match:', error);
+    }
+  };
+
+  const rejectMatch = async (matchId: string, reason?: string) => {
+    try {
+      // Registrar feedback negativo para aprendizado
+      await supabase.from('performance_metrics').insert({
+        metric_name: 'ai_matching_feedback',
+        metric_value: 0, // Rejeitado = 0
+        metric_unit: 'feedback',
+        tags: {
+          match_id: matchId,
+          user_id: user?.id,
+          feedback_type: 'rejected',
+          rejection_reason: reason || 'not_specified',
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      toast({
+        title: "Feedback registrado",
+        description: "Obrigado! Seu feedback nos ajuda a melhorar os matches futuros.",
+      });
+      
+      // Remover match da lista
+      setMatches(prev => prev.filter(m => m.id !== matchId));
+    } catch (error) {
+      console.error('Error rejecting match:', error);
     }
   };
 
@@ -250,13 +290,23 @@ const AIMatchingEngine = () => {
                       </Badge>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => acceptMatch(match.id)}
-                    className="flex items-center space-x-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Aceitar Match</span>
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => acceptMatch(match.id)}
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Aceitar</span>
+                    </Button>
+                    <Button
+                      onClick={() => rejectMatch(match.id)}
+                      variant="outline"
+                      className="flex items-center space-x-2"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      <span>Rejeitar</span>
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
