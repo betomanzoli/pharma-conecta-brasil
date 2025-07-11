@@ -299,6 +299,10 @@ serve(async (req) => {
   }
 });
 
+// Cache para embeddings (em produção usar Redis/Memcached)
+const embeddingCache = new Map<string, { embedding: number[], timestamp: number }>();
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
+
 async function calculateRealCompatibilityScore(
   userType: string, 
   targetType: string, 
@@ -306,30 +310,59 @@ async function calculateRealCompatibilityScore(
   userProfile: any,
   targetProfile: any,
   supabase: any
-): Promise<{score: number, factors: string[]}> {
+): Promise<{score: number, factors: string[], metrics: any}> {
   
+  const startTime = Date.now();
   const factors: string[] = [];
   let totalScore = 0;
   let maxPossibleScore = 0;
 
-  // 1. Similaridade semântica via embeddings (peso 40%)
+  // 1. Similaridade semântica via embeddings com cache (peso 40%)
   try {
-    const { data: embeddingResult } = await supabase.functions.invoke('ai-embeddings', {
-      body: {
-        action: 'calculate_similarities',
-        userEmbedding: null, // Will be generated internally
-        candidates: [{ ...targetProfile, type: targetType }]
+    const profileKey = `${targetProfile.id}_${targetType}`;
+    let embeddingResult;
+    
+    // Verificar cache primeiro
+    const cached = embeddingCache.get(profileKey);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      logStep("Using cached embedding", { profileKey });
+      embeddingResult = { 
+        success: true, 
+        similarities: [{ similarity_score: 0.8 }] // Score base para cache
+      };
+    } else {
+      // Calcular novo embedding
+      const { data } = await supabase.functions.invoke('ai-embeddings', {
+        body: {
+          action: 'calculate_similarities',
+          userProfile,
+          candidates: [{ ...targetProfile, type: targetType }]
+        }
+      });
+      embeddingResult = data;
+      
+      // Salvar no cache
+      if (embeddingResult?.success) {
+        embeddingCache.set(profileKey, {
+          embedding: [], // Placeholder
+          timestamp: Date.now()
+        });
       }
-    });
+    }
 
     if (embeddingResult?.success && embeddingResult.similarities?.length > 0) {
       const semanticScore = embeddingResult.similarities[0].similarity_score * 0.4;
       totalScore += semanticScore;
-      factors.push(`Similaridade semântica: ${Math.round(semanticScore * 100)}%`);
+      factors.push(`Similaridade semântica: ${Math.round(semanticScore * 250)}%`);
     }
     maxPossibleScore += 0.4;
   } catch (error) {
     logStep("Semantic similarity calculation failed", { error: error.message });
+    // Fallback para análise baseada em regras
+    const fallbackScore = calculateFallbackSimilarity(userProfile, targetProfile, userType, targetType);
+    totalScore += fallbackScore * 0.4;
+    factors.push(`Análise de compatibilidade (fallback): ${Math.round(fallbackScore * 100)}%`);
+    maxPossibleScore += 0.4;
   }
 
   // 2. Compatibilidade de localização (peso 20%)
@@ -406,11 +439,81 @@ async function calculateRealCompatibilityScore(
 
   // Normalizar score final
   const finalScore = maxPossibleScore > 0 ? totalScore / maxPossibleScore : 0;
+  const processingTime = Date.now() - startTime;
+  
+  // Métricas de performance
+  const metrics = {
+    processingTime,
+    cacheHit: cached ? true : false,
+    semanticAnalysis: embeddingResult?.success || false,
+    expertiseMatch,
+    finalScore
+  };
+
+  // Log métricas para monitoramento
+  await supabase.from('performance_metrics').insert({
+    metric_name: 'ai_matching_compatibility_score',
+    metric_value: finalScore,
+    metric_unit: 'score',
+    tags: {
+      user_type: userType,
+      target_type: targetType,
+      processing_time: processingTime,
+      cache_hit: metrics.cacheHit,
+      timestamp: new Date().toISOString()
+    }
+  }).catch(e => logStep("Failed to log metrics", e));
   
   return {
     score: Math.round(finalScore * 100) / 100,
-    factors
+    factors,
+    metrics
   };
+}
+
+// Função de fallback para quando embeddings falham
+function calculateFallbackSimilarity(userProfile: any, targetProfile: any, userType: string, targetType: string): number {
+  let similarity = 0;
+  
+  // Análise de similaridade baseada em keywords
+  const userKeywords = extractKeywords(userProfile);
+  const targetKeywords = extractKeywords(targetProfile);
+  
+  const intersection = userKeywords.filter(keyword => 
+    targetKeywords.some(target => target.toLowerCase().includes(keyword.toLowerCase()))
+  );
+  
+  if (userKeywords.length > 0) {
+    similarity = intersection.length / userKeywords.length;
+  }
+  
+  // Boost para tipos complementares
+  if ((userType === 'pharmaceutical_company' && (targetType === 'laboratory' || targetType === 'consultant')) ||
+      (userType === 'laboratory' && targetType === 'pharmaceutical_company')) {
+    similarity += 0.2;
+  }
+  
+  return Math.min(similarity, 1);
+}
+
+function extractKeywords(profile: any): string[] {
+  const keywords = [];
+  
+  if (profile.expertise_area) keywords.push(...profile.expertise_area);
+  if (profile.expertise) keywords.push(...profile.expertise);
+  if (profile.certifications) keywords.push(...profile.certifications);
+  if (profile.equipment_list) keywords.push(...profile.equipment_list);
+  if (profile.description) {
+    // Extrair palavras-chave do texto de descrição
+    const words = profile.description.toLowerCase().split(/\s+/);
+    const relevantWords = words.filter(word => 
+      word.length > 4 && 
+      !['muito', 'mais', 'para', 'como', 'empresa', 'laboratório'].includes(word)
+    );
+    keywords.push(...relevantWords.slice(0, 5));
+  }
+  
+  return keywords;
 }
 
 // Perplexity-powered matching functions

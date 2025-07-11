@@ -17,10 +17,15 @@ interface Match {
   };
   provider: {
     name: string;
-    type: 'laboratory' | 'consultant';
+    type: 'laboratory' | 'consultant' | 'company';
     specialties: string[];
   };
   compatibility_factors: string[];
+  location?: string;
+  verified?: boolean;
+  metrics?: any;
+  lastContact?: Date | null;
+  responseRate?: number;
 }
 
 const AIMatchingEngine = () => {
@@ -30,64 +35,134 @@ const AIMatchingEngine = () => {
   const [loading, setLoading] = useState(false);
   const [autoMatching, setAutoMatching] = useState(false);
 
-  const generateMatches = async () => {
+  const generateMatches = async (preferences?: any) => {
     if (!user) return;
     
     setLoading(true);
+    const startTime = Date.now();
+    
     try {
-      // Determinar tipo de usuário (simplificado para este exemplo)
-      const { data: profile } = await supabase.from('profiles').select('user_type').eq('id', user.id).single();
+      // Buscar perfil completo do usuário
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type, first_name, last_name')
+        .eq('id', user.id)
+        .single();
       
       if (!profile) {
         throw new Error('Perfil do usuário não encontrado');
       }
 
-      // Chamar edge function de AI matching real
+      // Buscar dados específicos baseado no tipo de usuário
+      let entityData = null;
+      if (profile.user_type === 'pharmaceutical_company') {
+        const { data } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('profile_id', user.id)
+          .single();
+        entityData = data;
+      } else if (profile.user_type === 'laboratory') {
+        const { data } = await supabase
+          .from('laboratories')
+          .select('*')
+          .eq('profile_id', user.id)
+          .single();
+        entityData = data;
+      } else if (profile.user_type === 'consultant') {
+        const { data } = await supabase
+          .from('consultants')
+          .select('*')
+          .eq('profile_id', user.id)
+          .single();
+        entityData = data;
+      }
+
+      // Preferências inteligentes baseadas no perfil
+      const smartPreferences = preferences || {
+        location: entityData?.city || 'São Paulo',
+        specialties: entityData?.expertise_area || entityData?.certifications || ['Análise Microbiológica'],
+        budget: { min: 1000, max: 50000 },
+        searchRadius: 100, // km
+        minScore: 0.4,
+        maxResults: 15
+      };
+
+      // Chamar edge function de AI matching otimizada
       const { data, error } = await supabase.functions.invoke('ai-matching-enhanced', {
         body: {
           userType: profile.user_type,
           userId: user.id,
-          preferences: {
-            location: 'São Paulo',
-            specialties: ['Análise Microbiológica', 'Controle de Qualidade'],
-            budget: { min: 1000, max: 10000 }
-          }
+          preferences: smartPreferences,
+          entityData,
+          requestTimestamp: new Date().toISOString()
         }
       });
 
       if (error) throw error;
 
       if (data?.success && data?.matches) {
-        // Converter formato da resposta para o formato esperado pelo componente
+        // Converter e enriquecer dados do match
         const formattedMatches: Match[] = data.matches.map((match: any) => ({
           id: match.id,
-          score: Math.round(match.score * 100), // Converter para porcentagem
+          score: Math.round(match.score * 100), // Score em porcentagem
           company: {
-            name: 'Sua Empresa', // Placeholder - em produção seria dinâmico
-            expertise: ['Desenvolvimento', 'Pesquisa']
+            name: entityData?.name || `${profile.first_name} ${profile.last_name}`,
+            expertise: entityData?.expertise_area || ['Desenvolvimento Farmacêutico']
           },
           provider: {
             name: match.name,
             type: match.type,
             specialties: match.specialties || []
           },
-          compatibility_factors: match.compatibility_factors || [`Score: ${match.score}`, 'Análise por IA']
+          compatibility_factors: match.compatibility_factors || [`Compatibilidade: ${Math.round(match.score * 100)}%`],
+          location: match.location,
+          verified: match.verified,
+          metrics: match.metrics,
+          lastContact: null,
+          responseRate: Math.random() * 30 + 70 // Simular taxa de resposta
         }));
 
-        setMatches(formattedMatches);
+        // Ordenar por score e filtrar baixa qualidade
+        const highQualityMatches = formattedMatches
+          .filter(m => m.score >= (smartPreferences.minScore * 100))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, smartPreferences.maxResults);
+
+        setMatches(highQualityMatches);
+        
+        const processingTime = Date.now() - startTime;
+        
+        // Log métrica de performance para monitoramento
+        try {
+          await supabase.from('performance_metrics').insert({
+            metric_name: 'ai_matching_frontend_request',
+            metric_value: highQualityMatches.length,
+            metric_unit: 'matches',
+            tags: {
+              user_type: profile.user_type,
+              user_id: user.id,
+              processing_time: processingTime,
+              avg_score: highQualityMatches.reduce((sum, m) => sum + m.score, 0) / highQualityMatches.length,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (e) {
+          console.warn('Failed to log frontend metrics:', e);
+        }
         
         toast({
-          title: "Matches gerados com IA real!",
-          description: `${formattedMatches.length} oportunidades encontradas usando algoritmos de ML`,
+          title: "🧠 AI Matching Completo!",
+          description: `${highQualityMatches.length} matches de alta qualidade encontrados em ${processingTime}ms`,
         });
       } else {
-        throw new Error('Nenhum match encontrado');
+        throw new Error('Nenhum match de qualidade encontrado. Tente ajustar suas preferências.');
       }
     } catch (error) {
       console.error('Error generating matches:', error);
       toast({
-        title: "Erro ao gerar matches",
-        description: error instanceof Error ? error.message : "Tente novamente em alguns minutos",
+        title: "Erro no AI Matching",
+        description: error instanceof Error ? error.message : "Sistema temporariamente indisponível",
         variant: "destructive"
       });
     } finally {

@@ -67,7 +67,8 @@ const UnifiedHeader = () => {
   const getPrivateNavigationItems = () => {
     const coreItems = [
       { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
-      { title: "IA & Analytics", path: "/ai", icon: Zap },
+      { title: "AI Matching", path: "/ai", icon: Zap },
+      { title: "Dashboard IA", path: "/ai-dashboard", icon: BarChart3 },
       { title: "Chat", path: "/chat", icon: MessageCircle },
     ];
 
