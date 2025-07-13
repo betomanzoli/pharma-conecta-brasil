@@ -84,16 +84,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid errors when no profile exists
 
       if (error) {
         console.error('Error fetching profile:', error);
+        // Don't show error toast here - profile might not exist yet for new users
         return;
       }
 
-      // Type assertion to ensure user_type is properly typed
-      const profileData = data as Profile;
-      setProfile(profileData);
+      if (data) {
+        // Type assertion to ensure user_type is properly typed
+        const profileData = data as Profile;
+        setProfile(profileData);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

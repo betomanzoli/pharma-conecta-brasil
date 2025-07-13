@@ -1,58 +1,60 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
-import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import Dashboard from '@/pages/Dashboard';
-import EnhancedDashboard from '@/pages/EnhancedDashboard';
-import Profile from '@/pages/Profile';
-import Regulatory from '@/pages/Regulatory';
-import NotificationsPage from '@/pages/NotificationsPage';
-import Network from '@/pages/Network';
-import Marketplace from '@/pages/Marketplace';
-import Projects from '@/pages/Projects';
-import MentorshipHub from '@/pages/MentorshipHub';
-import Forums from '@/pages/Forums';
-import ForumTopic from '@/pages/ForumTopic';
-import KnowledgeLibrary from '@/pages/KnowledgeLibrary';
-import IntegrationsPage from '@/pages/IntegrationsPage';
-import Analytics from '@/pages/Analytics';
-import Reports from '@/pages/Reports';
-import ReportsPage from '@/pages/ReportsPage';
-import Subscription from '@/pages/Subscription';
-import Companies from '@/pages/Companies';
-import Laboratories from '@/pages/Laboratories';
-import Consultants from '@/pages/Consultants';
-import Suppliers from '@/pages/Suppliers';
-import Careers from '@/pages/Careers';
-import Events from '@/pages/Events';
-import Privacy from '@/pages/Privacy';
-import Terms from '@/pages/Terms';
-import About from '@/pages/About';
-import Contact from '@/pages/Contact';
-import NotFound from '@/pages/NotFound';
-import ChatPage from '@/pages/ChatPage';
-import PaymentsPage from '@/pages/PaymentsPage';
-import AdvancedAnalyticsPage from '@/pages/AdvancedAnalyticsPage';
-import PlatformDemoPage from '@/pages/PlatformDemo';
-import SearchLaboratories from '@/pages/SearchLaboratories';
-import SearchConsultants from '@/pages/SearchConsultants';
-import ANVISAAlerts from '@/pages/ANVISAAlerts';
-import Opportunities from '@/pages/Opportunities';
-import AIPage from '@/pages/AIPage';
-import AdminPage from '@/pages/AdminPage';
-import AIDashboardPage from '@/pages/AIDashboardPage';
-import SearchPage from '@/pages/SearchPage';
-import DashboardCompany from '@/pages/DashboardCompany';
-import DashboardConsultant from '@/pages/DashboardConsultant';
-import DashboardLaboratory from '@/pages/DashboardLaboratory';
-import AnalyticsPage from '@/pages/AnalyticsPage';
-import SubscriptionPage from '@/pages/SubscriptionPage';
-import ConhecimentoBrasileiro from '@/pages/ConhecimentoBrasileiro';
-import AnvisaLegis from '@/pages/AnvisaLegis';
-import AllApisDashboard from '@/pages/AllApisDashboard';
+// Lazy load pages for better performance
+const Index = lazy(() => import('@/pages/Index'));
+const Auth = lazy(() => import('@/pages/Auth'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const EnhancedDashboard = lazy(() => import('@/pages/EnhancedDashboard'));
+const Profile = lazy(() => import('@/pages/Profile'));
+const Regulatory = lazy(() => import('@/pages/Regulatory'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const Network = lazy(() => import('@/pages/Network'));
+const Marketplace = lazy(() => import('@/pages/Marketplace'));
+const Projects = lazy(() => import('@/pages/Projects'));
+const MentorshipHub = lazy(() => import('@/pages/MentorshipHub'));
+const Forums = lazy(() => import('@/pages/Forums'));
+const ForumTopic = lazy(() => import('@/pages/ForumTopic'));
+const KnowledgeLibrary = lazy(() => import('@/pages/KnowledgeLibrary'));
+const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage'));
+const Analytics = lazy(() => import('@/pages/Analytics'));
+const Reports = lazy(() => import('@/pages/Reports'));
+const ReportsPage = lazy(() => import('@/pages/ReportsPage'));
+const Subscription = lazy(() => import('@/pages/Subscription'));
+const Companies = lazy(() => import('@/pages/Companies'));
+const Laboratories = lazy(() => import('@/pages/Laboratories'));
+const Consultants = lazy(() => import('@/pages/Consultants'));
+const Suppliers = lazy(() => import('@/pages/Suppliers'));
+const Careers = lazy(() => import('@/pages/Careers'));
+const Events = lazy(() => import('@/pages/Events'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
+const Terms = lazy(() => import('@/pages/Terms'));
+const About = lazy(() => import('@/pages/About'));
+const Contact = lazy(() => import('@/pages/Contact'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
+const PaymentsPage = lazy(() => import('@/pages/PaymentsPage'));
+const AdvancedAnalyticsPage = lazy(() => import('@/pages/AdvancedAnalyticsPage'));
+const PlatformDemoPage = lazy(() => import('@/pages/PlatformDemo'));
+const SearchLaboratories = lazy(() => import('@/pages/SearchLaboratories'));
+const SearchConsultants = lazy(() => import('@/pages/SearchConsultants'));
+const ANVISAAlerts = lazy(() => import('@/pages/ANVISAAlerts'));
+const Opportunities = lazy(() => import('@/pages/Opportunities'));
+const AIPage = lazy(() => import('@/pages/AIPage'));
+const AdminPage = lazy(() => import('@/pages/AdminPage'));
+const AIDashboardPage = lazy(() => import('@/pages/AIDashboardPage'));
+const SearchPage = lazy(() => import('@/pages/SearchPage'));
+const DashboardCompany = lazy(() => import('@/pages/DashboardCompany'));
+const DashboardConsultant = lazy(() => import('@/pages/DashboardConsultant'));
+const DashboardLaboratory = lazy(() => import('@/pages/DashboardLaboratory'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const SubscriptionPage = lazy(() => import('@/pages/SubscriptionPage'));
+const ConhecimentoBrasileiro = lazy(() => import('@/pages/ConhecimentoBrasileiro'));
+const AnvisaLegis = lazy(() => import('@/pages/AnvisaLegis'));
+const AllApisDashboard = lazy(() => import('@/pages/AllApisDashboard'));
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
@@ -67,17 +69,25 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationProvider>
-          <Toaster />
-          <NotificationContainer />
-          <PushNotificationPrompt />
-          <PWAInstallPrompt />
-          <OfflineIndicator />
-          <UpdatePrompt />
-          <Suspense fallback={<div>Loading...</div>}>
-            <Router>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>
+            <Toaster />
+            <NotificationContainer />
+            <PushNotificationPrompt />
+            <PWAInstallPrompt />
+            <OfflineIndicator />
+            <UpdatePrompt />
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-pulse">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full mb-4"></div>
+                  <p className="text-muted-foreground">Carregando...</p>
+                </div>
+              </div>
+            }>
+              <Router>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
@@ -141,11 +151,12 @@ function App() {
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Router>
-          </Suspense>
-        </NotificationProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+              </Router>
+            </Suspense>
+          </NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
