@@ -1,7 +1,7 @@
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
+import NotificationCenterReal from '@/components/notifications/NotificationCenterReal';
 import SystemAlerts from '@/components/notifications/SystemAlerts';
 import TestNotificationButton from '@/components/notifications/TestNotificationButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,7 +38,7 @@ const NotificationsPage = () => {
             </TabsList>
 
             <TabsContent value="notifications" className="space-y-6">
-              <NotificationCenter />
+              <NotificationCenterReal />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-6">

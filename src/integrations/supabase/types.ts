@@ -1880,6 +1880,45 @@ export type Database = {
           },
         ]
       }
+      match_feedback: {
+        Row: {
+          created_at: string
+          feedback_type: string
+          id: string
+          match_id: string
+          match_score: number | null
+          provider_name: string | null
+          provider_type: string | null
+          rejection_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_type: string
+          id?: string
+          match_id: string
+          match_score?: number | null
+          provider_name?: string | null
+          provider_type?: string | null
+          rejection_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          match_id?: string
+          match_score?: number | null
+          provider_name?: string | null
+          provider_type?: string | null
+          rejection_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentor_availability: {
         Row: {
           created_at: string

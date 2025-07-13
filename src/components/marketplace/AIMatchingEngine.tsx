@@ -7,6 +7,7 @@ import { Brain, Users, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { createMatchFeedbackNotification } from '@/utils/notificationSeeder';
 
 interface Match {
   id: string;
@@ -172,10 +173,27 @@ const AIMatchingEngine = () => {
 
   const acceptMatch = async (matchId: string) => {
     try {
-      // Registrar feedback positivo para aprendizado
+      const matchData = matches.find(m => m.id === matchId);
+      
+      // Registrar feedback na nova tabela
+      const feedbackData = {
+        user_id: user?.id,
+        match_id: matchId,
+        feedback_type: 'accepted',
+        provider_name: matchData?.provider.name,
+        provider_type: matchData?.provider.type,
+        match_score: matchData?.score
+      };
+      
+      await supabase.from('match_feedback').insert(feedbackData);
+      
+      // Criar notificação de feedback
+      await createMatchFeedbackNotification(user?.id!, feedbackData);
+
+      // Também manter log em performance_metrics para continuidade
       await supabase.from('performance_metrics').insert({
         metric_name: 'ai_matching_feedback',
-        metric_value: 1, // Aceito = 1
+        metric_value: 1,
         metric_unit: 'feedback',
         tags: {
           match_id: matchId,
@@ -190,19 +208,41 @@ const AIMatchingEngine = () => {
         description: "O provedor foi notificado e entrará em contato em breve. Seu feedback melhora nosso AI!",
       });
       
-      // Remover match da lista
       setMatches(prev => prev.filter(m => m.id !== matchId));
     } catch (error) {
       console.error('Error accepting match:', error);
+      toast({
+        title: "Erro ao aceitar match",
+        description: "Não foi possível processar sua resposta. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
   const rejectMatch = async (matchId: string, reason?: string) => {
     try {
-      // Registrar feedback negativo para aprendizado
+      const matchData = matches.find(m => m.id === matchId);
+      
+      // Registrar feedback na nova tabela
+      const feedbackData = {
+        user_id: user?.id,
+        match_id: matchId,
+        feedback_type: 'rejected',
+        rejection_reason: reason || 'not_specified',
+        provider_name: matchData?.provider.name,
+        provider_type: matchData?.provider.type,
+        match_score: matchData?.score
+      };
+      
+      await supabase.from('match_feedback').insert(feedbackData);
+      
+      // Criar notificação de feedback
+      await createMatchFeedbackNotification(user?.id!, feedbackData);
+
+      // Também manter log em performance_metrics para continuidade
       await supabase.from('performance_metrics').insert({
         metric_name: 'ai_matching_feedback',
-        metric_value: 0, // Rejeitado = 0
+        metric_value: 0,
         metric_unit: 'feedback',
         tags: {
           match_id: matchId,
@@ -218,10 +258,14 @@ const AIMatchingEngine = () => {
         description: "Obrigado! Seu feedback nos ajuda a melhorar os matches futuros.",
       });
       
-      // Remover match da lista
       setMatches(prev => prev.filter(m => m.id !== matchId));
     } catch (error) {
       console.error('Error rejecting match:', error);
+      toast({
+        title: "Erro ao registrar feedback",
+        description: "Não foi possível processar sua resposta. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
