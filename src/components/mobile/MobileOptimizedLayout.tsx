@@ -107,7 +107,14 @@ const MobileOptimizedLayout: React.FC<MobileOptimizedLayoutProps> = ({
       </main>
 
       {/* Mobile Navigation */}
-      {isMobile && showNavigation && <MobileNavigation />}
+      {isMobile && showNavigation && (
+        <MobileNavigation 
+          user={null}
+          profile={null}
+          onNavigate={() => {}}
+          onSignOut={() => {}}
+        />
+      )}
     </div>
   );
 

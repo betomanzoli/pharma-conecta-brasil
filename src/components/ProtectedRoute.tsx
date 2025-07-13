@@ -1,33 +1,46 @@
-
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredUserType?: string[];
+  adminOnly?: boolean;
+  allowedUserTypes?: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredUserType 
+  adminOnly = false,
+  allowedUserTypes = []
 }) => {
   const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1565C0]" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-gray-600">Verificando autenticação...</p>
+        </div>
       </div>
     );
   }
 
+  // Redirect to auth if not authenticated
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (requiredUserType && profile && !requiredUserType.includes(profile.user_type)) {
+  // Check admin-only routes
+  if (adminOnly && profile?.user_type !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Check user type restrictions
+  if (allowedUserTypes.length > 0 && profile?.user_type && !allowedUserTypes.includes(profile.user_type)) {
     return <Navigate to="/dashboard" replace />;
   }
 

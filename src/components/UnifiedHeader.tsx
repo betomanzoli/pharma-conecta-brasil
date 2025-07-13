@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/components/ui/logo';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import MobileNavigation from '@/components/mobile/MobileNavigation';
 
 const UnifiedHeader = () => {
   const { user, profile, signOut } = useAuth();
@@ -297,87 +298,12 @@ const UnifiedHeader = () => {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-80 p-0">
-                  <div className="flex flex-col h-full">
-                    {/* Mobile Header */}
-                    <div className="p-6 border-b">
-                      <div className="flex items-center justify-between mb-4">
-                        <Logo size="sm" />
-                        {user && (
-                          <Badge variant="outline" className="text-xs">
-                            <currentUserType.icon className="h-3 w-3 mr-1" />
-                            {currentUserType.label}
-                          </Badge>
-                        )}
-                      </div>
-                      {user && profile && (
-                        <div className="text-sm text-gray-600">
-                          Olá, {profile.first_name}!
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Mobile Navigation */}
-                    <div className="flex-1 p-4">
-                      <nav className="space-y-2">
-                        {navigationItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <Link
-                              key={item.path}
-                              to={item.path}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                isActive
-                                  ? "text-primary bg-primary-50"
-                                  : "text-gray-700 hover:text-primary hover:bg-gray-50"
-                              }`}
-                            >
-                              <item.icon className="h-5 w-5" />
-                              <span>{item.title}</span>
-                            </Link>
-                          );
-                        })}
-                      </nav>
-                    </div>
-
-                    {/* Mobile Footer */}
-                    <div className="p-4 border-t">
-                      {!user ? (
-                        <div className="space-y-2">
-                          <Link to="/auth" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                            <Button variant="outline" className="w-full border-primary text-primary">
-                              Entrar
-                            </Button>
-                          </Link>
-                          <Link to="/auth" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                            <Button className="w-full bg-primary hover:bg-primary-600">
-                              Cadastrar Grátis
-                            </Button>
-                          </Link>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Link to="/profile" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                            <Button variant="outline" className="w-full">
-                              <User className="h-4 w-4 mr-2" />
-                              Meu Perfil
-                            </Button>
-                          </Link>
-                          <Button 
-                            variant="ghost" 
-                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              setMobileMenuOpen(false);
-                              handleSignOut();
-                            }}
-                          >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Sair
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <MobileNavigation 
+                    user={user}
+                    profile={profile}
+                    onNavigate={() => setMobileMenuOpen(false)}
+                    onSignOut={handleSignOut}
+                  />
                 </SheetContent>
               </Sheet>
             </div>

@@ -53,6 +53,7 @@ import SubscriptionPage from '@/pages/SubscriptionPage';
 import ConhecimentoBrasileiro from '@/pages/ConhecimentoBrasileiro';
 import AnvisaLegis from '@/pages/AnvisaLegis';
 import AllApisDashboard from '@/pages/AllApisDashboard';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
 import PushNotificationPrompt from '@/components/notifications/PushNotificationPrompt';
@@ -93,50 +94,49 @@ function App() {
                 <Route path="/contact" element={<Contact />} />
                 
                 {/* Protected Routes */}
-                <Route path="/dashboard" element={<EnhancedDashboard />} />
-                <Route path="/dashboard-legacy" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/network" element={<Network />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/mentorship" element={<MentorshipHub />} />
-                <Route path="/forums" element={<Forums />} />
-                <Route path="/forums/:topicId" element={<ForumTopic />} />
-                <Route path="/knowledge" element={<KnowledgeLibrary />} />
-                <Route path="/regulatory" element={<Regulatory />} />
-                <Route path="/integrations" element={<IntegrationsPage />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/reports-legacy" element={<Reports />} />
-                <Route path="/subscription" element={<Subscription />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/payments" element={<PaymentsPage />} />
-                <Route path="/demo" element={<PlatformDemoPage />} />
+                <Route path="/dashboard" element={<ProtectedRoute><EnhancedDashboard /></ProtectedRoute>} />
+                <Route path="/dashboard-legacy" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
+                <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+                <Route path="/mentorship" element={<ProtectedRoute><MentorshipHub /></ProtectedRoute>} />
+                <Route path="/forums" element={<ProtectedRoute><Forums /></ProtectedRoute>} />
+                <Route path="/forums/:topicId" element={<ProtectedRoute><ForumTopic /></ProtectedRoute>} />
+                <Route path="/knowledge" element={<ProtectedRoute><KnowledgeLibrary /></ProtectedRoute>} />
+                <Route path="/regulatory" element={<ProtectedRoute><Regulatory /></ProtectedRoute>} />
+                <Route path="/integrations" element={<ProtectedRoute adminOnly><IntegrationsPage /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalyticsPage /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+                <Route path="/reports-legacy" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+                <Route path="/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+                <Route path="/demo" element={<ProtectedRoute><PlatformDemoPage /></ProtectedRoute>} />
                 
                 {/* Search Routes */}
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/search/laboratories" element={<SearchLaboratories />} />
-                <Route path="/search/consultants" element={<SearchConsultants />} />
-                <Route path="/anvisa-alerts" element={<ANVISAAlerts />} />
-                <Route path="/opportunities" element={<Opportunities />} />
-                <Route path="/ai" element={<AIPage />} />
-                <Route path="/ai-dashboard" element={<AIDashboardPage />} />
-                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
+                <Route path="/search/laboratories" element={<ProtectedRoute><SearchLaboratories /></ProtectedRoute>} />
+                <Route path="/search/consultants" element={<ProtectedRoute><SearchConsultants /></ProtectedRoute>} />
+                <Route path="/anvisa-alerts" element={<ProtectedRoute><ANVISAAlerts /></ProtectedRoute>} />
+                <Route path="/opportunities" element={<ProtectedRoute><Opportunities /></ProtectedRoute>} />
+                <Route path="/ai" element={<ProtectedRoute><AIPage /></ProtectedRoute>} />
+                <Route path="/ai-dashboard" element={<ProtectedRoute><AIDashboardPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
                 
                 {/* Brazilian Specific Routes */}
-                <Route path="/dashboard/company" element={<DashboardCompany />} />
-                <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
-                <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
-                <Route path="/analytics/brazilian" element={<AnalyticsPage />} />
-                <Route path="/subscription/brazilian" element={<SubscriptionPage />} />
-                <Route path="/conhecimento-brasileiro" element={<ConhecimentoBrasileiro />} />
+                <Route path="/dashboard/company" element={<ProtectedRoute allowedUserTypes={['company']}><DashboardCompany /></ProtectedRoute>} />
+                <Route path="/dashboard/consultant" element={<ProtectedRoute allowedUserTypes={['consultant']}><DashboardConsultant /></ProtectedRoute>} />
+                <Route path="/dashboard/laboratory" element={<ProtectedRoute allowedUserTypes={['laboratory']}><DashboardLaboratory /></ProtectedRoute>} />
+                <Route path="/analytics/brazilian" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+                <Route path="/subscription/brazilian" element={<ProtectedRoute><SubscriptionPage /></ProtectedRoute>} />
+                <Route path="/conhecimento-brasileiro" element={<ProtectedRoute><ConhecimentoBrasileiro /></ProtectedRoute>} />
                 
                 {/* API Integration Routes */}
-          <Route path="/anvisa-legis" element={<AnvisaLegis />} />
-          <Route path="/apis" element={<AllApisDashboard />} />
-          <Route path="/ai" element={<AIPage />} />
+                <Route path="/anvisa-legis" element={<ProtectedRoute><AnvisaLegis /></ProtectedRoute>} />
+                <Route path="/apis" element={<ProtectedRoute><AllApisDashboard /></ProtectedRoute>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
