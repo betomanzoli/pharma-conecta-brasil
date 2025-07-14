@@ -63,6 +63,7 @@ import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import OfflineIndicator from '@/components/pwa/OfflineIndicator';
 import UpdatePrompt from '@/components/pwa/UpdatePrompt';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -73,12 +74,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NotificationProvider>
-            <Toaster />
-            <NotificationContainer />
-            <PushNotificationPrompt />
-            <PWAInstallPrompt />
-            <OfflineIndicator />
-            <UpdatePrompt />
+            <ToastProvider>
+              <Toaster />
+              <NotificationContainer />
+              <PushNotificationPrompt />
+              <PWAInstallPrompt />
+              <OfflineIndicator />
+              <UpdatePrompt />
             <Suspense fallback={
               <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-pulse">
@@ -153,6 +155,7 @@ function App() {
               </Routes>
               </Router>
             </Suspense>
+            </ToastProvider>
           </NotificationProvider>
         </AuthProvider>
       </QueryClientProvider>
