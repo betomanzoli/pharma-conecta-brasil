@@ -55,6 +55,7 @@ const SubscriptionPage = lazy(() => import('@/pages/SubscriptionPage'));
 const ConhecimentoBrasileiro = lazy(() => import('@/pages/ConhecimentoBrasileiro'));
 const AnvisaLegis = lazy(() => import('@/pages/AnvisaLegis'));
 const AllApisDashboard = lazy(() => import('@/pages/AllApisDashboard'));
+const PerformancePage = lazy(() => import('@/pages/PerformancePage'));
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
@@ -65,8 +66,42 @@ import UpdatePrompt from '@/components/pwa/UpdatePrompt';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 
-// Create a client
-const queryClient = new QueryClient();
+// Create optimized QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache por 5 minutos por padrão
+      staleTime: 5 * 60 * 1000,
+      // Keep data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed requests up to 3 times
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Refetch on window focus only if data is stale
+      refetchOnWindowFocus: false,
+      // Don't refetch on reconnect by default
+      refetchOnReconnect: 'always',
+      // Background refetch interval
+      refetchInterval: false,
+      // Enable network mode to handle offline scenarios
+      networkMode: 'online'
+    },
+    mutations: {
+      // Retry mutations on network error
+      retry: 1,
+      // Show loading state for mutations
+      onMutate: () => {
+        // Global loading state can be handled here
+      },
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      },
+      onSuccess: () => {
+        // Global success handling
+      }
+    }
+  }
+});
 
 function App() {
   return (
@@ -149,6 +184,7 @@ function App() {
                 {/* API Integration Routes */}
                 <Route path="/anvisa-legis" element={<ProtectedRoute><AnvisaLegis /></ProtectedRoute>} />
                 <Route path="/apis" element={<ProtectedRoute><AllApisDashboard /></ProtectedRoute>} />
+                <Route path="/performance" element={<ProtectedRoute><PerformancePage /></ProtectedRoute>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
