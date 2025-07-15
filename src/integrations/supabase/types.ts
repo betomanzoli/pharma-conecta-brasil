@@ -723,6 +723,36 @@ export type Database = {
         }
         Relationships: []
       }
+      api_monitoring_events: {
+        Row: {
+          created_at: string | null
+          endpoint: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          response_time: number | null
+          service: string
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          response_time?: number | null
+          service: string
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          response_time?: number | null
+          service?: string
+        }
+        Relationships: []
+      }
       brazilian_content: {
         Row: {
           author_id: string | null
@@ -790,6 +820,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cache_entries: {
+        Row: {
+          cache_data: Json
+          cache_key: string
+          created_at: string | null
+          id: string
+          source: string
+          ttl: number
+          updated_at: string | null
+        }
+        Insert: {
+          cache_data: Json
+          cache_key: string
+          created_at?: string | null
+          id?: string
+          source: string
+          ttl: number
+          updated_at?: string | null
+        }
+        Update: {
+          cache_data?: Json
+          cache_key?: string
+          created_at?: string | null
+          id?: string
+          source?: string
+          ttl?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       companies: {
         Row: {

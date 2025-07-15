@@ -21,7 +21,6 @@ interface SyncStatus {
 }
 
 export class ApiMonitoringService {
-  private static readonly HEALTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
   private static readonly API_ENDPOINTS = {
     anvisa: 'https://dados.gov.br/api/publico/conjuntos-dados',
     fda: 'https://api.fda.gov/drug/label.json?limit=1',
@@ -63,23 +62,33 @@ export class ApiMonitoringService {
         `health-${service}`,
         'api:health',
         async () => {
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            timeout: 10000, // 10 segundos timeout
-            headers: {
-              'User-Agent': 'PharmaConecta-Monitor/1.0'
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
+          try {
+            const response = await fetch(endpoint, {
+              method: 'GET',
+              signal: controller.signal,
+              headers: {
+                'User-Agent': 'PharmaConecta-Monitor/1.0'
+              }
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-          });
 
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            return {
+              status: response.status,
+              ok: response.ok,
+              responseTime: Date.now() - startTime
+            };
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
           }
-
-          return {
-            status: response.status,
-            ok: response.ok,
-            responseTime: Date.now() - startTime
-          };
         }
       );
 
@@ -120,17 +129,27 @@ export class ApiMonitoringService {
     try {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       
+      // Usar performance_metrics como fallback já que temos acesso a ela
       const { data, error } = await supabase
-        .from('api_monitoring_events')
-        .select('event_type')
-        .eq('service', service)
-        .gte('created_at', oneHourAgo);
+        .from('performance_metrics')
+        .select('tags')
+        .eq('metric_name', 'api_health_check')
+        .gte('measured_at', oneHourAgo);
 
       if (error) throw error;
 
       const events = data || [];
-      const totalEvents = events.length;
-      const errorEvents = events.filter(e => e.event_type === 'error').length;
+      const serviceEvents = events.filter(e => 
+        e.tags && typeof e.tags === 'object' && 
+        'service' in e.tags && e.tags.service === service
+      );
+
+      const totalEvents = serviceEvents.length;
+      const errorEvents = serviceEvents.filter(e => 
+        e.tags && typeof e.tags === 'object' && 
+        'status' in e.tags && e.tags.status === 'error'
+      ).length;
+      
       const successRate = totalEvents > 0 ? ((totalEvents - errorEvents) / totalEvents) * 100 : 100;
 
       return {
@@ -150,14 +169,19 @@ export class ApiMonitoringService {
     error?: any
   ): Promise<void> {
     try {
+      // Usar performance_metrics para registrar eventos
       await supabase
-        .from('api_monitoring_events')
+        .from('performance_metrics')
         .insert({
-          service,
-          event_type: eventType,
-          response_time: responseTime,
-          error_message: error ? String(error) : null,
-          created_at: new Date().toISOString()
+          metric_name: 'api_health_check',
+          metric_value: eventType === 'success' ? 1 : 0,
+          metric_unit: 'status',
+          tags: {
+            service,
+            status: eventType,
+            response_time: responseTime,
+            error_message: error ? String(error) : null
+          }
         });
     } catch (insertError) {
       console.error('Erro ao registrar evento da API:', insertError);
@@ -178,7 +202,7 @@ export class ApiMonitoringService {
         lastSync: config.last_sync,
         nextSync: this.calculateNextSync(config.last_sync, config.sync_frequency_hours),
         status: this.determineSyncStatus(config),
-        recordsProcessed: 0, // Poderia vir de uma tabela de logs de sync
+        recordsProcessed: 0,
         errorMessage: undefined
       }));
     } catch (error) {
@@ -252,25 +276,36 @@ export class ApiMonitoringService {
       const startTime = new Date(Date.now() - (hours * 60 * 60 * 1000)).toISOString();
       
       const { data, error } = await supabase
-        .from('api_monitoring_events')
+        .from('performance_metrics')
         .select('*')
-        .eq('service', service)
-        .gte('created_at', startTime)
-        .order('created_at', { ascending: true });
+        .eq('metric_name', 'api_health_check')
+        .gte('measured_at', startTime)
+        .order('measured_at', { ascending: true });
 
       if (error) throw error;
 
-      const events = data || [];
+      const events = (data || []).filter(e => 
+        e.tags && typeof e.tags === 'object' && 
+        'service' in e.tags && e.tags.service === service
+      );
       
       // Calcular métricas
       const totalRequests = events.length;
-      const errorCount = events.filter(e => e.event_type === 'error').length;
+      const errorCount = events.filter(e => 
+        e.tags && typeof e.tags === 'object' && 
+        'status' in e.tags && e.tags.status === 'error'
+      ).length;
+      
       const successCount = totalRequests - errorCount;
       const successRate = totalRequests > 0 ? (successCount / totalRequests) * 100 : 100;
       
       const responseTimes = events
-        .filter(e => e.response_time > 0)
-        .map(e => e.response_time);
+        .filter(e => e.tags && typeof e.tags === 'object' && 'response_time' in e.tags)
+        .map(e => {
+          const tags = e.tags as any;
+          return Number(tags?.response_time || 0);
+        })
+        .filter(time => time > 0);
       
       const avgResponseTime = responseTimes.length > 0 
         ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length 
@@ -306,17 +341,23 @@ export class ApiMonitoringService {
 
     // Preencher com dados reais
     events.forEach(event => {
-      const eventHour = new Date(event.created_at).toISOString().substring(0, 13) + ':00:00.000Z';
+      const eventHour = new Date(event.measured_at).toISOString().substring(0, 13) + ':00:00.000Z';
       
       if (hourlyBuckets[eventHour]) {
-        if (event.event_type === 'error') {
+        const isError = event.tags && typeof event.tags === 'object' && 
+                       'status' in event.tags && event.tags.status === 'error';
+        
+        if (isError) {
           hourlyBuckets[eventHour].error++;
         } else {
           hourlyBuckets[eventHour].success++;
         }
         
-        if (event.response_time > 0) {
-          hourlyBuckets[eventHour].totalTime += event.response_time;
+        const responseTime = event.tags && typeof event.tags === 'object' && 
+                           'response_time' in event.tags ? Number((event.tags as any).response_time) : 0;
+        
+        if (responseTime > 0) {
+          hourlyBuckets[eventHour].totalTime += responseTime;
           hourlyBuckets[eventHour].count++;
         }
       }
@@ -336,15 +377,16 @@ export class ApiMonitoringService {
       const cutoffDate = new Date(Date.now() - (daysToKeep * 24 * 60 * 60 * 1000)).toISOString();
       
       const { error } = await supabase
-        .from('api_monitoring_events')
+        .from('performance_metrics')
         .delete()
-        .lt('created_at', cutoffDate);
+        .eq('metric_name', 'api_health_check')
+        .lt('measured_at', cutoffDate);
 
       if (error) throw error;
       
-      console.log(`Eventos de monitoramento anteriores a ${cutoffDate} foram removidos`);
+      console.log(`Métricas de API anteriores a ${cutoffDate} foram removidas`);
     } catch (error) {
-      console.error('Erro ao limpar eventos antigos:', error);
+      console.error('Erro ao limpar métricas antigas:', error);
     }
   }
 }

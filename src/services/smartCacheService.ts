@@ -154,7 +154,7 @@ export class SmartCacheService {
         .from('cache_entries')
         .upsert({
           cache_key: entry.key,
-          cache_data: entry.data,
+          cache_data: entry.data as any, // Type assertion para compatibilidade com JSONB
           ttl: entry.ttl,
           source: entry.source,
           created_at: new Date(entry.timestamp).toISOString()
