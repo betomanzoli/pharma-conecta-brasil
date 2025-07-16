@@ -56,6 +56,9 @@ const ConhecimentoBrasileiro = lazy(() => import('@/pages/ConhecimentoBrasileiro
 const AnvisaLegis = lazy(() => import('@/pages/AnvisaLegis'));
 const AllApisDashboard = lazy(() => import('@/pages/AllApisDashboard'));
 const PerformancePage = lazy(() => import('@/pages/PerformancePage'));
+const SmartSearchEngine = lazy(() => import('@/components/search/SmartSearchEngine'));
+const PersonalizedDashboard = lazy(() => import('@/components/enhanced/PersonalizedDashboard'));
+const AdvancedAnalyticsDashboard = lazy(() => import('@/components/enhanced/AdvancedAnalyticsDashboard'));
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
@@ -185,6 +188,9 @@ function App() {
                 <Route path="/anvisa-legis" element={<ProtectedRoute><AnvisaLegis /></ProtectedRoute>} />
                 <Route path="/apis" element={<ProtectedRoute><AllApisDashboard /></ProtectedRoute>} />
                 <Route path="/performance" element={<ProtectedRoute><PerformancePage /></ProtectedRoute>} />
+                <Route path="/search/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><SmartSearchEngine /></div></ProtectedRoute>} />
+                <Route path="/dashboard/personalized" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><PersonalizedDashboard /></div></ProtectedRoute>} />
+                <Route path="/analytics/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><AdvancedAnalyticsDashboard /></div></ProtectedRoute>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
