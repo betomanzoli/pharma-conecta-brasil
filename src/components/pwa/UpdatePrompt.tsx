@@ -1,77 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, X } from 'lucide-react';
+import { Download, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const UpdatePrompt = () => {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
+interface UpdatePromptProps {
+  onUpdate?: () => void;
+  className?: string;
+}
+
+export function UpdatePrompt({ onUpdate, className }: UpdatePromptProps) {
+  const [showPrompt, setShowPrompt] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        setUpdateAvailable(true);
-      });
-
-      // Verificar por atualizações periodicamente
-      const checkForUpdates = async () => {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          if (registration.waiting) {
-            setUpdateAvailable(true);
+      navigator.serviceWorker.ready.then((reg) => {
+        setRegistration(reg);
+        
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                setShowPrompt(true);
+              }
+            });
           }
-        } catch (error) {
-          console.error('Erro ao verificar atualizações:', error);
-        }
-      };
-
-      // Verificar a cada 30 minutos
-      const interval = setInterval(checkForUpdates, 30 * 60 * 1000);
-      
-      // Verificar imediatamente
-      checkForUpdates();
-
-      return () => clearInterval(interval);
+        });
+      });
     }
   }, []);
 
   const handleUpdate = async () => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!registration) return;
 
     setIsUpdating(true);
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      
       if (registration.waiting) {
-        // Enviar mensagem para o service worker atualizar
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        
-        toast.success('Atualizando app...', {
-          description: 'A página será recarregada automaticamente.'
-        });
-
-        // Recarregar após um breve delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      } else {
-        await registration.update();
-        toast.success('App já está atualizado! ✨');
-        setUpdateAvailable(false);
       }
+
+      await new Promise((resolve) => {
+        const handleControllerChange = () => {
+          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+          resolve(true);
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+      });
+
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        window.location.reload();
+      }
+
+      toast.success('Aplicativo atualizado!');
     } catch (error) {
       console.error('Erro ao atualizar:', error);
-      toast.error('Erro ao atualizar', {
-        description: 'Tente recarregar a página manualmente.'
-      });
+      toast.error('Erro na atualização');
     } finally {
       setIsUpdating(false);
+      setShowPrompt(false);
     }
   };
 
-  if (!updateAvailable) return null;
+  const handleDismiss = () => {
+    setShowPrompt(false);
+    setTimeout(() => setShowPrompt(true), 60 * 60 * 1000);
+  };
+
+  if (!showPrompt) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
@@ -85,14 +86,15 @@ const UpdatePrompt = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setUpdateAvailable(false)}
+              onClick={handleDismiss}
               className="h-6 w-6 p-0"
+              disabled={isUpdating}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
           <CardDescription>
-            Uma nova versão do PharmaConnect está disponível com melhorias e correções.
+            Uma nova versão do aplicativo está disponível com melhorias e correções.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -103,27 +105,84 @@ const UpdatePrompt = () => {
               disabled={isUpdating}
             >
               {isUpdating ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Atualizando...
+                </>
               ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Atualizar Agora
+                </>
               )}
-              {isUpdating ? 'Atualizando...' : 'Atualizar Agora'}
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => setUpdateAvailable(false)}
+              onClick={handleDismiss}
               disabled={isUpdating}
             >
               Depois
             </Button>
           </div>
           <div className="mt-3 text-xs text-muted-foreground">
-            🚀 Melhor desempenho • 🐛 Correções de bugs • ✨ Novas funcionalidades
+            🚀 Nova versão • 🐛 Correções • ⚡ Melhor performance
           </div>
         </CardContent>
       </Card>
     </div>
   );
 };
+
+// Hook for detecting app updates
+export function useAppUpdate() {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        setRegistration(reg);
+        
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                setUpdateAvailable(true);
+              }
+            });
+          }
+        });
+      });
+    }
+  }, []);
+
+  const updateApp = async () => {
+    if (!registration || !registration.waiting) return false;
+
+    try {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      
+      await new Promise((resolve) => {
+        const handleControllerChange = () => {
+          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+          resolve(true);
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar app:', error);
+      return false;
+    }
+  };
+
+  return {
+    updateAvailable,
+    updateApp,
+    registration
+  };
+}
 
 export default UpdatePrompt;
