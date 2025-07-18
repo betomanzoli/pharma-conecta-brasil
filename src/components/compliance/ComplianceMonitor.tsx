@@ -88,7 +88,7 @@ const mockComplianceData: ComplianceItem[] = [
   }
 ];
 
-export function ComplianceMonitor() {
+const ComplianceMonitor = () => {
   const [complianceData, setComplianceData] = useState<ComplianceItem[]>(mockComplianceData);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -420,4 +420,6 @@ export function ComplianceMonitor() {
       </Card>
     </div>
   );
-}
+};
+
+export default ComplianceMonitor;

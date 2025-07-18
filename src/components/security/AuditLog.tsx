@@ -101,7 +101,7 @@ const mockAuditLogs: AuditLogEntry[] = [
   }
 ];
 
-export function AuditLog() {
+const AuditLog = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>(mockAuditLogs);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
@@ -412,4 +412,6 @@ export function AuditLog() {
       </Card>
     </div>
   );
-}
+};
+
+export default AuditLog;

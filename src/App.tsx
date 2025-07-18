@@ -59,6 +59,11 @@ const PerformancePage = lazy(() => import('@/pages/PerformancePage'));
 const SmartSearchEngine = lazy(() => import('@/components/search/SmartSearchEngine'));
 const PersonalizedDashboard = lazy(() => import('@/components/enhanced/PersonalizedDashboard'));
 const AdvancedAnalyticsDashboard = lazy(() => import('@/components/enhanced/AdvancedAnalyticsDashboard'));
+const TwoFactorAuth = lazy(() => import('@/components/security/TwoFactorAuth'));
+const AuditLog = lazy(() => import('@/components/security/AuditLog'));
+const ComplianceMonitor = lazy(() => import('@/components/compliance/ComplianceMonitor'));
+const EnhancedReportExporter = lazy(() => import('@/components/reports/EnhancedReportExporter'));
+const UserManagement = lazy(() => import('@/components/admin/UserManagement'));
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Toaster } from "@/components/ui/toaster"
 import NotificationContainer from '@/components/notifications/NotificationContainer';
@@ -191,6 +196,13 @@ function App() {
                 <Route path="/search/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><SmartSearchEngine /></div></ProtectedRoute>} />
                 <Route path="/dashboard/personalized" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><PersonalizedDashboard /></div></ProtectedRoute>} />
                 <Route path="/analytics/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><AdvancedAnalyticsDashboard /></div></ProtectedRoute>} />
+                
+                {/* Security & Compliance Routes */}
+                <Route path="/security" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><TwoFactorAuth /></div></ProtectedRoute>} />
+                <Route path="/security/audit" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><AuditLog /></div></ProtectedRoute>} />
+                <Route path="/compliance" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><ComplianceMonitor /></div></ProtectedRoute>} />
+                <Route path="/reports/export" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><EnhancedReportExporter /></div></ProtectedRoute>} />
+                <Route path="/admin/users" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><UserManagement /></div></ProtectedRoute>} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />

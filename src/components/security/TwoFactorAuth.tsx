@@ -13,7 +13,7 @@ interface TwoFactorAuthProps {
   onToggle?: (enabled: boolean) => void;
 }
 
-export function TwoFactorAuth({ isEnabled = false, onToggle }: TwoFactorAuthProps) {
+const TwoFactorAuth = ({ isEnabled = false, onToggle }: TwoFactorAuthProps) => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'setup' | 'verify' | 'backup'>('setup');
   const [verificationCode, setVerificationCode] = useState('');
@@ -273,4 +273,6 @@ export function TwoFactorAuth({ isEnabled = false, onToggle }: TwoFactorAuthProp
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TwoFactorAuth;
