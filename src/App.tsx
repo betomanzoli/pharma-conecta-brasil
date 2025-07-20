@@ -63,6 +63,8 @@ const AdvancedBusinessAnalytics = lazy(() => import('@/components/analytics/Adva
 const IndividualizedROIReports = lazy(() => import('@/components/reports/IndividualizedROIReports'));
 const FinalOptimizations = lazy(() => import('@/components/ai/FinalOptimizations'));
 const ComprehensiveIntegrationMonitor = lazy(() => import('@/components/integration/ComprehensiveIntegrationMonitor'));
+const BusinessMetricsDashboard = lazy(() => import('@/components/dashboard/BusinessMetricsDashboard'));
+const RealTimeBusinessMonitor = lazy(() => import('@/components/integration/RealTimeBusinessMonitor'));
 const TwoFactorAuth = lazy(() => import('@/components/security/TwoFactorAuth'));
 const AuditLog = lazy(() => import('@/components/security/AuditLog'));
 const ComplianceMonitor = lazy(() => import('@/components/compliance/ComplianceMonitor'));
@@ -205,7 +207,9 @@ function App() {
                 <Route path="/analytics/business" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><AdvancedBusinessAnalytics /></div></ProtectedRoute>} />
                 <Route path="/reports/roi" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><IndividualizedROIReports /></div></ProtectedRoute>} />
                 <Route path="/ai/final-optimizations" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><FinalOptimizations /></div></ProtectedRoute>} />
-                <Route path="/integration/monitor" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><ComprehensiveIntegrationMonitor /></div></ProtectedRoute>} />
+                 <Route path="/integration/monitor" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><ComprehensiveIntegrationMonitor /></div></ProtectedRoute>} />
+                 <Route path="/business-metrics" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><BusinessMetricsDashboard /></div></ProtectedRoute>} />
+                 <Route path="/real-time-monitor" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><RealTimeBusinessMonitor /></div></ProtectedRoute>} />
                 
                 {/* Security & Compliance Routes */}
                 <Route path="/security" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><TwoFactorAuth /></div></ProtectedRoute>} />

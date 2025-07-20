@@ -365,23 +365,40 @@ async function calculateRealCompatibilityScore(
     maxPossibleScore += 0.4;
   }
 
-  // 2. Compatibilidade de localização (peso 20%)
+  // 2. Análise de Sentimento Integrada (peso 15%)
+  try {
+    const sentimentWeight = calculateSentimentCompatibility(userProfile, targetProfile);
+    totalScore += sentimentWeight * 0.15;
+    
+    if (sentimentWeight > 0.7) {
+      factors.push('Excelente compatibilidade de personalidade');
+    } else if (sentimentWeight > 0.5) {
+      factors.push('Boa compatibilidade de comunicação');
+    } else if (sentimentWeight > 0.3) {
+      factors.push('Compatibilidade neutra');
+    }
+  } catch (error) {
+    logStep("Sentiment analysis failed", { error: error.message });
+  }
+  maxPossibleScore += 0.15;
+
+  // 3. Compatibilidade de localização (peso 15%)
   if (userProfile.location && targetProfile.location) {
     const userLocation = userProfile.location.toLowerCase();
     const targetLocation = targetProfile.location.toLowerCase();
     
     if (userLocation.includes(targetLocation) || targetLocation.includes(userLocation)) {
-      totalScore += 0.2;
+      totalScore += 0.15;
       factors.push('Localização compatível');
     } else if (userProfile.state && targetProfile.state && 
                userProfile.state.toLowerCase() === targetProfile.state.toLowerCase()) {
-      totalScore += 0.1;
+      totalScore += 0.075;
       factors.push('Mesmo estado');
     }
   }
-  maxPossibleScore += 0.2;
+  maxPossibleScore += 0.15;
 
-  // 3. Correspondência de especialidades (peso 25%)
+  // 4. Correspondência de especialidades (peso 25%)
   let expertiseMatch = false;
   if (userType === 'pharmaceutical_company' && targetType === 'laboratory') {
     const companyExpertise = userProfile.expertise_area || [];
@@ -420,7 +437,7 @@ async function calculateRealCompatibilityScore(
   }
   maxPossibleScore += 0.25;
 
-  // 4. Fatores específicos do tipo (peso 15%)
+  // 5. Fatores específicos do tipo (peso 15%)
   if (targetType === 'laboratory' && targetProfile.available_capacity > 0) {
     totalScore += 0.075;
     factors.push('Capacidade disponível');
@@ -494,6 +511,39 @@ function calculateFallbackSimilarity(userProfile: any, targetProfile: any, userT
   }
   
   return Math.min(similarity, 1);
+}
+
+// Função para calcular compatibilidade de sentimento
+function calculateSentimentCompatibility(userProfile: any, targetProfile: any): number {
+  const userSentiment = {
+    score: userProfile.sentiment_score || 0,
+    label: userProfile.sentiment_label || 'neutral'
+  };
+  
+  const targetSentiment = {
+    score: targetProfile.sentiment_score || 0,  
+    label: targetProfile.sentiment_label || 'neutral'
+  };
+  
+  // Normalizar scores para 0-1
+  const userNormalized = Math.max(0, Math.min(1, (userSentiment.score + 1) / 2));
+  const targetNormalized = Math.max(0, Math.min(1, (targetSentiment.score + 1) / 2));
+  
+  // Calcular compatibilidade baseada na diferença
+  const scoreDifference = Math.abs(userNormalized - targetNormalized);
+  const scoreCompatibility = 1 - scoreDifference;
+  
+  // Boost para combinações complementares
+  let labelBoost = 0;
+  if (userSentiment.label === 'positive' && targetSentiment.label === 'positive') {
+    labelBoost = 0.2; // Ambos positivos = excelente
+  } else if (userSentiment.label === 'neutral' || targetSentiment.label === 'neutral') {
+    labelBoost = 0.1; // Um neutro = ok
+  } else if (userSentiment.label !== targetSentiment.label) {
+    labelBoost = -0.1; // Sentimentos opostos = problema
+  }
+  
+  return Math.max(0, Math.min(1, scoreCompatibility + labelBoost));
 }
 
 function extractKeywords(profile: any): string[] {
