@@ -59,6 +59,10 @@ const PerformancePage = lazy(() => import('@/pages/PerformancePage'));
 const SmartSearchEngine = lazy(() => import('@/components/search/SmartSearchEngine'));
 const PersonalizedDashboard = lazy(() => import('@/components/enhanced/PersonalizedDashboard'));
 const AdvancedAnalyticsDashboard = lazy(() => import('@/components/enhanced/AdvancedAnalyticsDashboard'));
+const AdvancedBusinessAnalytics = lazy(() => import('@/components/analytics/AdvancedBusinessAnalytics'));
+const IndividualizedROIReports = lazy(() => import('@/components/reports/IndividualizedROIReports'));
+const FinalOptimizations = lazy(() => import('@/components/ai/FinalOptimizations'));
+const ComprehensiveIntegrationMonitor = lazy(() => import('@/components/integration/ComprehensiveIntegrationMonitor'));
 const TwoFactorAuth = lazy(() => import('@/components/security/TwoFactorAuth'));
 const AuditLog = lazy(() => import('@/components/security/AuditLog'));
 const ComplianceMonitor = lazy(() => import('@/components/compliance/ComplianceMonitor'));
@@ -196,6 +200,12 @@ function App() {
                 <Route path="/search/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><SmartSearchEngine /></div></ProtectedRoute>} />
                 <Route path="/dashboard/personalized" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><PersonalizedDashboard /></div></ProtectedRoute>} />
                 <Route path="/analytics/advanced" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><AdvancedAnalyticsDashboard /></div></ProtectedRoute>} />
+                
+                {/* Phase 11 Final Implementation Routes */}
+                <Route path="/analytics/business" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><AdvancedBusinessAnalytics /></div></ProtectedRoute>} />
+                <Route path="/reports/roi" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><IndividualizedROIReports /></div></ProtectedRoute>} />
+                <Route path="/ai/final-optimizations" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><FinalOptimizations /></div></ProtectedRoute>} />
+                <Route path="/integration/monitor" element={<ProtectedRoute adminOnly><div className="container mx-auto px-4 py-8"><ComprehensiveIntegrationMonitor /></div></ProtectedRoute>} />
                 
                 {/* Security & Compliance Routes */}
                 <Route path="/security" element={<ProtectedRoute><div className="container mx-auto px-4 py-8"><TwoFactorAuth /></div></ProtectedRoute>} />
