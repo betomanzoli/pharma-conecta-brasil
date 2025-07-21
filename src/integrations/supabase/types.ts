@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_test_results: {
+        Row: {
+          conversion_event: string | null
+          conversion_value: number | null
+          created_at: string
+          id: string
+          test_completed_at: string | null
+          test_id: string
+          test_name: string
+          test_started_at: string
+          updated_at: string
+          user_id: string | null
+          variant: string
+        }
+        Insert: {
+          conversion_event?: string | null
+          conversion_value?: number | null
+          created_at?: string
+          id?: string
+          test_completed_at?: string | null
+          test_id: string
+          test_name: string
+          test_started_at: string
+          updated_at?: string
+          user_id?: string | null
+          variant: string
+        }
+        Update: {
+          conversion_event?: string | null
+          conversion_value?: number | null
+          created_at?: string
+          id?: string
+          test_completed_at?: string | null
+          test_id?: string
+          test_name?: string
+          test_started_at?: string
+          updated_at?: string
+          user_id?: string | null
+          variant?: string
+        }
+        Relationships: []
+      }
       anvisa_conjunto_detalhe: {
         Row: {
           conjunto_id: string | null
@@ -821,6 +863,45 @@ export type Database = {
           },
         ]
       }
+      business_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          measured_at: string
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_unit: string | null
+          metric_value: number
+          segment: string | null
+          time_period: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          metric_unit?: string | null
+          metric_value: number
+          segment?: string | null
+          time_period: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measured_at?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_unit?: string | null
+          metric_value?: number
+          segment?: string | null
+          time_period?: string
+        }
+        Relationships: []
+      }
       cache_entries: {
         Row: {
           cache_data: Json
@@ -864,6 +945,8 @@ export type Database = {
           name: string
           phone: string | null
           profile_id: string | null
+          sentiment_label: string | null
+          sentiment_score: number | null
           state: string | null
           updated_at: string | null
           user_id: string | null
@@ -882,6 +965,8 @@ export type Database = {
           name: string
           phone?: string | null
           profile_id?: string | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           state?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -900,6 +985,8 @@ export type Database = {
           name?: string
           phone?: string | null
           profile_id?: string | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           state?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1037,6 +1124,8 @@ export type Database = {
           location: string | null
           profile_id: string | null
           projects_completed: number | null
+          sentiment_label: string | null
+          sentiment_score: number | null
           updated_at: string | null
           user_id: string | null
         }
@@ -1051,6 +1140,8 @@ export type Database = {
           location?: string | null
           profile_id?: string | null
           projects_completed?: number | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1065,6 +1156,8 @@ export type Database = {
           location?: string | null
           profile_id?: string | null
           projects_completed?: number | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1877,6 +1970,8 @@ export type Database = {
           operating_hours: string | null
           phone: string | null
           profile_id: string | null
+          sentiment_label: string | null
+          sentiment_score: number | null
           state: string | null
           updated_at: string | null
           user_id: string | null
@@ -1897,6 +1992,8 @@ export type Database = {
           operating_hours?: string | null
           phone?: string | null
           profile_id?: string | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           state?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1917,6 +2014,8 @@ export type Database = {
           operating_hours?: string | null
           phone?: string | null
           profile_id?: string | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           state?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -2178,6 +2277,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_model_weights: {
+        Row: {
+          accuracy_score: number
+          created_at: string
+          id: string
+          is_active: boolean
+          model_version: string
+          trained_at: string
+          training_data_size: number
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          accuracy_score?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_version: string
+          trained_at?: string
+          training_data_size?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          accuracy_score?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_version?: string
+          trained_at?: string
+          training_data_size?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -2433,6 +2568,42 @@ export type Database = {
           metric_unit?: string | null
           metric_value?: number
           tags?: Json | null
+        }
+        Relationships: []
+      }
+      personalization_data: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          id: string
+          is_active: boolean
+          preference_type: string
+          preference_value: Json
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          preference_type: string
+          preference_value?: Json
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          preference_type?: string
+          preference_value?: Json
+          source?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2761,6 +2932,87 @@ export type Database = {
           response_time_ms?: number | null
           status_code?: number | null
           success?: boolean | null
+        }
+        Relationships: []
+      }
+      regulatory_matching_results: {
+        Row: {
+          compatibility_score: number
+          compliance_score: number
+          created_at: string
+          id: string
+          match_id: string
+          match_type: string
+          regulatory_alerts: string[] | null
+          regulatory_factors: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          compatibility_score?: number
+          compliance_score?: number
+          created_at?: string
+          id?: string
+          match_id: string
+          match_type: string
+          regulatory_alerts?: string[] | null
+          regulatory_factors?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          compatibility_score?: number
+          compliance_score?: number
+          created_at?: string
+          id?: string
+          match_id?: string
+          match_type?: string
+          regulatory_alerts?: string[] | null
+          regulatory_factors?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sentiment_analysis: {
+        Row: {
+          analyzed_at: string
+          confidence: number
+          created_at: string
+          id: string
+          keywords: string[] | null
+          original_text: string
+          profile_id: string
+          profile_type: string
+          sentiment_label: string
+          sentiment_score: number
+          updated_at: string
+        }
+        Insert: {
+          analyzed_at?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          original_text: string
+          profile_id: string
+          profile_type: string
+          sentiment_label?: string
+          sentiment_score?: number
+          updated_at?: string
+        }
+        Update: {
+          analyzed_at?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          original_text?: string
+          profile_id?: string
+          profile_type?: string
+          sentiment_label?: string
+          sentiment_score?: number
+          updated_at?: string
         }
         Relationships: []
       }
