@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_embedding_cache: {
+        Row: {
+          cache_key: string
+          created_at: string | null
+          embedding_data: Json
+          entity_id: string
+          entity_type: string
+          expires_at: string | null
+          id: string
+          similarity_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string | null
+          embedding_data: Json
+          entity_id: string
+          entity_type: string
+          expires_at?: string | null
+          id?: string
+          similarity_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string | null
+          embedding_data?: Json
+          entity_id?: string
+          entity_type?: string
+          expires_at?: string | null
+          id?: string
+          similarity_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       anvisa_conjunto_detalhe: {
         Row: {
           conjunto_id: string | null
@@ -3147,6 +3183,10 @@ export type Database = {
           record_id: string
           details?: Json
         }
+        Returns: undefined
+      }
+      clean_expired_embedding_cache: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       clean_old_metrics: {
