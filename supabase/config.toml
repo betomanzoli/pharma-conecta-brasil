@@ -63,3 +63,15 @@ verify_jwt = false
 
 [functions.who-guidelines]
 verify_jwt = false
+
+[functions.perplexity-search]
+verify_jwt = true
+
+[functions.anvisa-real-sync]
+verify_jwt = false
+
+[functions.fda-real-sync]
+verify_jwt = false
+
+[functions.industrial-segmentation]
+verify_jwt = true
