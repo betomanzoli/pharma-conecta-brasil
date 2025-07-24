@@ -229,6 +229,96 @@ export type Database = {
         }
         Relationships: []
       }
+      anvisa_laboratorios: {
+        Row: {
+          anvisa_data: Json | null
+          atividades: string[] | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          endereco: string | null
+          estado: string | null
+          external_id: string
+          id: string
+          nome: string
+          situacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          anvisa_data?: Json | null
+          atividades?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          external_id: string
+          id?: string
+          nome: string
+          situacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anvisa_data?: Json | null
+          atividades?: string[] | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          external_id?: string
+          id?: string
+          nome?: string
+          situacao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      anvisa_medicamentos: {
+        Row: {
+          anvisa_data: Json | null
+          categoria: string | null
+          created_at: string
+          data_vencimento: string | null
+          external_id: string
+          id: string
+          laboratorio: string | null
+          nome_comercial: string
+          principio_ativo: string
+          status_registro: string | null
+          updated_at: string
+        }
+        Insert: {
+          anvisa_data?: Json | null
+          categoria?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          external_id: string
+          id?: string
+          laboratorio?: string | null
+          nome_comercial: string
+          principio_ativo: string
+          status_registro?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anvisa_data?: Json | null
+          categoria?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          external_id?: string
+          id?: string
+          laboratorio?: string | null
+          nome_comercial?: string
+          principio_ativo?: string
+          status_registro?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anvisa_observancia_legal: {
         Row: {
           created_at: string
@@ -978,12 +1068,14 @@ export type Database = {
           description: string | null
           expertise_area: string[] | null
           id: string
+          industrial_segment: string | null
           name: string
           phone: string | null
           profile_id: string | null
           sentiment_label: string | null
           sentiment_score: number | null
           state: string | null
+          subsegment: string | null
           updated_at: string | null
           user_id: string | null
           website: string | null
@@ -998,12 +1090,14 @@ export type Database = {
           description?: string | null
           expertise_area?: string[] | null
           id?: string
+          industrial_segment?: string | null
           name: string
           phone?: string | null
           profile_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           state?: string | null
+          subsegment?: string | null
           updated_at?: string | null
           user_id?: string | null
           website?: string | null
@@ -1018,12 +1112,14 @@ export type Database = {
           description?: string | null
           expertise_area?: string[] | null
           id?: string
+          industrial_segment?: string | null
           name?: string
           phone?: string | null
           profile_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           state?: string | null
+          subsegment?: string | null
           updated_at?: string | null
           user_id?: string | null
           website?: string | null
@@ -1432,6 +1528,48 @@ export type Database = {
           report_to_fda?: string | null
           reprocessed_and_reused_flag?: string | null
           single_use_flag?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fda_device_events: {
+        Row: {
+          created_at: string
+          date_received: string | null
+          device_name: string | null
+          event_type: string | null
+          external_id: string
+          fda_data: Json | null
+          id: string
+          manufacturer: string | null
+          mdr_report_key: string | null
+          patient_problem_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_received?: string | null
+          device_name?: string | null
+          event_type?: string | null
+          external_id: string
+          fda_data?: Json | null
+          id?: string
+          manufacturer?: string | null
+          mdr_report_key?: string | null
+          patient_problem_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_received?: string | null
+          device_name?: string | null
+          event_type?: string | null
+          external_id?: string
+          fda_data?: Json | null
+          id?: string
+          manufacturer?: string | null
+          mdr_report_key?: string | null
+          patient_problem_code?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2001,6 +2139,7 @@ export type Database = {
           description: string | null
           equipment_list: string[] | null
           id: string
+          industrial_segment: string | null
           location: string
           name: string
           operating_hours: string | null
@@ -2008,7 +2147,9 @@ export type Database = {
           profile_id: string | null
           sentiment_label: string | null
           sentiment_score: number | null
+          specializations: string[] | null
           state: string | null
+          subsegment: string | null
           updated_at: string | null
           user_id: string | null
           website: string | null
@@ -2023,6 +2164,7 @@ export type Database = {
           description?: string | null
           equipment_list?: string[] | null
           id?: string
+          industrial_segment?: string | null
           location: string
           name: string
           operating_hours?: string | null
@@ -2030,7 +2172,9 @@ export type Database = {
           profile_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
+          specializations?: string[] | null
           state?: string | null
+          subsegment?: string | null
           updated_at?: string | null
           user_id?: string | null
           website?: string | null
@@ -2045,6 +2189,7 @@ export type Database = {
           description?: string | null
           equipment_list?: string[] | null
           id?: string
+          industrial_segment?: string | null
           location?: string
           name?: string
           operating_hours?: string | null
@@ -2052,7 +2197,9 @@ export type Database = {
           profile_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
+          specializations?: string[] | null
           state?: string | null
+          subsegment?: string | null
           updated_at?: string | null
           user_id?: string | null
           website?: string | null

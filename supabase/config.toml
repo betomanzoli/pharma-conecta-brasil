@@ -73,5 +73,14 @@ verify_jwt = false
 [functions.fda-real-sync]
 verify_jwt = false
 
+[functions.real-time-alerts]
+verify_jwt = true
+
+[functions.auto-sync]
+verify_jwt = true
+
+[functions.chat-system]
+verify_jwt = true
+
 [functions.industrial-segmentation]
 verify_jwt = true
