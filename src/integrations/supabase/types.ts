@@ -1435,6 +1435,98 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_listings: {
+        Row: {
+          category: string
+          condition: string
+          created_at: string
+          currency: string | null
+          description: string
+          id: string
+          images: string[] | null
+          location: string | null
+          price: number | null
+          seller_id: string
+          specifications: Json | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          condition?: string
+          created_at?: string
+          currency?: string | null
+          description: string
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          price?: number | null
+          seller_id: string
+          specifications?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          condition?: string
+          created_at?: string
+          currency?: string | null
+          description?: string
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          price?: number | null
+          seller_id?: string
+          specifications?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment_quotes: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          listing_id: string
+          message: string | null
+          quoted_price: number
+          status: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          listing_id: string
+          message?: string | null
+          quoted_price: number
+          status?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          listing_id?: string
+          message?: string | null
+          quoted_price?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_quotes_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fda_adverse_events: {
         Row: {
           created_at: string
@@ -3383,6 +3475,36 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_name: string
+          achievement_type: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+          points: number
+          user_id: string
+        }
+        Insert: {
+          achievement_name: string
+          achievement_type: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          points?: number
+          user_id: string
+        }
+        Update: {
+          achievement_name?: string
+          achievement_type?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -3406,6 +3528,50 @@ export type Database = {
           role?: string
         }
         Relationships: []
+      }
+      video_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          mentee_id: string
+          mentor_id: string
+          recording_url: string | null
+          room_id: string
+          session_id: string | null
+          started_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          mentee_id: string
+          mentor_id: string
+          recording_url?: string | null
+          room_id: string
+          session_id?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          mentee_id?: string
+          mentor_id?: string
+          recording_url?: string | null
+          room_id?: string
+          session_id?: string | null
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
