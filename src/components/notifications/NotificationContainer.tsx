@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { NotificationCenter } from './NotificationCenter';
+import NotificationCenter from './NotificationCenter';
 
 interface NotificationContainerProps {
   children: ReactNode;
