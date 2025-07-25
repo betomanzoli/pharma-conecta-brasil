@@ -1058,6 +1058,95 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          chat_id: string | null
+          edited_at: string | null
+          id: string
+          message: string
+          message_type: string
+          metadata: Json | null
+          sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          chat_id?: string | null
+          edited_at?: string | null
+          id?: string
+          message: string
+          message_type?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          chat_id?: string | null
+          edited_at?: string | null
+          id?: string
+          message?: string
+          message_type?: string
+          metadata?: Json | null
+          sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          chat_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_activity: string
+          last_message: string | null
+          participants: string[]
+          updated_at: string
+        }
+        Insert: {
+          chat_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_activity?: string
+          last_message?: string | null
+          participants: string[]
+          updated_at?: string
+        }
+        Update: {
+          chat_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_activity?: string
+          last_message?: string | null
+          participants?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chats_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
