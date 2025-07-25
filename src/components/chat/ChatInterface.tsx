@@ -88,9 +88,23 @@ const ChatInterface: React.FC = () => {
 
       if (error) throw error;
 
-      const formattedChats = data?.map(chat => ({
-        ...chat,
-        last_message: chat.chat_messages?.[0]?.message || 'Sem mensagens'
+      const formattedChats: Chat[] = data?.map(chat => ({
+        id: chat.id,
+        participants: chat.participants,
+        chat_type: chat.chat_type as 'direct' | 'group' | 'ai_assistant',
+        created_at: chat.created_at,
+        last_activity: chat.last_activity,
+        created_by: chat.created_by,
+        updated_at: chat.updated_at,
+        last_message: chat.chat_messages?.[0]?.message || 'Sem mensagens',
+        chat_messages: chat.chat_messages?.map((msg: any) => ({
+          id: msg.id,
+          message: msg.message,
+          user_id: msg.user_id,
+          chat_id: chat.id,
+          message_type: msg.message_type as 'text' | 'ai_suggestion' | 'system',
+          sent_at: msg.sent_at
+        }))
       })) || [];
 
       setChats(formattedChats);
@@ -111,7 +125,18 @@ const ChatInterface: React.FC = () => {
         .order('sent_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+
+      const formattedMessages: Message[] = data?.map(msg => ({
+        id: msg.id,
+        message: msg.message,
+        user_id: msg.user_id,
+        chat_id: msg.chat_id,
+        message_type: msg.message_type as 'text' | 'ai_suggestion' | 'system',
+        sent_at: msg.sent_at,
+        metadata: msg.metadata
+      })) || [];
+
+      setMessages(formattedMessages);
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error);
       toast.error('Erro ao carregar mensagens');
@@ -175,9 +200,19 @@ const ChatInterface: React.FC = () => {
           table: 'chat_messages',
         },
         (payload) => {
-          const newMessage = payload.new as Message;
-          if (selectedChat && newMessage.chat_id === selectedChat.id) {
-            setMessages(prev => [...prev, newMessage]);
+          const newMessage = payload.new as any;
+          const formattedMessage: Message = {
+            id: newMessage.id,
+            message: newMessage.message,
+            user_id: newMessage.user_id,
+            chat_id: newMessage.chat_id,
+            message_type: newMessage.message_type as 'text' | 'ai_suggestion' | 'system',
+            sent_at: newMessage.sent_at,
+            metadata: newMessage.metadata
+          };
+
+          if (selectedChat && formattedMessage.chat_id === selectedChat.id) {
+            setMessages(prev => [...prev, formattedMessage]);
           }
           fetchChats();
         }
