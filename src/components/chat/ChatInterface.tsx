@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Send, 
   Bot, 
@@ -13,7 +12,6 @@ import {
   MessageSquare, 
   Search,
   Settings,
-  Star,
   Paperclip,
   Mic,
   Smile
@@ -24,11 +22,12 @@ import { toast } from 'sonner';
 
 interface Message {
   id: string;
-  content: string;
-  sender_id: string;
+  message: string;
+  user_id: string;
   chat_id: string;
   message_type: 'text' | 'ai_suggestion' | 'system';
-  created_at: string;
+  sent_at: string;
+  metadata?: any;
   sender?: {
     first_name: string;
     last_name: string;
@@ -37,15 +36,14 @@ interface Message {
 
 interface Chat {
   id: string;
-  participant_ids: string[];
+  participants: string[];
   chat_type: 'direct' | 'group' | 'ai_assistant';
   created_at: string;
-  last_message?: Message;
-  participants?: Array<{
-    id: string;
-    first_name: string;
-    last_name: string;
-  }>;
+  last_activity: string;
+  last_message?: string;
+  created_by: string;
+  updated_at: string;
+  chat_messages?: Message[];
 }
 
 const ChatInterface: React.FC = () => {
@@ -79,20 +77,20 @@ const ChatInterface: React.FC = () => {
           *,
           chat_messages(
             id,
-            content,
-            sender_id,
-            created_at,
+            message,
+            user_id,
+            sent_at,
             message_type
           )
         `)
-        .contains('participant_ids', [profile?.id])
-        .order('updated_at', { ascending: false });
+        .contains('participants', [profile?.id])
+        .order('last_activity', { ascending: false });
 
       if (error) throw error;
 
       const formattedChats = data?.map(chat => ({
         ...chat,
-        last_message: chat.chat_messages?.[0]
+        last_message: chat.chat_messages?.[0]?.message || 'Sem mensagens'
       })) || [];
 
       setChats(formattedChats);
@@ -110,7 +108,7 @@ const ChatInterface: React.FC = () => {
         .from('chat_messages')
         .select('*')
         .eq('chat_id', chatId)
-        .order('created_at', { ascending: true });
+        .order('sent_at', { ascending: true });
 
       if (error) throw error;
       setMessages(data || []);
@@ -128,10 +126,9 @@ const ChatInterface: React.FC = () => {
       const { error } = await supabase.functions.invoke('chat-system', {
         body: {
           action: 'send_message',
-          chat_id: selectedChat.id,
-          sender_id: profile?.id,
-          content: newMessage.trim(),
-          message_type: 'text'
+          chatId: selectedChat.id,
+          userId: profile?.id,
+          message: newMessage.trim()
         }
       });
 
@@ -151,8 +148,8 @@ const ChatInterface: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('chat-system', {
         body: {
           action: 'create_chat',
-          participant_ids: [profile?.id, 'ai_assistant'],
-          chat_type: 'ai_assistant'
+          participants: [profile?.id, 'ai_assistant'],
+          userId: profile?.id
         }
       });
 
@@ -193,9 +190,8 @@ const ChatInterface: React.FC = () => {
   };
 
   const filteredChats = chats.filter(chat =>
-    chat.participants?.some(p => 
-      `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    chat.last_message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chat.chat_type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -253,14 +249,14 @@ const ChatInterface: React.FC = () => {
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-medium truncate">
                             {chat.chat_type === 'ai_assistant' ? 'Assistente de IA' : 
-                             chat.participants?.map(p => `${p.first_name} ${p.last_name}`).join(', ')}
+                             `Chat ${chat.chat_type}`}
                           </p>
                           <Badge variant={chat.chat_type === 'ai_assistant' ? 'default' : 'secondary'}>
                             {chat.chat_type === 'ai_assistant' ? 'IA' : 'Chat'}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">
-                          {chat.last_message?.content || 'Sem mensagens'}
+                          {chat.last_message || 'Sem mensagens'}
                         </p>
                       </div>
                     </div>
@@ -287,7 +283,7 @@ const ChatInterface: React.FC = () => {
                   <div>
                     <h3 className="font-semibold">
                       {selectedChat.chat_type === 'ai_assistant' ? 'Assistente de IA' : 
-                       selectedChat.participants?.map(p => `${p.first_name} ${p.last_name}`).join(', ')}
+                       `Chat ${selectedChat.chat_type}`}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {selectedChat.chat_type === 'ai_assistant' ? 'Sempre disponível' : 'Online'}
@@ -313,7 +309,7 @@ const ChatInterface: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {messages.map((message) => {
-                      const isOwn = message.sender_id === profile?.id;
+                      const isOwn = message.user_id === profile?.id;
                       const isAI = message.message_type === 'ai_suggestion';
                       
                       return (
@@ -336,12 +332,12 @@ const ChatInterface: React.FC = () => {
                                 <span className="text-xs font-medium">IA</span>
                               </div>
                             )}
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-sm">{message.message}</p>
                             <p className={`text-xs mt-1 ${
                               isAI ? 'text-blue-600' :
                               isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
                             }`}>
-                              {new Date(message.created_at).toLocaleTimeString()}
+                              {new Date(message.sent_at).toLocaleTimeString()}
                             </p>
                           </div>
                         </div>
