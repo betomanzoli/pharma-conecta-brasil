@@ -19,17 +19,19 @@ import {
   CheckCircle
 } from 'lucide-react';
 
+interface ModelWeights {
+  location_weight: number;
+  expertise_weight: number;
+  compliance_weight: number;
+  size_weight: number;
+  rating_weight: number;
+  accuracy: number;
+}
+
 interface MLModelWeights {
   id: string;
   model_version: string;
-  weights: {
-    location_weight: number;
-    expertise_weight: number;
-    compliance_weight: number;
-    size_weight: number;
-    rating_weight: number;
-    accuracy: number;
-  };
+  weights: ModelWeights;
   training_data_size: number;
   accuracy_score: number;
   trained_at: string;
@@ -64,7 +66,28 @@ const MLModelWeights = () => {
         .limit(5);
 
       if (error) throw error;
-      setModels(data || []);
+      
+      // Transform the data to match our interface
+      const transformedModels = (data || []).map(item => ({
+        id: item.id,
+        model_version: item.model_version,
+        weights: typeof item.weights === 'object' && item.weights !== null ? 
+          item.weights as ModelWeights : 
+          {
+            location_weight: 0.2,
+            expertise_weight: 0.3,
+            compliance_weight: 0.25,
+            size_weight: 0.15,
+            rating_weight: 0.1,
+            accuracy: 0
+          },
+        training_data_size: item.training_data_size,
+        accuracy_score: item.accuracy_score,
+        trained_at: item.trained_at,
+        is_active: item.is_active
+      }));
+      
+      setModels(transformedModels);
     } catch (error) {
       console.error('Error loading models:', error);
     }
@@ -83,9 +106,11 @@ const MLModelWeights = () => {
 
       const formatted = (data || []).map(item => ({
         date: new Date(item.measured_at).toLocaleDateString(),
-        accuracy: item.tags?.accuracy || 0,
+        accuracy: typeof item.tags === 'object' && item.tags && 'accuracy' in item.tags ? 
+          Number(item.tags.accuracy) : 0,
         matches: item.metric_value,
-        acceptance_rate: item.tags?.acceptance_rate || 0
+        acceptance_rate: typeof item.tags === 'object' && item.tags && 'acceptance_rate' in item.tags ? 
+          Number(item.tags.acceptance_rate) : 0
       }));
 
       setPerformanceData(formatted);
@@ -273,9 +298,9 @@ const MLModelWeights = () => {
                         <span className="capitalize">
                           {key.replace('_weight', '').replace('_', ' ')}
                         </span>
-                        <span className="font-medium">{Math.round(value * 100)}%</span>
+                        <span className="font-medium">{Math.round(Number(value) * 100)}%</span>
                       </div>
-                      <Progress value={value * 100} className="h-2" />
+                      <Progress value={Number(value) * 100} className="h-2" />
                     </div>
                   )
                 ))}
