@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -49,48 +50,34 @@ const TwoFactorAuth = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
+  // Use o hook useSupabaseQuery para buscar as configurações de segurança
+  const { data: securityData } = useSupabaseQuery<UserSecuritySettings>({
+    queryKey: ['user_security_settings', user?.id],
+    table: 'user_security_settings',
+    filters: user ? { user_id: user.id } : {},
+    single: true,
+    enabled: !!user,
+    throwError: false
+  });
+
   useEffect(() => {
-    loadTwoFactorSettings();
-  }, [user]);
-
-  const loadTwoFactorSettings = async () => {
-    if (!user) return;
-
-    try {
-      // Fazemos a consulta usando type assertion para contornar o problema de tipos
-      const { data, error } = await supabase
-        .from('user_security_settings' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data) {
-        const securityData = data as UserSecuritySettings;
-        setSettings({
-          is_enabled: securityData.two_factor_enabled,
-          backup_codes: securityData.backup_codes || [],
-          setup_complete: securityData.two_factor_setup_complete,
-          last_used: securityData.two_factor_last_used
-        });
-      } else {
-        setSettings({
-          is_enabled: false,
-          backup_codes: [],
-          setup_complete: false,
-          last_used: null
-        });
-      }
-    } catch (error) {
-      console.error('Error loading 2FA settings:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar configurações de segurança",
-        variant: "destructive"
+    if (securityData) {
+      setSettings({
+        is_enabled: securityData.two_factor_enabled,
+        backup_codes: securityData.backup_codes || [],
+        setup_complete: securityData.two_factor_setup_complete,
+        last_used: securityData.two_factor_last_used
+      });
+    } else if (user) {
+      // Configurações padrão se não existem dados
+      setSettings({
+        is_enabled: false,
+        backup_codes: [],
+        setup_complete: false,
+        last_used: null
       });
     }
-  };
+  }, [securityData, user]);
 
   const initializeTwoFactor = async () => {
     if (!user) return;
@@ -144,7 +131,8 @@ const TwoFactorAuth = () => {
         description: "Autenticação de dois fatores ativada com sucesso",
       });
 
-      loadTwoFactorSettings();
+      // Recarregar configurações
+      window.location.reload();
     } catch (error) {
       console.error('Error completing 2FA setup:', error);
       toast({
@@ -173,7 +161,8 @@ const TwoFactorAuth = () => {
         description: "Autenticação de dois fatores foi desativada",
       });
 
-      loadTwoFactorSettings();
+      // Recarregar configurações
+      window.location.reload();
     } catch (error) {
       console.error('Error disabling 2FA:', error);
       toast({
@@ -204,7 +193,8 @@ const TwoFactorAuth = () => {
         description: "Novos códigos de backup foram gerados",
       });
 
-      loadTwoFactorSettings();
+      // Recarregar configurações
+      window.location.reload();
     } catch (error) {
       console.error('Error generating backup codes:', error);
       toast({
