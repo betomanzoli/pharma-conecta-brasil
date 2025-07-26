@@ -45,6 +45,29 @@ interface PerformanceMetric {
   acceptance_rate: number;
 }
 
+// Função helper para converter JSON para ModelWeights
+const parseModelWeights = (weights: any): ModelWeights => {
+  if (!weights || typeof weights !== 'object') {
+    return {
+      location_weight: 0.2,
+      expertise_weight: 0.3,
+      compliance_weight: 0.25,
+      size_weight: 0.15,
+      rating_weight: 0.1,
+      accuracy: 0
+    };
+  }
+
+  return {
+    location_weight: Number(weights.location_weight) || 0.2,
+    expertise_weight: Number(weights.expertise_weight) || 0.3,
+    compliance_weight: Number(weights.compliance_weight) || 0.25,
+    size_weight: Number(weights.size_weight) || 0.15,
+    rating_weight: Number(weights.rating_weight) || 0.1,
+    accuracy: Number(weights.accuracy) || 0
+  };
+};
+
 const MLModelWeights = () => {
   const [models, setModels] = useState<MLModelWeights[]>([]);
   const [performanceData, setPerformanceData] = useState<PerformanceMetric[]>([]);
@@ -71,16 +94,7 @@ const MLModelWeights = () => {
       const transformedModels = (data || []).map(item => ({
         id: item.id,
         model_version: item.model_version,
-        weights: typeof item.weights === 'object' && item.weights !== null ? 
-          item.weights as ModelWeights : 
-          {
-            location_weight: 0.2,
-            expertise_weight: 0.3,
-            compliance_weight: 0.25,
-            size_weight: 0.15,
-            rating_weight: 0.1,
-            accuracy: 0
-          },
+        weights: parseModelWeights(item.weights),
         training_data_size: item.training_data_size,
         accuracy_score: item.accuracy_score,
         trained_at: item.trained_at,
@@ -104,14 +118,15 @@ const MLModelWeights = () => {
 
       if (error) throw error;
 
-      const formatted = (data || []).map(item => ({
-        date: new Date(item.measured_at).toLocaleDateString(),
-        accuracy: typeof item.tags === 'object' && item.tags && 'accuracy' in item.tags ? 
-          Number(item.tags.accuracy) : 0,
-        matches: item.metric_value,
-        acceptance_rate: typeof item.tags === 'object' && item.tags && 'acceptance_rate' in item.tags ? 
-          Number(item.tags.acceptance_rate) : 0
-      }));
+      const formatted = (data || []).map(item => {
+        const tags = item.tags as any || {};
+        return {
+          date: new Date(item.measured_at).toLocaleDateString(),
+          accuracy: Number(tags.accuracy) || 0,
+          matches: item.metric_value,
+          acceptance_rate: Number(tags.acceptance_rate) || 0
+        };
+      });
 
       setPerformanceData(formatted);
     } catch (error) {

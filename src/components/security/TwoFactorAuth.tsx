@@ -26,6 +26,19 @@ interface TwoFactorSettings {
   last_used: string | null;
 }
 
+// Interface para os dados da tabela user_security_settings
+interface UserSecuritySettings {
+  id: string;
+  user_id: string;
+  two_factor_enabled: boolean;
+  two_factor_secret: string | null;
+  two_factor_setup_complete: boolean;
+  two_factor_last_used: string | null;
+  backup_codes: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const TwoFactorAuth = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,8 +57,9 @@ const TwoFactorAuth = () => {
     if (!user) return;
 
     try {
+      // Fazemos a consulta usando type assertion para contornar o problema de tipos
       const { data, error } = await supabase
-        .from('user_security_settings')
+        .from('user_security_settings' as any)
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -53,11 +67,12 @@ const TwoFactorAuth = () => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
+        const securityData = data as UserSecuritySettings;
         setSettings({
-          is_enabled: data.two_factor_enabled,
-          backup_codes: data.backup_codes || [],
-          setup_complete: data.two_factor_setup_complete,
-          last_used: data.two_factor_last_used
+          is_enabled: securityData.two_factor_enabled,
+          backup_codes: securityData.backup_codes || [],
+          setup_complete: securityData.two_factor_setup_complete,
+          last_used: securityData.two_factor_last_used
         });
       } else {
         setSettings({
@@ -69,6 +84,11 @@ const TwoFactorAuth = () => {
       }
     } catch (error) {
       console.error('Error loading 2FA settings:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar configurações de segurança",
+        variant: "destructive"
+      });
     }
   };
 
