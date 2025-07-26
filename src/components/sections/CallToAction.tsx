@@ -2,150 +2,114 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, CheckCircle, Star, Users, Zap } from 'lucide-react';
+import { ArrowRight, TrendingUp, Users, Target } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-export const CallToAction = () => {
-  const benefits = [
-    'Acesso gratuito por 30 dias',
-    'Configuração completa incluída',
-    'Suporte especializado 24/7',
-    'Sem compromisso ou taxa de cancelamento',
-    'Resultados visíveis em até 15 dias'
-  ];
-
-  const testimonials = [
-    {
-      name: 'Dr. Maria Santos',
-      role: 'Diretora Regulatória, PharmaBrasil',
-      text: 'A plataforma revolucionou nossa gestão de compliance. ROI de 400% em 6 meses.',
-      rating: 5
-    },
-    {
-      name: 'João Silva',
-      role: 'CEO, LabTech Solutions',
-      text: 'Aumentamos nossa carteira de clientes em 300% através das conexões da plataforma.',
-      rating: 5
-    },
-    {
-      name: 'Ana Costa',
-      role: 'Consultora Regulatória',
-      text: 'Minha autoridade no setor cresceu significativamente. Recomendo para todos os colegas.',
-      rating: 5
-    }
-  ];
-
+const CallToAction = () => {
   return (
-    <section className="py-20 bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-      <div className="container mx-auto px-4">
+    <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">
-            Pronto para <span className="text-yellow-300">Transformar</span> Seus Resultados?
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Pronto para Transformar Seu Negócio?
           </h2>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Junte-se a milhares de profissionais que já estão maximizando suas oportunidades na plataforma
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Junte-se à revolução digital do setor farmacêutico brasileiro. 
+            Comece gratuitamente e descubra oportunidades ilimitadas.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Benefícios */}
-          <div>
-            <h3 className="text-2xl font-bold mb-6">O que você recebe:</h3>
-            <div className="space-y-4">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-green-400 flex-shrink-0" />
-                  <span className="text-lg">{benefit}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Crescimento Garantido</h3>
+              <p className="text-muted-foreground">
+                Aumente suas oportunidades de negócio em até 300% com nosso AI Matching
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Rede Qualificada</h3>
+              <p className="text-muted-foreground">
+                Conecte-se apenas com profissionais verificados e empresas certificadas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center hover:shadow-lg transition-shadow">
+            <CardContent className="p-8">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Target className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Matches Precisos</h3>
+              <p className="text-muted-foreground">
+                IA treinada especificamente para o mercado farmacêutico brasileiro
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3">
+              <Link to="/register">
                 Começar Gratuitamente
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                Agendar Demonstração
-              </Button>
-            </div>
-          </div>
-
-          {/* Depoimentos */}
-          <div>
-            <h3 className="text-2xl font-bold mb-6">O que nossos clientes dizem:</h3>
-            <div className="space-y-6">
-              {testimonials.map((testimonial, index) => (
-                <Card key={index} className="bg-white/10 border-white/20 text-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-3">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                      ))}
-                    </div>
-                    <p className="text-sm mb-4 italic">"{testimonial.text}"</p>
-                    <div>
-                      <div className="font-semibold">{testimonial.name}</div>
-                      <div className="text-sm text-blue-100">{testimonial.role}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Estatísticas finais */}
-        <div className="bg-white/10 rounded-xl p-8 backdrop-blur-sm">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Resultados Comprovados</h3>
-            <p className="text-blue-100">Dados reais de nossos clientes</p>
+              </Link>
+            </Button>
+            
+            <Button asChild variant="outline" size="lg" className="px-8 py-3">
+              <Link to="/marketplace">
+                Explorar Marketplace
+              </Link>
+            </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="h-8 w-8 text-green-400" />
-              </div>
-              <div className="text-3xl font-bold">300%</div>
-              <div className="text-sm text-blue-100">ROI Médio</div>
+          <p className="text-sm text-muted-foreground">
+            Sem compromisso • Configuração em 2 minutos • Suporte especializado 24/7
+          </p>
+          
+          <div className="flex justify-center items-center space-x-8 text-sm text-muted-foreground">
+            <div className="flex items-center">
+              ✅ Grátis para sempre
             </div>
-            
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="h-8 w-8 text-blue-400" />
-              </div>
-              <div className="text-3xl font-bold">10k+</div>
-              <div className="text-sm text-blue-100">Profissionais Ativos</div>
+            <div className="flex items-center">
+              ✅ Sem cartão de crédito
             </div>
-            
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Zap className="h-8 w-8 text-yellow-400" />
-              </div>
-              <div className="text-3xl font-bold">15 dias</div>
-              <div className="text-sm text-blue-100">Tempo para Resultados</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <CheckCircle className="h-8 w-8 text-green-400" />
-              </div>
-              <div className="text-3xl font-bold">95%</div>
-              <div className="text-sm text-blue-100">Satisfação</div>
+            <div className="flex items-center">
+              ✅ Compliance ANVISA
             </div>
           </div>
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-blue-100 mb-4">
-            Mais de 500 empresas já confiam em nossa plataforma
-          </p>
-          <Button size="lg" className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold">
-            Teste Grátis por 30 Dias - Sem Cartão de Crédito
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+        <div className="mt-16 p-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
+          <div className="text-center">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              🎯 Oferta Especial de Lançamento
+            </h3>
+            <p className="text-lg text-gray-700 mb-6">
+              Primeiros 1000 usuários recebem <span className="font-bold text-blue-600">6 meses Premium GRÁTIS</span>
+            </p>
+            <div className="flex justify-center items-center space-x-4 text-sm text-gray-600">
+              <span>⏰ Oferta limitada</span>
+              <span>•</span>
+              <span>🚀 Acesso antecipado a novas features</span>
+              <span>•</span>
+              <span>💼 Consultoria personalizada</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 };
+
+export default CallToAction;

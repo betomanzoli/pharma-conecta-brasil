@@ -1,386 +1,420 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { Search, Plus, MessageSquare, Star, MapPin, Calendar, Package, Zap, Settings, Microscope, FlaskConical, Beaker } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Package, 
+  Plus, 
+  Search, 
+  MapPin, 
+  DollarSign, 
+  MessageSquare,
+  Star,
+  Filter,
+  Camera,
+  Calendar
+} from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+interface Equipment {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  price: number;
+  currency: string;
+  location: string;
+  images: string[];
+  specifications: any;
+  status: string;
+  seller_id: string;
+  created_at: string;
+}
+
+interface Quote {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  quoted_price: number;
+  message: string;
+  status: string;
+  created_at: string;
+}
 
 const EquipmentMarketplace = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
-  const [selectedListing, setSelectedListing] = useState(null);
+  const { user } = useAuth();
   const { toast } = useToast();
-
-  const { data: listings = [] } = useSupabaseQuery({
-    queryKey: ['equipment-listings'],
-    table: 'equipment_listings',
-    select: '*',
-    filters: {}
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    condition: 'all',
+    priceRange: 'all',
+    location: ''
   });
 
-  const { data: quotes = [] } = useSupabaseQuery({
-    queryKey: ['equipment-quotes'],
-    table: 'equipment_quotes',
-    select: '*',
-    filters: {}
-  });
+  useEffect(() => {
+    loadEquipment();
+    if (user) loadQuotes();
+  }, [user]);
 
-  const categories = [
-    { id: 'all', name: 'Todos', icon: Package },
-    { id: 'analytical', name: 'Equipamentos Analíticos', icon: Microscope },
-    { id: 'production', name: 'Equipamentos de Produção', icon: Settings },
-    { id: 'laboratory', name: 'Equipamentos de Laboratório', icon: FlaskConical },
-    { id: 'quality', name: 'Controle de Qualidade', icon: Beaker },
-    { id: 'packaging', name: 'Embalagem', icon: Package },
-    { id: 'maintenance', name: 'Manutenção', icon: Zap }
-  ];
-
-  const filteredListings = listings.filter(listing => {
-    const matchesSearch = listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         listing.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleCreateListing = async (formData: FormData) => {
+  const loadEquipment = async () => {
     try {
       const { data, error } = await supabase
         .from('equipment_listings')
-        .insert([{
-          title: formData.get('title'),
-          description: formData.get('description'),
-          category: formData.get('category'),
-          condition: formData.get('condition'),
-          price: parseFloat(formData.get('price') as string),
-          location: formData.get('location'),
-          specifications: JSON.parse(formData.get('specifications') as string || '{}'),
-          seller_id: (await supabase.auth.getUser()).data.user?.id
-        }]);
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      toast({
-        title: "Equipamento listado com sucesso!",
-        description: "Seu equipamento foi adicionado ao marketplace.",
-      });
-
-      setIsCreateDialogOpen(false);
+      setEquipment(data || []);
     } catch (error) {
-      console.error('Erro ao criar listagem:', error);
-      toast({
-        title: "Erro ao criar listagem",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      console.error('Error loading equipment:', error);
     }
   };
 
-  const handleSubmitQuote = async (formData: FormData) => {
+  const loadQuotes = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('equipment_quotes')
-        .insert([{
-          listing_id: selectedListing?.id,
-          buyer_id: (await supabase.auth.getUser()).data.user?.id,
-          quoted_price: parseFloat(formData.get('price') as string),
-          message: formData.get('message')
-        }]);
+        .select('*')
+        .eq('buyer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQuotes(data || []);
+    } catch (error) {
+      console.error('Error loading quotes:', error);
+    }
+  };
+
+  const handleAddEquipment = async (formData: FormData) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const equipmentData = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        category: formData.get('category') as string,
+        condition: formData.get('condition') as string,
+        price: parseFloat(formData.get('price') as string),
+        location: formData.get('location') as string,
+        specifications: JSON.parse((formData.get('specifications') as string) || '{}'),
+        seller_id: user.id
+      };
+
+      const { error } = await supabase
+        .from('equipment_listings')
+        .insert(equipmentData);
 
       if (error) throw error;
 
       toast({
-        title: "Cotação enviada com sucesso!",
-        description: "O vendedor receberá sua proposta.",
+        title: "Equipamento adicionado!",
+        description: "Seu equipamento foi listado com sucesso.",
       });
 
-      setIsQuoteDialogOpen(false);
+      loadEquipment();
     } catch (error) {
-      console.error('Erro ao enviar cotação:', error);
+      console.error('Error adding equipment:', error);
       toast({
-        title: "Erro ao enviar cotação",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível adicionar o equipamento.",
+        variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'new': return 'bg-green-500';
-      case 'excellent': return 'bg-blue-500';
-      case 'good': return 'bg-yellow-500';
-      case 'fair': return 'bg-orange-500';
-      case 'poor': return 'bg-red-500';
-      default: return 'bg-gray-500';
+  const handleQuoteSubmit = async (formData: FormData, listingId: string) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const quoteData = {
+        listing_id: listingId,
+        buyer_id: user.id,
+        quoted_price: parseFloat(formData.get('quoted_price') as string),
+        message: formData.get('message') as string
+      };
+
+      const { error } = await supabase
+        .from('equipment_quotes')
+        .insert(quoteData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Proposta enviada!",
+        description: "Sua proposta foi enviada ao vendedor.",
+      });
+
+      loadQuotes();
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a proposta.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getConditionText = (condition: string) => {
-    switch (condition) {
-      case 'new': return 'Novo';
-      case 'excellent': return 'Excelente';
-      case 'good': return 'Bom';
-      case 'fair': return 'Regular';
-      case 'poor': return 'Ruim';
-      default: return 'Não especificado';
-    }
-  };
+  const filteredEquipment = equipment.filter(item => {
+    if (filters.category !== 'all' && item.category !== filters.category) return false;
+    if (filters.condition !== 'all' && item.condition !== filters.condition) return false;
+    if (filters.location && !item.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    return true;
+  });
+
+  const categories = [
+    { value: 'all', label: 'Todas as Categorias' },
+    { value: 'laboratory', label: 'Equipamentos de Laboratório' },
+    { value: 'analytical', label: 'Equipamentos Analíticos' },
+    { value: 'pharmaceutical', label: 'Equipamentos Farmacêuticos' },
+    { value: 'biotechnology', label: 'Biotecnologia' },
+    { value: 'quality_control', label: 'Controle de Qualidade' }
+  ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Marketplace de Equipamentos</h1>
-          <p className="text-muted-foreground">Compre e venda equipamentos farmacêuticos</p>
-        </div>
-        
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Listar Equipamento
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Listar Novo Equipamento</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateListing(new FormData(e.currentTarget));
-            }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Título</Label>
-                  <Input id="title" name="title" required />
-                </div>
-                <div>
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select name="category" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.filter(cat => cat.id !== 'all').map(category => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" name="description" required />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="condition">Condição</Label>
-                  <Select name="condition" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Condição" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">Novo</SelectItem>
-                      <SelectItem value="excellent">Excelente</SelectItem>
-                      <SelectItem value="good">Bom</SelectItem>
-                      <SelectItem value="fair">Regular</SelectItem>
-                      <SelectItem value="poor">Ruim</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="price">Preço (R$)</Label>
-                  <Input id="price" name="price" type="number" step="0.01" required />
-                </div>
-                <div>
-                  <Label htmlFor="location">Localização</Label>
-                  <Input id="location" name="location" required />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="specifications">Especificações Técnicas (JSON)</Label>
-                <Textarea 
-                  id="specifications" 
-                  name="specifications" 
-                  placeholder='{"modelo": "XYZ-123", "ano": 2020, "voltagem": "220V"}'
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancelar
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Marketplace de Equipamentos</h1>
+              <p className="text-muted-foreground">
+                Compre e venda equipamentos farmacêuticos e laboratoriais
+              </p>
+            </div>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Vender Equipamento
                 </Button>
-                <Button type="submit">Criar Listagem</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Equipamento</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  handleAddEquipment(formData);
+                }}>
+                  <div className="space-y-4">
+                    <Input name="title" placeholder="Título do equipamento" required />
+                    <Textarea name="description" placeholder="Descrição detalhada" required />
+                    <Select name="category" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.slice(1).map(cat => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select name="condition" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Condição" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">Novo</SelectItem>
+                        <SelectItem value="excellent">Excelente</SelectItem>
+                        <SelectItem value="good">Bom</SelectItem>
+                        <SelectItem value="fair">Regular</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input name="price" type="number" placeholder="Preço (R$)" required />
+                    <Input name="location" placeholder="Localização" required />
+                    <Textarea name="specifications" placeholder="Especificações técnicas (JSON)" />
+                    <Button type="submit" disabled={loading} className="w-full">
+                      {loading ? 'Adicionando...' : 'Adicionar Equipamento'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Filters */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Filter className="h-5 w-5" />
+                <span>Filtros</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Select value={filters.category} onValueChange={(value) => 
+                  setFilters(prev => ({...prev, category: value}))
+                }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={filters.condition} onValueChange={(value) => 
+                  setFilters(prev => ({...prev, condition: value}))
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Condição" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Condições</SelectItem>
+                    <SelectItem value="new">Novo</SelectItem>
+                    <SelectItem value="excellent">Excelente</SelectItem>
+                    <SelectItem value="good">Bom</SelectItem>
+                    <SelectItem value="fair">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Input 
+                  placeholder="Localização"
+                  value={filters.location}
+                  onChange={(e) => setFilters(prev => ({...prev, location: e.target.value}))}
+                />
+                
+                <Button variant="outline" onClick={() => setFilters({
+                  category: 'all',
+                  condition: 'all',
+                  priceRange: 'all',
+                  location: ''
+                })}>
+                  Limpar Filtros
+                </Button>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </CardContent>
+          </Card>
 
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar equipamentos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(category => {
-              const Icon = category.icon;
-              return (
-                <SelectItem key={category.id} value={category.id}>
-                  <div className="flex items-center">
-                    <Icon className="mr-2 h-4 w-4" />
-                    {category.name}
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Tabs defaultValue="listings" className="w-full">
-        <TabsList>
-          <TabsTrigger value="listings">Listagens ({filteredListings.length})</TabsTrigger>
-          <TabsTrigger value="quotes">Minhas Cotações ({quotes.length})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="listings" className="space-y-4">
+          {/* Equipment Listings */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing) => (
-              <Card key={listing.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{listing.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {listing.description}
-                      </CardDescription>
-                    </div>
-                    <Badge className={`${getConditionColor(listing.condition)} text-white`}>
-                      {getConditionText(listing.condition)}
+            {filteredEquipment.map((item) => (
+              <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-lg font-semibold">{item.title}</h3>
+                    <Badge variant={item.condition === 'new' ? 'default' : 'secondary'}>
+                      {item.condition}
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-green-600">
-                        R$ {listing.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                      <Badge variant="outline">{listing.category}</Badge>
+                  
+                  <p className="text-muted-foreground mb-4 line-clamp-2">
+                    {item.description}
+                  </p>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Package className="h-4 w-4" />
+                      <span>{item.category}</span>
                     </div>
-                    
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="mr-1 h-4 w-4" />
-                      {listing.location}
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>{item.location}</span>
                     </div>
-                    
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="mr-1 h-4 w-4" />
-                      {new Date(listing.created_at).toLocaleDateString('pt-BR')}
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button 
-                        className="flex-1" 
-                        onClick={() => {
-                          setSelectedListing(listing);
-                          setIsQuoteDialogOpen(true);
-                        }}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Cotar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Star className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="quotes" className="space-y-4">
-          <div className="space-y-4">
-            {quotes.map((quote) => (
-              <Card key={quote.id}>
-                <CardContent className="p-4">
+                  
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Cotação para: {quote.listing?.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Valor proposto: R$ {quote.quoted_price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
+                    <div className="text-2xl font-bold text-primary">
+                      R$ {item.price.toLocaleString()}
                     </div>
-                    <Badge variant={quote.status === 'pending' ? 'secondary' : 'default'}>
-                      {quote.status === 'pending' ? 'Pendente' : 'Aceito'}
-                    </Badge>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Fazer Proposta
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Fazer Proposta</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.currentTarget);
+                          handleQuoteSubmit(formData, item.id);
+                        }}>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium">Equipamento:</label>
+                              <p className="text-sm text-muted-foreground">{item.title}</p>
+                            </div>
+                            <Input 
+                              name="quoted_price" 
+                              type="number" 
+                              placeholder="Sua proposta (R$)" 
+                              required 
+                            />
+                            <Textarea 
+                              name="message" 
+                              placeholder="Mensagem para o vendedor (opcional)" 
+                            />
+                            <Button type="submit" disabled={loading} className="w-full">
+                              {loading ? 'Enviando...' : 'Enviar Proposta'}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </TabsContent>
-      </Tabs>
 
-      <Dialog open={isQuoteDialogOpen} onOpenChange={setIsQuoteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enviar Cotação</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmitQuote(new FormData(e.currentTarget));
-          }} className="space-y-4">
-            <div>
-              <Label htmlFor="price">Preço Proposto (R$)</Label>
-              <Input id="price" name="price" type="number" step="0.01" required />
-            </div>
-            
-            <div>
-              <Label htmlFor="message">Mensagem</Label>
-              <Textarea id="message" name="message" placeholder="Inclua detalhes sobre sua proposta..." />
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setIsQuoteDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit">Enviar Cotação</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+          {filteredEquipment.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                  Nenhum equipamento encontrado
+                </h3>
+                <p className="text-muted-foreground">
+                  Tente ajustar os filtros ou seja o primeiro a listar um equipamento!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 };
 
