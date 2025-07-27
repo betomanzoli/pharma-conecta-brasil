@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
@@ -47,14 +48,28 @@ const SecurityMonitor = () => {
     successful_2fa: 0,
     total_events: 0
   });
-  const [loading, setLoading] = useState(true);
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
+
+  // Use the custom hook to fetch security events
+  const { data: eventsData, refetch } = useSupabaseQuery({
+    queryKey: ['security-events', user?.id],
+    table: 'security_audit_logs',
+    select: '*',
+    filters: { user_id: user?.id },
+    enabled: !!user?.id
+  });
+
+  useEffect(() => {
+    if (eventsData && Array.isArray(eventsData)) {
+      // Type cast the data to SecurityEvent array
+      const events = eventsData as SecurityEvent[];
+      setSecurityEvents(events.slice(0, 50));
+      loadSecurityMetrics(events);
+    }
+  }, [eventsData]);
 
   useEffect(() => {
     if (user?.id) {
-      fetchSecurityEvents();
-      loadSecurityMetrics();
-      
       // Set up real-time monitoring
       const subscription = supabase
         .channel('security_events')
@@ -76,58 +91,19 @@ const SecurityMonitor = () => {
     }
   }, [user?.id]);
 
-  const fetchSecurityEvents = async () => {
-    if (!user?.id) return;
+  const loadSecurityMetrics = (events: SecurityEvent[]) => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentEvents = events.filter(e => new Date(e.created_at) >= thirtyDaysAgo);
 
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_logs' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+    const newMetrics = {
+      failed_logins: recentEvents.filter(e => e.event_type === 'failed_login').length,
+      suspicious_activities: recentEvents.filter(e => e.event_type === 'suspicious_activity').length,
+      blocked_ips: recentEvents.filter(e => e.event_type === 'blocked_ip').length,
+      successful_2fa: recentEvents.filter(e => e.event_type === 'successful_2fa').length,
+      total_events: recentEvents.length
+    };
 
-      if (error) {
-        console.error('Error fetching security events:', error);
-        return;
-      }
-
-      setSecurityEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching security events:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadSecurityMetrics = async () => {
-    if (!user?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_logs' as any)
-        .select('event_type')
-        .eq('user_id', user.id)
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-      if (error) {
-        console.error('Error loading security metrics:', error);
-        return;
-      }
-
-      const events = data || [];
-      const newMetrics = {
-        failed_logins: events.filter((e: any) => e.event_type === 'failed_login').length,
-        suspicious_activities: events.filter((e: any) => e.event_type === 'suspicious_activity').length,
-        blocked_ips: events.filter((e: any) => e.event_type === 'blocked_ip').length,
-        successful_2fa: events.filter((e: any) => e.event_type === 'successful_2fa').length,
-        total_events: events.length
-      };
-
-      setMetrics(newMetrics);
-    } catch (error) {
-      console.error('Error loading security metrics:', error);
-    }
+    setMetrics(newMetrics);
   };
 
   const handleNewSecurityEvent = (event: SecurityEvent) => {
@@ -197,14 +173,6 @@ const SecurityMonitor = () => {
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} h atrás`;
     return `${Math.floor(diffMins / 1440)} dias atrás`;
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

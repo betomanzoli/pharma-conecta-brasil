@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
@@ -50,44 +51,30 @@ const AdvancedSecuritySettings = () => {
   const [loading, setLoading] = useState(false);
   const [newIpRange, setNewIpRange] = useState('');
 
+  // Use the custom hook to fetch security settings
+  const { data: securityData, refetch } = useSupabaseQuery({
+    queryKey: ['security-settings', user?.id],
+    table: 'user_security_settings',
+    filters: { user_id: user?.id },
+    single: true,
+    enabled: !!user?.id
+  });
+
   useEffect(() => {
-    if (user?.id) {
-      fetchSecuritySettings();
+    if (securityData) {
+      setSettings({
+        login_notifications: securityData.login_notifications ?? true,
+        suspicious_activity_alerts: securityData.suspicious_activity_alerts ?? true,
+        device_tracking: securityData.device_tracking ?? true,
+        session_timeout: securityData.session_timeout ?? 30,
+        allowed_ip_ranges: securityData.allowed_ip_ranges ?? [],
+        max_failed_attempts: securityData.max_failed_attempts ?? 5,
+        auto_lock_enabled: securityData.auto_lock_enabled ?? true,
+        password_expiry_days: securityData.password_expiry_days ?? 90,
+        require_2fa_for_sensitive: securityData.require_2fa_for_sensitive ?? false
+      });
     }
-  }, [user?.id]);
-
-  const fetchSecuritySettings = async () => {
-    if (!user?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_security_settings' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching security settings:', error);
-        return;
-      }
-
-      if (data) {
-        setSettings({
-          login_notifications: data.login_notifications ?? true,
-          suspicious_activity_alerts: data.suspicious_activity_alerts ?? true,
-          device_tracking: data.device_tracking ?? true,
-          session_timeout: data.session_timeout ?? 30,
-          allowed_ip_ranges: data.allowed_ip_ranges ?? [],
-          max_failed_attempts: data.max_failed_attempts ?? 5,
-          auto_lock_enabled: data.auto_lock_enabled ?? true,
-          password_expiry_days: data.password_expiry_days ?? 90,
-          require_2fa_for_sensitive: data.require_2fa_for_sensitive ?? false
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching security settings:', error);
-    }
-  };
+  }, [securityData]);
 
   const saveSettings = async () => {
     if (!user) return;
@@ -117,7 +104,7 @@ const AdvancedSecuritySettings = () => {
         description: "Suas configurações de segurança foram atualizadas",
       });
 
-      // Log security event using direct insert instead of RPC
+      // Log security event using direct insert
       await supabase.from('security_audit_logs' as any).insert({
         user_id: user.id,
         event_type: 'security_settings_updated',
@@ -127,6 +114,7 @@ const AdvancedSecuritySettings = () => {
         metadata: {}
       });
 
+      refetch();
     } catch (error) {
       console.error('Error saving security settings:', error);
       toast({
