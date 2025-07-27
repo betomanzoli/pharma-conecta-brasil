@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
   Lock, 
@@ -50,48 +50,29 @@ const AdvancedSecuritySettings = () => {
   const [loading, setLoading] = useState(false);
   const [newIpRange, setNewIpRange] = useState('');
 
+  const { data: securityData } = useSupabaseQuery({
+    queryKey: ['user_security_settings', user?.id],
+    table: 'user_security_settings',
+    filters: { user_id: user?.id },
+    single: true,
+    enabled: !!user?.id
+  });
+
   useEffect(() => {
-    if (user) {
-      loadSecuritySettings();
-    }
-  }, [user]);
-
-  const loadSecuritySettings = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_security_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (data) {
-        // Parse settings from database
-        const parsedSettings = {
-          login_notifications: data.login_notifications || true,
-          suspicious_activity_alerts: data.suspicious_activity_alerts || true,
-          device_tracking: data.device_tracking || true,
-          session_timeout: data.session_timeout || 30,
-          allowed_ip_ranges: data.allowed_ip_ranges || [],
-          max_failed_attempts: data.max_failed_attempts || 5,
-          auto_lock_enabled: data.auto_lock_enabled || true,
-          password_expiry_days: data.password_expiry_days || 90,
-          require_2fa_for_sensitive: data.require_2fa_for_sensitive || false
-        };
-        setSettings(parsedSettings);
-      }
-    } catch (error) {
-      console.error('Error loading security settings:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar configurações de segurança",
-        variant: "destructive"
+    if (securityData) {
+      setSettings({
+        login_notifications: securityData.login_notifications ?? true,
+        suspicious_activity_alerts: securityData.suspicious_activity_alerts ?? true,
+        device_tracking: securityData.device_tracking ?? true,
+        session_timeout: securityData.session_timeout ?? 30,
+        allowed_ip_ranges: securityData.allowed_ip_ranges ?? [],
+        max_failed_attempts: securityData.max_failed_attempts ?? 5,
+        auto_lock_enabled: securityData.auto_lock_enabled ?? true,
+        password_expiry_days: securityData.password_expiry_days ?? 90,
+        require_2fa_for_sensitive: securityData.require_2fa_for_sensitive ?? false
       });
     }
-  };
+  }, [securityData]);
 
   const saveSettings = async () => {
     if (!user) return;
@@ -122,12 +103,10 @@ const AdvancedSecuritySettings = () => {
       });
 
       // Log security event
-      await supabase.functions.invoke('log_security_event', {
-        body: {
-          user_id: user.id,
-          event_type: 'security_settings_updated',
-          description: 'Configurações de segurança atualizadas pelo usuário'
-        }
+      await supabase.rpc('log_security_event', {
+        p_user_id: user.id,
+        p_event_type: 'security_settings_updated',
+        p_description: 'Configurações de segurança atualizadas pelo usuário'
       });
 
     } catch (error) {

@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
   AlertTriangle, 
@@ -39,7 +40,6 @@ interface SecurityMetrics {
 const SecurityMonitor = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     failed_logins: 0,
     suspicious_activities: 0,
@@ -47,12 +47,17 @@ const SecurityMonitor = () => {
     successful_2fa: 0,
     total_events: 0
   });
-  const [loading, setLoading] = useState(true);
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
+
+  const { data: securityEvents = [], isLoading } = useSupabaseQuery({
+    queryKey: ['security_audit_logs', user?.id],
+    table: 'security_audit_logs',
+    filters: { user_id: user?.id },
+    enabled: !!user?.id
+  });
 
   useEffect(() => {
     if (user) {
-      loadSecurityEvents();
       loadSecurityMetrics();
       
       // Set up real-time monitoring
@@ -75,32 +80,6 @@ const SecurityMonitor = () => {
       };
     }
   }, [user]);
-
-  const loadSecurityEvents = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-
-      setSecurityEvents(data || []);
-    } catch (error) {
-      console.error('Error loading security events:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar eventos de segurança",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadSecurityMetrics = async () => {
     if (!user) return;
@@ -130,8 +109,6 @@ const SecurityMonitor = () => {
   };
 
   const handleNewSecurityEvent = (event: SecurityEvent) => {
-    setSecurityEvents(prev => [event, ...prev.slice(0, 19)]);
-    
     // Show toast for critical events
     if (event.event_type === 'failed_login' || event.event_type === 'suspicious_activity') {
       toast({
@@ -192,7 +169,7 @@ const SecurityMonitor = () => {
     return `${Math.floor(diffMins / 1440)} dias atrás`;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -279,7 +256,7 @@ const SecurityMonitor = () => {
                 Nenhum evento de segurança registrado
               </div>
             ) : (
-              securityEvents.map((event) => (
+              securityEvents.slice(0, 20).map((event) => (
                 <div
                   key={event.id}
                   className={`p-4 rounded-lg border-l-4 ${
