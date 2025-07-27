@@ -1,73 +1,64 @@
 
-import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
-import UnifiedHeader from "@/components/UnifiedHeader";
-import ComplianceFooter from "@/components/ComplianceFooter";
-
-// Pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
+import Projects from "./pages/Projects";
 import Marketplace from "./pages/Marketplace";
-import ChatPage from "./pages/ChatPage";
-import KnowledgeLibrary from "./pages/KnowledgeLibrary";
+import Network from "./pages/Network";
 import Forums from "./pages/Forums";
-import MentorshipHub from "./pages/MentorshipHub";
-import EquipmentMarketplace from "./pages/EquipmentMarketplace";
-import VideoMeeting from "./pages/VideoMeeting";
-import Gamification from "./pages/Gamification";
-import OnboardingWizard from "./pages/OnboardingWizard";
+import Knowledge from "./pages/Knowledge";
+import Mentorship from "./pages/Mentorship";
+import Analytics from "./pages/Analytics";
+import Profile from "./pages/Profile";
+import CompanyProfile from "./pages/CompanyProfile";
+import PharmaceuticalDashboard from "./pages/PharmaceuticalDashboard";
+import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
+import EnhancedDashboard from "./pages/EnhancedDashboard";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import AIDashboardPage from "./pages/AIDashboardPage";
 import Security from "./pages/Security";
+import StrategicPlan from "./pages/StrategicPlan";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <div className="min-h-screen flex flex-col bg-background">
-              <PWAInstallPrompt />
-              <UnifiedHeader />
-              
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                  <Route path="/knowledge" element={<KnowledgeLibrary />} />
-                  <Route path="/forum" element={<Forums />} />
-                  <Route path="/mentorship" element={<MentorshipHub />} />
-                  <Route path="/equipment" element={<EquipmentMarketplace />} />
-                  <Route path="/video" element={<VideoMeeting />} />
-                  <Route path="/gamification" element={<Gamification />} />
-                  <Route path="/onboarding" element={<OnboardingWizard />} />
-                  <Route path="/security" element={<Security />} />
-                </Routes>
-              </main>
-              
-              <ComplianceFooter />
-            </div>
-          </AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/network" element={<Network />} />
+            <Route path="/forums" element={<Forums />} />
+            <Route path="/knowledge" element={<Knowledge />} />
+            <Route path="/mentorship" element={<Mentorship />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/company-profile" element={<CompanyProfile />} />
+            <Route path="/pharmaceutical-dashboard" element={<PharmaceuticalDashboard />} />
+            <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
+            <Route path="/enhanced-dashboard" element={<EnhancedDashboard />} />
+            <Route path="/analytics-page" element={<AnalyticsPage />} />
+            <Route path="/ai-dashboard" element={<AIDashboardPage />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/strategic-plan" element={<StrategicPlan />} />
+          </Routes>
         </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-}
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
