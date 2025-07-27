@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
@@ -23,8 +22,8 @@ interface SecurityEvent {
   id: string;
   event_type: string;
   event_description: string;
-  ip_address: string;
-  user_agent: string;
+  ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
   metadata: any;
 }
@@ -40,6 +39,7 @@ interface SecurityMetrics {
 const SecurityMonitor = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     failed_logins: 0,
     suspicious_activities: 0,
@@ -47,17 +47,12 @@ const SecurityMonitor = () => {
     successful_2fa: 0,
     total_events: 0
   });
+  const [loading, setLoading] = useState(true);
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
 
-  const { data: securityEvents = [], isLoading } = useSupabaseQuery({
-    queryKey: ['security_audit_logs', user?.id],
-    table: 'security_audit_logs',
-    filters: { user_id: user?.id },
-    enabled: !!user?.id
-  });
-
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
+      fetchSecurityEvents();
       loadSecurityMetrics();
       
       // Set up real-time monitoring
@@ -79,26 +74,53 @@ const SecurityMonitor = () => {
         subscription.unsubscribe();
       };
     }
-  }, [user]);
+  }, [user?.id]);
 
-  const loadSecurityMetrics = async () => {
-    if (!user) return;
+  const fetchSecurityEvents = async () => {
+    if (!user?.id) return;
 
     try {
       const { data, error } = await supabase
-        .from('security_audit_logs')
+        .from('security_audit_logs' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching security events:', error);
+        return;
+      }
+
+      setSecurityEvents(data || []);
+    } catch (error) {
+      console.error('Error fetching security events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSecurityMetrics = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('security_audit_logs' as any)
         .select('event_type')
         .eq('user_id', user.id)
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading security metrics:', error);
+        return;
+      }
 
       const events = data || [];
       const newMetrics = {
-        failed_logins: events.filter(e => e.event_type === 'failed_login').length,
-        suspicious_activities: events.filter(e => e.event_type === 'suspicious_activity').length,
-        blocked_ips: events.filter(e => e.event_type === 'blocked_ip').length,
-        successful_2fa: events.filter(e => e.event_type === 'successful_2fa').length,
+        failed_logins: events.filter((e: any) => e.event_type === 'failed_login').length,
+        suspicious_activities: events.filter((e: any) => e.event_type === 'suspicious_activity').length,
+        blocked_ips: events.filter((e: any) => e.event_type === 'blocked_ip').length,
+        successful_2fa: events.filter((e: any) => e.event_type === 'successful_2fa').length,
         total_events: events.length
       };
 
@@ -118,11 +140,17 @@ const SecurityMonitor = () => {
       });
     }
 
+    // Update events list
+    setSecurityEvents(prev => [event, ...prev.slice(0, 49)]);
+
     // Update metrics
     setMetrics(prev => ({
       ...prev,
       total_events: prev.total_events + 1,
-      [event.event_type]: (prev[event.event_type] || 0) + 1
+      failed_logins: event.event_type === 'failed_login' ? prev.failed_logins + 1 : prev.failed_logins,
+      suspicious_activities: event.event_type === 'suspicious_activity' ? prev.suspicious_activities + 1 : prev.suspicious_activities,
+      blocked_ips: event.event_type === 'blocked_ip' ? prev.blocked_ips + 1 : prev.blocked_ips,
+      successful_2fa: event.event_type === 'successful_2fa' ? prev.successful_2fa + 1 : prev.successful_2fa
     }));
   };
 
@@ -151,6 +179,7 @@ const SecurityMonitor = () => {
         return 'high';
       case 'password_change':
       case 'email_change':
+      case 'security_settings_updated':
         return 'medium';
       default:
         return 'low';
@@ -169,7 +198,7 @@ const SecurityMonitor = () => {
     return `${Math.floor(diffMins / 1440)} dias atrás`;
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

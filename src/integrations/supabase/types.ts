@@ -3338,6 +3338,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_logs: {
+        Row: {
+          created_at: string | null
+          event_description: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_description: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_description?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       sentiment_analysis: {
         Row: {
           analyzed_at: string
@@ -3505,6 +3538,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_security_settings: {
+        Row: {
+          allowed_ip_ranges: string[] | null
+          auto_lock_enabled: boolean | null
+          created_at: string | null
+          device_tracking: boolean | null
+          id: string
+          login_notifications: boolean | null
+          max_failed_attempts: number | null
+          password_expiry_days: number | null
+          require_2fa_for_sensitive: boolean | null
+          session_timeout: number | null
+          suspicious_activity_alerts: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allowed_ip_ranges?: string[] | null
+          auto_lock_enabled?: boolean | null
+          created_at?: string | null
+          device_tracking?: boolean | null
+          id?: string
+          login_notifications?: boolean | null
+          max_failed_attempts?: number | null
+          password_expiry_days?: number | null
+          require_2fa_for_sensitive?: boolean | null
+          session_timeout?: number | null
+          suspicious_activity_alerts?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allowed_ip_ranges?: string[] | null
+          auto_lock_enabled?: boolean | null
+          created_at?: string | null
+          device_tracking?: boolean | null
+          id?: string
+          login_notifications?: boolean | null
+          max_failed_attempts?: number | null
+          password_expiry_days?: number | null
+          require_2fa_for_sensitive?: boolean | null
+          session_timeout?: number | null
+          suspicious_activity_alerts?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -3631,6 +3712,17 @@ export type Database = {
       is_admin: {
         Args: { user_id?: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_description: string
+          p_ip_address?: string
+          p_user_agent?: string
+          p_metadata?: Json
+        }
+        Returns: string
       }
       mark_all_notifications_read: {
         Args: Record<PropertyKey, never>
