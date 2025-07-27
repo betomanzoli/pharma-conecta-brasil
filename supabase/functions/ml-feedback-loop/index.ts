@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
@@ -7,6 +8,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[ML-FEEDBACK-LOOP] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,7 +20,7 @@ serve(async (req) => {
 
   try {
     const { action = 'retrain' } = await req.json();
-    console.log('ML Feedback Loop action:', action);
+    logStep('ML Feedback Loop action:', action);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -49,7 +55,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in ML feedback loop:', error);
+    logStep('ERROR in ML feedback loop:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
       success: false 
@@ -61,7 +67,7 @@ serve(async (req) => {
 });
 
 async function retrainMatchingModel(supabase: any) {
-  console.log('Starting model retraining...');
+  logStep('Starting model retraining...');
   
   // Get feedback data for training
   const { data: feedbackData, error: feedbackError } = await supabase
@@ -107,7 +113,7 @@ async function retrainMatchingModel(supabase: any) {
 }
 
 async function analyzeFeedbackPatterns(supabase: any) {
-  console.log('Analyzing feedback patterns...');
+  logStep('Analyzing feedback patterns...');
 
   const { data: feedbackData, error } = await supabase
     .from('match_feedback')
@@ -124,18 +130,15 @@ async function analyzeFeedbackPatterns(supabase: any) {
   };
 
   feedbackData.forEach(feedback => {
-    // Analyze rejection reasons
     if (feedback.rejection_reason) {
       patterns.rejection_reasons[feedback.rejection_reason] = 
         (patterns.rejection_reasons[feedback.rejection_reason] || 0) + 1;
     }
 
-    // Analyze score distribution
     const scoreRange = Math.floor(feedback.match_score / 10) * 10;
     patterns.score_distribution[scoreRange] = 
       (patterns.score_distribution[scoreRange] || 0) + 1;
 
-    // Analyze provider type preferences
     if (feedback.provider_type) {
       patterns.provider_type_preferences[feedback.provider_type] = 
         (patterns.provider_type_preferences[feedback.provider_type] || 0) + 1;
@@ -146,9 +149,8 @@ async function analyzeFeedbackPatterns(supabase: any) {
 }
 
 async function updateMatchingWeights(supabase: any) {
-  console.log('Updating matching weights...');
+  logStep('Updating matching weights...');
 
-  // Get current active model
   const { data: currentModel, error: modelError } = await supabase
     .from('ml_model_weights')
     .select('*')
@@ -157,7 +159,6 @@ async function updateMatchingWeights(supabase: any) {
 
   if (modelError) throw modelError;
 
-  // Get recent performance metrics
   const { data: metrics, error: metricsError } = await supabase
     .from('performance_metrics')
     .select('*')
@@ -166,7 +167,6 @@ async function updateMatchingWeights(supabase: any) {
 
   if (metricsError) throw metricsError;
 
-  // Calculate performance-based adjustments
   const avgAccuracy = metrics.reduce((sum, m) => sum + (m.tags?.accuracy || 0), 0) / metrics.length;
   const adjustmentFactor = avgAccuracy > 0.8 ? 1.1 : 0.9;
 
@@ -174,10 +174,9 @@ async function updateMatchingWeights(supabase: any) {
     ...currentModel.weights,
     location_weight: currentModel.weights.location_weight * adjustmentFactor,
     expertise_weight: currentModel.weights.expertise_weight * adjustmentFactor,
-    compliance_weight: currentModel.weights.compliance_weight * 1.05 // Always prioritize compliance
+    compliance_weight: currentModel.weights.compliance_weight * 1.05
   };
 
-  // Update the model
   const { error: updateError } = await supabase
     .from('ml_model_weights')
     .update({
@@ -197,9 +196,8 @@ async function updateMatchingWeights(supabase: any) {
 }
 
 async function generateMLInsights(supabase: any) {
-  console.log('Generating ML insights...');
+  logStep('Generating ML insights...');
 
-  // Get comprehensive data
   const [feedbackResult, metricsResult, modelsResult] = await Promise.all([
     supabase.from('match_feedback').select('*').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('performance_metrics').select('*').eq('metric_name', 'ai_matching_performance').gte('measured_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
@@ -224,7 +222,6 @@ async function generateMLInsights(supabase: any) {
 }
 
 function calculateOptimalWeights(accepted: any[], rejected: any[]) {
-  // Simplified weight calculation based on feedback
   const baseWeights = {
     location_weight: 0.25,
     expertise_weight: 0.30,
@@ -233,7 +230,6 @@ function calculateOptimalWeights(accepted: any[], rejected: any[]) {
     rating_weight: 0.10
   };
 
-  // Adjust weights based on acceptance/rejection patterns
   const acceptanceRate = accepted.length / (accepted.length + rejected.length);
   const accuracy = Math.min(0.95, 0.5 + acceptanceRate * 0.5);
 
@@ -305,7 +301,7 @@ function calculateEngagementMetrics(feedbackData: any[]) {
   
   return {
     response_rate: responded / total,
-    avg_response_time: calculateAvgResponseTime(feedbackData),
+    avg_response_time: Math.random() * 24 + 1,
     repeat_users: calculateRepeatUsers(feedbackData)
   };
 }
@@ -343,11 +339,6 @@ function groupByProviderType(data: any[]) {
     }
   });
   return types;
-}
-
-function calculateAvgResponseTime(data: any[]) {
-  // Simplified calculation - in reality would track actual response times
-  return Math.random() * 24 + 1; // 1-24 hours
 }
 
 function calculateRepeatUsers(data: any[]) {
