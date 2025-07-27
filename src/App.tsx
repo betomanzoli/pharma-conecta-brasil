@@ -25,6 +25,7 @@ import EquipmentMarketplace from "./pages/EquipmentMarketplace";
 import VideoMeeting from "./pages/VideoMeeting";
 import Gamification from "./pages/Gamification";
 import OnboardingWizard from "./pages/OnboardingWizard";
+import Security from "./pages/Security";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function App() {
                   <Route path="/video" element={<VideoMeeting />} />
                   <Route path="/gamification" element={<Gamification />} />
                   <Route path="/onboarding" element={<OnboardingWizard />} />
+                  <Route path="/security" element={<Security />} />
                 </Routes>
               </main>
               
