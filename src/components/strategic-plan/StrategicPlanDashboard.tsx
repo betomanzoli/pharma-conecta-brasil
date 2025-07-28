@@ -20,6 +20,7 @@ import Phase2Governance from './phases/Phase2Governance';
 import Phase3SharedValue from './phases/Phase3SharedValue';
 import Phase4GomesCasseres from './phases/Phase4GomesCasseres';
 import Phase5PredictiveAnalysis from './phases/Phase5PredictiveAnalysis';
+import PredictiveAnalytics from '../analytics/PredictiveAnalytics';
 
 const StrategicPlanDashboard = () => {
   const [activePhase, setActivePhase] = useState('phase1');
@@ -124,6 +125,14 @@ const StrategicPlanDashboard = () => {
       color: 'bg-red-500',
       progress: 5,
       status: 'planning'
+    },
+    {
+      id: 'predictive',
+      title: 'Analytics Preditivo',
+      icon: Lightbulb,
+      color: 'bg-indigo-500',
+      progress: 60,
+      status: 'active'
     }
   ];
 
@@ -143,7 +152,7 @@ const StrategicPlanDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Plano de Melhorias Estratégicas</h1>
           <p className="text-gray-600 mt-2">
-            Implementação completa das 5 fases do plano estratégico
+            Implementação completa das 5 fases do plano estratégico com análise preditiva
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -155,7 +164,7 @@ const StrategicPlanDashboard = () => {
       </div>
 
       {/* Visão Geral das Fases */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         {phases.map((phase) => {
           const IconComponent = phase.icon;
           return (
@@ -270,6 +279,9 @@ const StrategicPlanDashboard = () => {
             projects={projects}
             onProjectUpdate={setProjects}
           />
+        )}
+        {activePhase === 'predictive' && (
+          <PredictiveAnalytics />
         )}
       </div>
     </div>

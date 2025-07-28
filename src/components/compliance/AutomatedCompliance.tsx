@@ -183,7 +183,7 @@ const AutomatedCompliance = () => {
     const updatedRules = complianceRules.map(rule => ({
       ...rule,
       lastChecked: new Date(),
-      status: Math.random() > 0.8 ? 'warning' : 'compliant'
+      status: (Math.random() > 0.8 ? 'warning' : 'compliant') as 'compliant' | 'warning' | 'non_compliant' | 'pending'
     }));
     setComplianceRules(updatedRules);
   };
