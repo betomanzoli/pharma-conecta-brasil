@@ -12,12 +12,8 @@ import Projects from "./pages/Projects";
 import Marketplace from "./pages/Marketplace";
 import Network from "./pages/Network";
 import Forums from "./pages/Forums";
-import Knowledge from "./pages/Knowledge";
-import Mentorship from "./pages/Mentorship";
 import Analytics from "./pages/Analytics";
 import Profile from "./pages/Profile";
-import CompanyProfile from "./pages/CompanyProfile";
-import PharmaceuticalDashboard from "./pages/PharmaceuticalDashboard";
 import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
 import EnhancedDashboard from "./pages/EnhancedDashboard";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -42,12 +38,8 @@ const App = () => (
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/network" element={<Network />} />
             <Route path="/forums" element={<Forums />} />
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/mentorship" element={<Mentorship />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/company-profile" element={<CompanyProfile />} />
-            <Route path="/pharmaceutical-dashboard" element={<PharmaceuticalDashboard />} />
             <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
             <Route path="/enhanced-dashboard" element={<EnhancedDashboard />} />
             <Route path="/analytics-page" element={<AnalyticsPage />} />
