@@ -126,11 +126,18 @@ const RealTimeMonitor: React.FC = () => {
     for (const api of apis) {
       try {
         const startTime = Date.now();
+        
+        // Use AbortController for timeout instead of timeout property
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         const response = await fetch(api.url, { 
           method: 'HEAD',
           mode: 'no-cors',
-          timeout: 10000 
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         const responseTime = Date.now() - startTime;
 
         // Registrar métrica de tempo de resposta
