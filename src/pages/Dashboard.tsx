@@ -1,46 +1,57 @@
 
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import Navigation from '@/components/Navigation';
-import DashboardCompany from './DashboardCompany';
-import DashboardLaboratory from './DashboardLaboratory';
-import DashboardConsultant from './DashboardConsultant';
-import DashboardGeneral from './DashboardGeneral';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import MobileOptimizedLayout from "@/components/mobile/MobileOptimizedLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardGeneral from "./DashboardGeneral";
+import DashboardCompany from "./DashboardCompany";
+import DashboardLaboratory from "./DashboardLaboratory";
+import DashboardConsultant from "./DashboardConsultant";
 
 const Dashboard = () => {
-  const { profile, loading } = useAuth();
+  const { profile } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1565C0]"></div>
-      </div>
-    );
-  }
+  const handleRefresh = async () => {
+    setRefreshKey(prev => prev + 1);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  };
 
-  const renderDashboard = () => {
+  const renderDashboardByType = () => {
     switch (profile?.user_type) {
       case 'company':
-        return <DashboardCompany />;
+        return <DashboardCompany key={refreshKey} />;
       case 'laboratory':
-        return <DashboardLaboratory />;
+        return <DashboardLaboratory key={refreshKey} />;
       case 'consultant':
-        return <DashboardConsultant />;
-      case 'individual':
+        return <DashboardConsultant key={refreshKey} />;
       default:
-        return <DashboardGeneral />;
+        return <DashboardGeneral key={refreshKey} />;
     }
   };
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <main>
-          {renderDashboard()}
-        </main>
-      </div>
+      <MobileOptimizedLayout
+        title="Dashboard"
+        showHeader={true}
+        showNavigation={true}
+        enablePullToRefresh={true}
+        enableGestures={true}
+        onRefresh={handleRefresh}
+        headerProps={{
+          showMenu: true,
+          rightAction: (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">
+                {profile?.first_name} {profile?.last_name}
+              </span>
+            </div>
+          )
+        }}
+      >
+        {renderDashboardByType()}
+      </MobileOptimizedLayout>
     </ProtectedRoute>
   );
 };

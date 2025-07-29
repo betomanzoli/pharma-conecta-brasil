@@ -1,633 +1,426 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
-  User, 
   Building, 
   FlaskConical, 
-  Users, 
-  Zap, 
-  CheckCircle, 
+  UserCog, 
+  User, 
+  MapPin, 
+  Phone, 
+  Globe, 
+  FileText,
+  CheckCircle,
   ArrowRight,
-  BookOpen,
-  Target,
-  Trophy,
-  Play
+  ArrowLeft
 } from 'lucide-react';
 
-interface UserSegment {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  onboardingSteps: OnboardingStep[];
-  features: string[];
-  tutorials: Tutorial[];
+interface PersonalizedOnboardingProps {
+  onComplete?: () => void;
 }
 
-interface OnboardingStep {
-  id: string;
-  title: string;
-  description: string;
-  component: React.ReactNode;
-  completed: boolean;
-  required: boolean;
-}
-
-interface Tutorial {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: string;
-  completed: boolean;
-}
-
-const PersonalizedOnboarding = () => {
-  const [selectedSegment, setSelectedSegment] = useState<UserSegment | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [userProfile, setUserProfile] = useState({
-    name: '',
-    company: '',
-    role: '',
-    experience: '',
-    goals: [] as string[]
+const PersonalizedOnboarding: React.FC<PersonalizedOnboardingProps> = ({ onComplete }) => {
+  const { profile } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    userType: profile?.user_type || '',
+    companyName: '',
+    cnpj: '',
+    description: '',
+    website: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    expertiseAreas: [] as string[],
+    specializations: [] as string[],
+    certifications: [] as string[],
+    industrialSegment: '',
+    subsegment: ''
   });
 
-  const segments: UserSegment[] = [
-    {
-      id: 'pharmaceutical',
-      name: 'Empresa Farmacêutica',
-      description: 'Desenvolva medicamentos inovadores com parceiros qualificados',
-      icon: <Building className="h-6 w-6" />,
-      onboardingSteps: [
-        {
-          id: 'profile',
-          title: 'Perfil da Empresa',
-          description: 'Configure o perfil da sua empresa farmacêutica',
-          component: <ProfileSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'expertise',
-          title: 'Áreas de Expertise',
-          description: 'Defina suas áreas de especialização',
-          component: <ExpertiseSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'matching',
-          title: 'AI Matching',
-          description: 'Configure preferências de matching',
-          component: <MatchingSetup />,
-          completed: false,
-          required: false
-        }
-      ],
-      features: ['AI Matching', 'Gestão de Projetos', 'Compliance ANVISA', 'Análise de ROI'],
-      tutorials: [
-        {
-          id: '1',
-          title: 'Como Usar o AI Matching',
-          description: 'Aprenda a encontrar parceiros ideais',
-          duration: 15,
-          difficulty: 'beginner',
-          category: 'matching',
-          completed: false
-        },
-        {
-          id: '2',
-          title: 'Gestão de Projetos Farmacêuticos',
-          description: 'Gerencie projetos complexos com eficiência',
-          duration: 25,
-          difficulty: 'intermediate',
-          category: 'projects',
-          completed: false
-        }
-      ]
-    },
-    {
-      id: 'laboratory',
-      name: 'Laboratório',
-      description: 'Ofereça serviços especializados e amplie sua rede',
-      icon: <FlaskConical className="h-6 w-6" />,
-      onboardingSteps: [
-        {
-          id: 'lab_profile',
-          title: 'Perfil do Laboratório',
-          description: 'Configure o perfil do seu laboratório',
-          component: <LabProfileSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'services',
-          title: 'Serviços Oferecidos',
-          description: 'Defina os serviços que você oferece',
-          component: <ServicesSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'capacity',
-          title: 'Capacidade e Agenda',
-          description: 'Configure sua capacidade e disponibilidade',
-          component: <CapacitySetup />,
-          completed: false,
-          required: false
-        }
-      ],
-      features: ['Marketplace de Serviços', 'Gestão de Capacidade', 'Certificações', 'Relatórios'],
-      tutorials: [
-        {
-          id: '3',
-          title: 'Configurar Serviços no Marketplace',
-          description: 'Como listar e gerenciar seus serviços',
-          duration: 20,
-          difficulty: 'beginner',
-          category: 'marketplace',
-          completed: false
-        },
-        {
-          id: '4',
-          title: 'Gestão de Capacidade Avançada',
-          description: 'Otimize sua agenda e recursos',
-          duration: 30,
-          difficulty: 'advanced',
-          category: 'capacity',
-          completed: false
-        }
-      ]
-    },
-    {
-      id: 'consultant',
-      name: 'Consultor',
-      description: 'Conecte-se com projetos e empresas que precisam da sua expertise',
-      icon: <User className="h-6 w-6" />,
-      onboardingSteps: [
-        {
-          id: 'consultant_profile',
-          title: 'Perfil Profissional',
-          description: 'Configure seu perfil como consultor',
-          component: <ConsultantProfileSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'specializations',
-          title: 'Especializações',
-          description: 'Defina suas áreas de especialização',
-          component: <SpecializationsSetup />,
-          completed: false,
-          required: true
-        },
-        {
-          id: 'availability',
-          title: 'Disponibilidade',
-          description: 'Configure sua disponibilidade e tarifas',
-          component: <AvailabilitySetup />,
-          completed: false,
-          required: false
-        }
-      ],
-      features: ['Matching de Projetos', 'Gestão de Clientes', 'Portfólio', 'Faturamento'],
-      tutorials: [
-        {
-          id: '5',
-          title: 'Construindo seu Portfólio',
-          description: 'Crie um portfólio atrativo',
-          duration: 15,
-          difficulty: 'beginner',
-          category: 'portfolio',
-          completed: false
-        },
-        {
-          id: '6',
-          title: 'Negociação e Contratos',
-          description: 'Melhores práticas para negociação',
-          duration: 35,
-          difficulty: 'advanced',
-          category: 'business',
-          completed: false
-        }
-      ]
-    }
+  const totalSteps = 4;
+  const progress = (currentStep / totalSteps) * 100;
+
+  const expertiseOptions = [
+    'Desenvolvimento de Medicamentos',
+    'Análises Laboratoriais',
+    'Registro ANVISA',
+    'Consultoria Regulatória',
+    'P&D Farmacêutico',
+    'Controle de Qualidade',
+    'Validação de Processos',
+    'Farmacovigilância'
   ];
 
-  const handleSegmentSelect = (segment: UserSegment) => {
-    setSelectedSegment(segment);
-    setCurrentStep(0);
+  const segmentOptions = [
+    'Medicamentos',
+    'Cosméticos',
+    'Saneantes',
+    'Alimentos',
+    'Dispositivos Médicos',
+    'Produtos Biológicos'
+  ];
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const handleNextStep = () => {
-    if (selectedSegment && currentStep < selectedSegment.onboardingSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
+  const toggleArrayItem = (field: string, item: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field as keyof typeof prev].includes(item)
+        ? (prev[field as keyof typeof prev] as string[]).filter(i => i !== item)
+        : [...(prev[field as keyof typeof prev] as string[]), item]
+    }));
+  };
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(prev => prev + 1);
     }
   };
 
-  const handlePrevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
     }
   };
 
-  const getProgress = () => {
-    if (!selectedSegment) return 0;
-    const completedSteps = selectedSegment.onboardingSteps.filter(step => step.completed).length;
-    return (completedSteps / selectedSegment.onboardingSteps.length) * 100;
-  };
+  const handleComplete = async () => {
+    try {
+      if (formData.userType === 'company') {
+        await supabase
+          .from('companies')
+          .upsert({
+            profile_id: profile?.id,
+            name: formData.companyName,
+            cnpj: formData.cnpj,
+            description: formData.description,
+            website: formData.website,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            expertise_area: formData.expertiseAreas,
+            industrial_segment: formData.industrialSegment,
+            subsegment: formData.subsegment
+          });
+      } else if (formData.userType === 'laboratory') {
+        await supabase
+          .from('laboratories')
+          .upsert({
+            profile_id: profile?.id,
+            name: formData.companyName,
+            description: formData.description,
+            website: formData.website,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            certifications: formData.certifications,
+            specializations: formData.specializations,
+            industrial_segment: formData.industrialSegment,
+            subsegment: formData.subsegment,
+            location: `${formData.city}, ${formData.state}`
+          });
+      }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      toast.success('Onboarding Completo!', {
+        description: 'Seu perfil foi configurado com sucesso.'
+      });
+
+      if (onComplete) {
+        onComplete();
+      }
+    } catch (error) {
+      console.error('Erro ao salvar dados do onboarding:', error);
+      toast.error('Erro ao salvar dados', {
+        description: 'Tente novamente mais tarde.'
+      });
     }
   };
 
-  if (!selectedSegment) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              <span>Bem-vindo à PharmaConnect Brasil</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Vamos começar!</h2>
-              <p className="text-gray-600">
-                Selecione seu perfil para personalizar sua experiência na plataforma
-              </p>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Tipo de Usuário</h3>
+              <p className="text-muted-foreground">Como você pretende usar a plataforma?</p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {segments.map((segment) => (
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { value: 'company', label: 'Empresa Farmacêutica', icon: Building, desc: 'Desenvolvo produtos farmacêuticos' },
+                { value: 'laboratory', label: 'Laboratório', icon: FlaskConical, desc: 'Ofereço serviços de análise' },
+                { value: 'consultant', label: 'Consultor', icon: UserCog, desc: 'Presto consultoria especializada' },
+                { value: 'individual', label: 'Profissional', icon: User, desc: 'Sou um profissional da área' }
+              ].map((type) => (
                 <Card 
-                  key={segment.id} 
-                  className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-500"
-                  onClick={() => handleSegmentSelect(segment)}
+                  key={type.value}
+                  className={`cursor-pointer transition-all ${formData.userType === type.value ? 'border-primary bg-primary/5' : ''}`}
+                  onClick={() => handleInputChange('userType', type.value)}
                 >
-                  <CardContent className="p-6 text-center">
-                    <div className="flex justify-center mb-4">
-                      <div className="p-3 bg-blue-100 rounded-full">
-                        {segment.icon}
-                      </div>
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">{segment.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{segment.description}</p>
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-700">Principais recursos:</p>
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {segment.features.slice(0, 3).map((feature, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {feature}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                  <CardContent className="p-4 text-center">
+                    <type.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
+                    <h4 className="font-semibold">{type.label}</h4>
+                    <p className="text-sm text-muted-foreground">{type.desc}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {selectedSegment.icon}
-              <span>Onboarding - {selectedSegment.name}</span>
-            </div>
-            <Badge variant="outline">
-              {currentStep + 1} de {selectedSegment.onboardingSteps.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progresso</span>
-              <span className="text-sm text-gray-600">{Math.round(getProgress())}%</span>
-            </div>
-            <Progress value={getProgress()} className="h-2" />
           </div>
+        );
 
-          <Tabs defaultValue="onboarding" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="onboarding">Configuração</TabsTrigger>
-              <TabsTrigger value="tutorials">Tutoriais</TabsTrigger>
-              <TabsTrigger value="resources">Recursos</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="onboarding" className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
-                        {currentStep + 1}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">
-                      {selectedSegment.onboardingSteps[currentStep].title}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {selectedSegment.onboardingSteps[currentStep].description}
-                    </p>
-                  </div>
-                  {selectedSegment.onboardingSteps[currentStep].required && (
-                    <Badge variant="destructive">Obrigatório</Badge>
-                  )}
-                </div>
-
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  {selectedSegment.onboardingSteps[currentStep].component}
-                </div>
-
-                <div className="flex justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={handlePrevStep}
-                    disabled={currentStep === 0}
-                  >
-                    Anterior
-                  </Button>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedSegment(null)}
-                    >
-                      Voltar ao Início
-                    </Button>
-                    <Button
-                      onClick={handleNextStep}
-                      disabled={currentStep === selectedSegment.onboardingSteps.length - 1}
-                    >
-                      Próximo
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </div>
-                </div>
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Informações da Organização</h3>
+              <p className="text-muted-foreground">Conte-nos sobre sua empresa/organização</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="companyName">Nome da Organização *</Label>
+                <Input
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="Nome da sua empresa/laboratório"
+                />
               </div>
-            </TabsContent>
-
-            <TabsContent value="tutorials" className="space-y-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Tutoriais Recomendados</h3>
-                <p className="text-sm text-gray-600">
-                  Aprenda a usar todos os recursos da plataforma com nossos tutoriais interativos
-                </p>
+              
+              {formData.userType === 'company' && (
+                <div>
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input
+                    id="cnpj"
+                    value={formData.cnpj}
+                    onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                    placeholder="00.000.000/0001-00"
+                  />
+                </div>
+              )}
+              
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={formData.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  placeholder="https://exemplo.com.br"
+                />
               </div>
+              
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Descreva sua organização, serviços e expertise..."
+                rows={4}
+              />
+            </div>
+          </div>
+        );
 
-              <div className="space-y-3">
-                {selectedSegment.tutorials.map((tutorial) => (
-                  <Card key={tutorial.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-100 rounded-full">
-                            <Play className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium">{tutorial.title}</h4>
-                            <p className="text-sm text-gray-600">{tutorial.description}</p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <span className="text-xs text-gray-500">
-                                {tutorial.duration} min
-                              </span>
-                              <Badge className={getDifficultyColor(tutorial.difficulty)}>
-                                {tutorial.difficulty}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {tutorial.completed && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
-                          <Button variant="outline" size="sm">
-                            {tutorial.completed ? 'Revisar' : 'Iniciar'}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Localização</h3>
+              <p className="text-muted-foreground">Onde sua organização está localizada?</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  placeholder="Rua, número, bairro"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="São Paulo"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="state">Estado</Label>
+                <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'GO', 'PE', 'CE'].map(state => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="zipCode">CEP</Label>
+                <Input
+                  id="zipCode"
+                  value={formData.zipCode}
+                  onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                  placeholder="00000-000"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="segment">Segmento Industrial</Label>
+                <Select value={formData.industrialSegment} onValueChange={(value) => handleInputChange('industrialSegment', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {segmentOptions.map(segment => (
+                      <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Áreas de Expertise</h3>
+              <p className="text-muted-foreground">Selecione suas áreas de especialização</p>
+            </div>
+            
+            <div>
+              <Label>Áreas de Expertise</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {expertiseOptions.map(option => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={formData.expertiseAreas.includes(option)}
+                      onCheckedChange={() => toggleArrayItem('expertiseAreas', option)}
+                    />
+                    <span className="text-sm">{option}</span>
+                  </div>
                 ))}
               </div>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="resources" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center space-x-2">
-                      <BookOpen className="h-5 w-5 text-blue-600" />
-                      <span>Documentação</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Guia de Início Rápido</span>
-                        <Button variant="outline" size="sm">Ver</Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">API Documentation</span>
-                        <Button variant="outline" size="sm">Ver</Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Melhores Práticas</span>
-                        <Button variant="outline" size="sm">Ver</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-green-600" />
-                      <span>Suporte</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Chat ao Vivo</span>
-                        <Button variant="outline" size="sm">Iniciar</Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Centro de Ajuda</span>
-                        <Button variant="outline" size="sm">Visitar</Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Comunidade</span>
-                        <Button variant="outline" size="sm">Participar</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {formData.userType === 'laboratory' && (
+              <div>
+                <Label>Certificações</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['ISO 17025', 'ANVISA', 'INMETRO', 'CAP', 'GLP'].map(cert => (
+                    <Badge
+                      key={cert}
+                      variant={formData.certifications.includes(cert) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleArrayItem('certifications', cert)}
+                    >
+                      {cert}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
+        );
 
-              <Alert>
-                <Target className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Dica:</strong> Complete todos os tutoriais para desbloquear recursos avançados 
-                  e ganhar pontos no sistema de gamificação da plataforma.
-                </AlertDescription>
-              </Alert>
-            </TabsContent>
-          </Tabs>
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Passo {currentStep} de {totalSteps}</span>
+          <span className="text-sm text-muted-foreground">{Math.round(progress)}% completo</span>
+        </div>
+        <Progress value={progress} className="h-2" />
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          {renderStepContent()}
         </CardContent>
       </Card>
+
+      <div className="flex justify-between mt-6">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          disabled={currentStep === 1}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Anterior
+        </Button>
+
+        {currentStep < totalSteps ? (
+          <Button
+            onClick={nextStep}
+            disabled={currentStep === 1 && !formData.userType}
+          >
+            Próximo
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleComplete}
+            disabled={!formData.companyName}
+            className="bg-primary"
+          >
+            Finalizar
+            <CheckCircle className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
-
-// Componentes de configuração específicos para cada segmento
-const ProfileSetup = () => (
-  <div className="space-y-4">
-    <div>
-      <Label htmlFor="company-name">Nome da Empresa</Label>
-      <Input id="company-name" placeholder="Digite o nome da sua empresa" />
-    </div>
-    <div>
-      <Label htmlFor="cnpj">CNPJ</Label>
-      <Input id="cnpj" placeholder="00.000.000/0000-00" />
-    </div>
-    <div>
-      <Label htmlFor="description">Descrição</Label>
-      <Input id="description" placeholder="Descreva sua empresa e principais atividades" />
-    </div>
-  </div>
-);
-
-const ExpertiseSetup = () => (
-  <div className="space-y-4">
-    <Label>Selecione suas áreas de expertise:</Label>
-    <div className="grid grid-cols-2 gap-2">
-      {['Oncologia', 'Cardiologia', 'Neurologia', 'Dermatologia', 'Pediatria', 'Geriatria'].map((area) => (
-        <label key={area} className="flex items-center space-x-2">
-          <input type="checkbox" />
-          <span className="text-sm">{area}</span>
-        </label>
-      ))}
-    </div>
-  </div>
-);
-
-const MatchingSetup = () => (
-  <div className="space-y-4">
-    <Label>Preferências de Matching:</Label>
-    <div className="space-y-2">
-      <label className="flex items-center space-x-2">
-        <input type="checkbox" />
-        <span className="text-sm">Receber notificações de novos matches</span>
-      </label>
-      <label className="flex items-center space-x-2">
-        <input type="checkbox" />
-        <span className="text-sm">Permitir matching automático</span>
-      </label>
-    </div>
-  </div>
-);
-
-const LabProfileSetup = () => (
-  <div className="space-y-4">
-    <div>
-      <Label htmlFor="lab-name">Nome do Laboratório</Label>
-      <Input id="lab-name" placeholder="Digite o nome do seu laboratório" />
-    </div>
-    <div>
-      <Label htmlFor="certifications">Certificações</Label>
-      <Input id="certifications" placeholder="ISO, ANVISA, etc." />
-    </div>
-  </div>
-);
-
-const ServicesSetup = () => (
-  <div className="space-y-4">
-    <Label>Serviços oferecidos:</Label>
-    <div className="grid grid-cols-2 gap-2">
-      {['Análises Clínicas', 'Microbiologia', 'Química', 'Toxicologia'].map((service) => (
-        <label key={service} className="flex items-center space-x-2">
-          <input type="checkbox" />
-          <span className="text-sm">{service}</span>
-        </label>
-      ))}
-    </div>
-  </div>
-);
-
-const CapacitySetup = () => (
-  <div className="space-y-4">
-    <div>
-      <Label htmlFor="capacity">Capacidade Mensal</Label>
-      <Input id="capacity" type="number" placeholder="Número de análises por mês" />
-    </div>
-  </div>
-);
-
-const ConsultantProfileSetup = () => (
-  <div className="space-y-4">
-    <div>
-      <Label htmlFor="consultant-name">Nome Completo</Label>
-      <Input id="consultant-name" placeholder="Seu nome completo" />
-    </div>
-    <div>
-      <Label htmlFor="experience">Anos de Experiência</Label>
-      <Input id="experience" type="number" placeholder="Quantos anos de experiência" />
-    </div>
-  </div>
-);
-
-const SpecializationsSetup = () => (
-  <div className="space-y-4">
-    <Label>Suas especializações:</Label>
-    <div className="grid grid-cols-2 gap-2">
-      {['Regulatório', 'Qualidade', 'P&D', 'Assuntos Clínicos'].map((spec) => (
-        <label key={spec} className="flex items-center space-x-2">
-          <input type="checkbox" />
-          <span className="text-sm">{spec}</span>
-        </label>
-      ))}
-    </div>
-  </div>
-);
-
-const AvailabilitySetup = () => (
-  <div className="space-y-4">
-    <div>
-      <Label htmlFor="hourly-rate">Valor Hora (R$)</Label>
-      <Input id="hourly-rate" type="number" placeholder="Seu valor por hora" />
-    </div>
-    <div>
-      <Label htmlFor="availability">Disponibilidade Semanal</Label>
-      <Input id="availability" type="number" placeholder="Horas por semana" />
-    </div>
-  </div>
-);
 
 export default PersonalizedOnboarding;

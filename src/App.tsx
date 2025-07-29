@@ -8,6 +8,12 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import GlobalHelpSystem from "./components/layout/GlobalHelpSystem";
+import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
+import UpdatePrompt from "./components/pwa/UpdatePrompt";
+import OfflineIndicator from "./components/pwa/OfflineIndicator";
+import PWAManager from "./components/pwa/PWAManager";
+import AutoOnboarding from "./components/onboarding/AutoOnboarding";
+import RealTimeMonitor from "./components/monitoring/RealTimeMonitor";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -19,6 +25,10 @@ import Analytics from "./pages/Analytics";
 import Security from "./pages/Security";
 import StrategicPlan from "./pages/StrategicPlan";
 import Reports from "./pages/Reports";
+import NotificationsPage from "./pages/NotificationsPage";
+import PerformancePage from "./pages/PerformancePage";
+import AdminPage from "./pages/AdminPage";
+import SearchPage from "./pages/SearchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -38,6 +48,12 @@ const App = () => (
           <ToastProvider>
             <Toaster />
             <Sonner />
+            <OfflineIndicator />
+            <PWAInstallPrompt />
+            <UpdatePrompt />
+            <PWAManager />
+            <AutoOnboarding />
+            <RealTimeMonitor />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -51,6 +67,10 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/strategic-plan" element={<StrategicPlan />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/performance" element={<PerformancePage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/search" element={<SearchPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <GlobalHelpSystem />
