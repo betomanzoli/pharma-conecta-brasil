@@ -9,6 +9,11 @@ import { Users, Sparkles, Target } from 'lucide-react';
 const OnboardingDashboard = () => {
   const [activeTab, setActiveTab] = useState('wizard');
 
+  const handleOnboardingComplete = () => {
+    console.log('Onboarding completed');
+    // Lógica para quando o onboarding é completado
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -33,7 +38,7 @@ const OnboardingDashboard = () => {
         </TabsList>
 
         <TabsContent value="wizard" className="space-y-6">
-          <OnboardingWizard />
+          <OnboardingWizard onComplete={handleOnboardingComplete} />
         </TabsContent>
 
         <TabsContent value="personalized" className="space-y-6">

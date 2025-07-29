@@ -11,6 +11,50 @@ import { Brain, Search, Users, TrendingUp, Target } from 'lucide-react';
 const EnhancedMarketplace = () => {
   const [activeTab, setActiveTab] = useState('matching');
 
+  const mockProviders = [
+    {
+      id: '1',
+      name: 'Laboratório ABC',
+      type: 'laboratory' as const,
+      location: 'São Paulo, SP',
+      rating: 4.8,
+      specialties: ['Análises Microbiológicas'],
+      description: 'Laboratório especializado em análises microbiológicas avançadas',
+      verified: true,
+      price_range: 'R$ 150/análise'
+    },
+    {
+      id: '2',
+      name: 'Consultoria XYZ',
+      type: 'consultant' as const,
+      location: 'Rio de Janeiro, RJ',
+      rating: 4.9,
+      specialties: ['Registro ANVISA'],
+      description: 'Consultoria especializada em registro de produtos na ANVISA',
+      verified: true,
+      price_range: 'R$ 5.000/projeto'
+    },
+    {
+      id: '3',
+      name: 'TechPharma',
+      type: 'company' as const,
+      location: 'Belo Horizonte, MG',
+      rating: 4.7,
+      specialties: ['Desenvolvimento de Formulações'],
+      description: 'Empresa especializada em desenvolvimento de formulações farmacêuticas',
+      verified: true,
+      price_range: 'R$ 8.000/projeto'
+    }
+  ];
+
+  const handleContact = (providerId: string) => {
+    console.log('Contacting provider:', providerId);
+  };
+
+  const handleSchedule = (providerId: string) => {
+    console.log('Scheduling with provider:', providerId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -56,30 +100,14 @@ const EnhancedMarketplace = () => {
 
         <TabsContent value="search" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ServiceProviderCard 
-              name="Laboratório ABC"
-              specialty="Análises Microbiológicas"
-              rating={4.8}
-              location="São Paulo, SP"
-              price="R$ 150/análise"
-              verified={true}
-            />
-            <ServiceProviderCard 
-              name="Consultoria XYZ"
-              specialty="Registro ANVISA"
-              rating={4.9}
-              location="Rio de Janeiro, RJ"
-              price="R$ 5.000/projeto"
-              verified={true}
-            />
-            <ServiceProviderCard 
-              name="TechPharma"
-              specialty="Desenvolvimento de Formulações"
-              rating={4.7}
-              location="Belo Horizonte, MG"
-              price="R$ 8.000/projeto"
-              verified={true}
-            />
+            {mockProviders.map((provider) => (
+              <ServiceProviderCard
+                key={provider.id}
+                provider={provider}
+                onContact={handleContact}
+                onSchedule={handleSchedule}
+              />
+            ))}
           </div>
         </TabsContent>
 
