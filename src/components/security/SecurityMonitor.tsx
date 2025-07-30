@@ -2,358 +2,339 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Shield, 
-  AlertTriangle, 
-  Activity, 
-  Eye, 
-  Lock,
-  TrendingUp,
-  Clock,
-  MapPin,
-  Smartphone
-} from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Eye, Lock, Zap } from 'lucide-react';
+
+interface SecurityMetric {
+  name: string;
+  value: number;
+  status: 'good' | 'warning' | 'critical';
+  description: string;
+}
 
 interface SecurityEvent {
   id: string;
   event_type: string;
   event_description: string;
-  ip_address: string | null;
-  user_agent: string | null;
   created_at: string;
-  metadata: any;
-}
-
-interface SecurityMetrics {
-  failed_logins: number;
-  suspicious_activities: number;
-  blocked_ips: number;
-  successful_2fa: number;
-  total_events: number;
+  ip_address?: string;
+  severity: 'low' | 'medium' | 'high';
 }
 
 const SecurityMonitor = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
-  const [metrics, setMetrics] = useState<SecurityMetrics>({
-    failed_logins: 0,
-    suspicious_activities: 0,
-    blocked_ips: 0,
-    successful_2fa: 0,
-    total_events: 0
-  });
-  const [realTimeEnabled, setRealTimeEnabled] = useState(false);
-
-  // Use the custom hook to fetch security events
-  const { data: eventsData, refetch } = useSupabaseQuery({
-    queryKey: ['security-events', user?.id],
-    table: 'security_audit_logs',
-    select: '*',
-    filters: { user_id: user?.id },
-    enabled: !!user?.id
-  });
+  const [metrics, setMetrics] = useState<SecurityMetric[]>([]);
+  const [events, setEvents] = useState<SecurityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [monitoring, setMonitoring] = useState(false);
 
   useEffect(() => {
-    if (eventsData && Array.isArray(eventsData)) {
-      // Type cast the data to SecurityEvent array
-      const events = eventsData as SecurityEvent[];
-      setSecurityEvents(events.slice(0, 50));
-      loadSecurityMetrics(events);
+    if (user) {
+      loadSecurityData();
+      startRealTimeMonitoring();
     }
-  }, [eventsData]);
+  }, [user]);
 
-  useEffect(() => {
-    if (user?.id) {
-      // Set up real-time monitoring
-      const subscription = supabase
-        .channel('security_events')
-        .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'security_audit_logs' },
-          (payload) => {
-            if (payload.new.user_id === user.id) {
-              handleNewSecurityEvent(payload.new as SecurityEvent);
-            }
+  const loadSecurityData = async () => {
+    try {
+      setLoading(true);
+
+      // Carregar métricas de segurança
+      const { data: securityReport } = await supabase.rpc('generate_security_report', {
+        p_user_id: user?.id,
+        p_days: 7
+      });
+
+      if (securityReport) {
+        const newMetrics: SecurityMetric[] = [
+          {
+            name: 'Login Failures',
+            value: securityReport.failed_logins || 0,
+            status: (securityReport.failed_logins || 0) > 5 ? 'critical' : 
+                   (securityReport.failed_logins || 0) > 2 ? 'warning' : 'good',
+            description: 'Tentativas de login falhadas nos últimos 7 dias'
+          },
+          {
+            name: 'Suspicious Activities',
+            value: securityReport.suspicious_activities || 0,
+            status: (securityReport.suspicious_activities || 0) > 0 ? 'critical' : 'good',
+            description: 'Atividades suspeitas detectadas'
+          },
+          {
+            name: 'Unique IPs',
+            value: securityReport.unique_ips || 0,
+            status: (securityReport.unique_ips || 0) > 5 ? 'warning' : 'good',
+            description: 'Diferentes IPs utilizados para acesso'
+          },
+          {
+            name: 'Security Score',
+            value: securityReport.security_score === 'alto' ? 100 : 
+                   securityReport.security_score === 'médio' ? 75 : 50,
+            status: securityReport.security_score === 'alto' ? 'good' : 
+                   securityReport.security_score === 'médio' ? 'warning' : 'critical',
+            description: 'Pontuação geral de segurança'
           }
-        )
-        .subscribe();
+        ];
+        setMetrics(newMetrics);
+      }
 
-      setRealTimeEnabled(true);
+      // Carregar eventos recentes de segurança
+      const { data: recentEvents } = await supabase
+        .from('security_audit_logs')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [user?.id]);
-
-  const loadSecurityMetrics = (events: SecurityEvent[]) => {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const recentEvents = events.filter(e => new Date(e.created_at) >= thirtyDaysAgo);
-
-    const newMetrics = {
-      failed_logins: recentEvents.filter(e => e.event_type === 'failed_login').length,
-      suspicious_activities: recentEvents.filter(e => e.event_type === 'suspicious_activity').length,
-      blocked_ips: recentEvents.filter(e => e.event_type === 'blocked_ip').length,
-      successful_2fa: recentEvents.filter(e => e.event_type === 'successful_2fa').length,
-      total_events: recentEvents.length
-    };
-
-    setMetrics(newMetrics);
-  };
-
-  const handleNewSecurityEvent = (event: SecurityEvent) => {
-    // Show toast for critical events
-    if (event.event_type === 'failed_login' || event.event_type === 'suspicious_activity') {
+      if (recentEvents) {
+        const formattedEvents: SecurityEvent[] = recentEvents.map(event => ({
+          id: event.id,
+          event_type: event.event_type,
+          event_description: event.event_description,
+          created_at: event.created_at,
+          ip_address: event.ip_address,
+          severity: getSeverity(event.event_type)
+        }));
+        setEvents(formattedEvents);
+      }
+    } catch (error) {
+      console.error('Error loading security data:', error);
       toast({
-        title: "🚨 Alerta de Segurança",
-        description: event.event_description,
+        title: "Erro",
+        description: "Falha ao carregar dados de segurança",
         variant: "destructive"
       });
-    }
-
-    // Update events list
-    setSecurityEvents(prev => [event, ...prev.slice(0, 49)]);
-
-    // Update metrics
-    setMetrics(prev => ({
-      ...prev,
-      total_events: prev.total_events + 1,
-      failed_logins: event.event_type === 'failed_login' ? prev.failed_logins + 1 : prev.failed_logins,
-      suspicious_activities: event.event_type === 'suspicious_activity' ? prev.suspicious_activities + 1 : prev.suspicious_activities,
-      blocked_ips: event.event_type === 'blocked_ip' ? prev.blocked_ips + 1 : prev.blocked_ips,
-      successful_2fa: event.event_type === 'successful_2fa' ? prev.successful_2fa + 1 : prev.successful_2fa
-    }));
-  };
-
-  const getEventIcon = (eventType: string) => {
-    switch (eventType) {
-      case 'failed_login':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'successful_login':
-        return <Shield className="h-4 w-4 text-green-500" />;
-      case 'suspicious_activity':
-        return <Eye className="h-4 w-4 text-yellow-500" />;
-      case 'successful_2fa':
-        return <Lock className="h-4 w-4 text-blue-500" />;
-      case 'blocked_ip':
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      default:
-        return <Activity className="h-4 w-4 text-gray-500" />;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getEventSeverity = (eventType: string) => {
+  const getSeverity = (eventType: string): 'low' | 'medium' | 'high' => {
     switch (eventType) {
-      case 'failed_login':
       case 'suspicious_activity':
-      case 'blocked_ip':
+      case 'account_locked':
+      case 'password_changed':
         return 'high';
-      case 'password_change':
-      case 'email_change':
-      case 'security_settings_updated':
+      case 'failed_login':
+      case 'two_factor_enabled':
         return 'medium';
       default:
         return 'low';
     }
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const eventTime = new Date(timestamp);
-    const diffMs = now.getTime() - eventTime.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+  const startRealTimeMonitoring = () => {
+    setMonitoring(true);
     
-    if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins < 60) return `${diffMins} min atrás`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} h atrás`;
-    return `${Math.floor(diffMins / 1440)} dias atrás`;
+    // Configurar canal de tempo real para eventos de segurança
+    const securityChannel = supabase
+      .channel('security-events')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'security_audit_logs',
+          filter: `user_id=eq.${user?.id}`
+        },
+        (payload) => {
+          const newEvent: SecurityEvent = {
+            id: payload.new.id,
+            event_type: payload.new.event_type,
+            event_description: payload.new.event_description,
+            created_at: payload.new.created_at,
+            ip_address: payload.new.ip_address,
+            severity: getSeverity(payload.new.event_type)
+          };
+
+          setEvents(prev => [newEvent, ...prev.slice(0, 9)]);
+
+          // Mostrar toast para eventos críticos
+          if (newEvent.severity === 'high') {
+            toast({
+              title: "🚨 Alerta de Segurança",
+              description: newEvent.event_description,
+              variant: "destructive"
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      securityChannel.unsubscribe();
+      setMonitoring(false);
+    };
   };
+
+  const runSecurityScan = async () => {
+    try {
+      toast({
+        title: "🔍 Iniciando Scan de Segurança",
+        description: "Analisando sua conta...",
+      });
+
+      // Executar função de detecção de atividade suspeita
+      const { data: result } = await supabase.rpc('detect_suspicious_activity', {
+        p_user_id: user?.id,
+        p_ip_address: 'manual_scan',
+        p_user_agent: navigator.userAgent
+      });
+
+      // Recarregar dados após o scan
+      await loadSecurityData();
+
+      toast({
+        title: result ? "⚠️ Atividade Suspeita Detectada" : "✅ Scan Completo",
+        description: result ? 
+          "Foram detectadas atividades suspeitas em sua conta" :
+          "Nenhuma atividade suspeita encontrada",
+        variant: result ? "destructive" : "default"
+      });
+    } catch (error) {
+      console.error('Error running security scan:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao executar scan de segurança",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'good':
+        return 'text-green-600 bg-green-100';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'critical':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'text-red-600 bg-red-100';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'low':
+        return 'text-blue-600 bg-blue-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Status Header */}
-      <Card className="border-l-4 border-l-green-500">
+      {/* Header com Status de Monitoramento */}
+      <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <span className="text-xl">Monitor de Segurança</span>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge className="bg-green-100 text-green-800 border-green-300">
-                  <Activity className="h-3 w-3 mr-1" />
-                  {realTimeEnabled ? 'Ativo' : 'Inativo'}
-                </Badge>
-                <Badge variant="outline">
-                  Últimos 30 dias
-                </Badge>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Shield className="h-6 w-6 text-blue-600" />
               </div>
+              <span>Monitor de Segurança</span>
+            </CardTitle>
+            <div className="flex items-center space-x-4">
+              <Badge className={monitoring ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                {monitoring ? (
+                  <>
+                    <Eye className="h-3 w-3 mr-1" />
+                    Monitorando
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Offline
+                  </>
+                )}
+              </Badge>
+              <Button onClick={runSecurityScan} size="sm" variant="outline">
+                <Zap className="h-4 w-4 mr-2" />
+                Scan de Segurança
+              </Button>
             </div>
-          </CardTitle>
+          </div>
         </CardHeader>
       </Card>
 
-      {/* Security Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Logins Falhados</p>
-                <p className="text-2xl font-bold text-red-600">{metrics.failed_logins}</p>
+      {/* Métricas de Segurança */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metrics.map((metric, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {metric.name}
+                  </p>
+                  <p className="text-2xl font-bold">{metric.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {metric.description}
+                  </p>
+                </div>
+                <Badge className={getStatusColor(metric.status)}>
+                  {metric.status === 'good' && <CheckCircle className="h-3 w-3 mr-1" />}
+                  {metric.status === 'warning' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                  {metric.status === 'critical' && <Lock className="h-3 w-3 mr-1" />}
+                  {metric.status.toUpperCase()}
+                </Badge>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">2FA Sucessos</p>
-                <p className="text-2xl font-bold text-green-600">{metrics.successful_2fa}</p>
-              </div>
-              <Lock className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Atividades Suspeitas</p>
-                <p className="text-2xl font-bold text-yellow-600">{metrics.suspicious_activities}</p>
-              </div>
-              <Eye className="h-8 w-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Security Events */}
+      {/* Eventos de Segurança Recentes */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5" />
-            <span>Eventos de Segurança Recentes</span>
-          </CardTitle>
+          <CardTitle>Eventos de Segurança Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {securityEvents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhum evento de segurança registrado
-              </div>
-            ) : (
-              securityEvents.slice(0, 20).map((event) => (
-                <div
-                  key={event.id}
-                  className={`p-4 rounded-lg border-l-4 ${
-                    getEventSeverity(event.event_type) === 'high' ? 'border-l-red-500 bg-red-50' :
-                    getEventSeverity(event.event_type) === 'medium' ? 'border-l-yellow-500 bg-yellow-50' :
-                    'border-l-blue-500 bg-blue-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      {getEventIcon(event.event_type)}
-                      <div>
-                        <div className="font-medium">{event.event_description}</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          <div className="flex items-center space-x-4">
-                            <span className="flex items-center space-x-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatTimeAgo(event.created_at)}</span>
-                            </span>
-                            {event.ip_address && (
-                              <span className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3" />
-                                <span>{event.ip_address}</span>
-                              </span>
-                            )}
-                            {event.user_agent && (
-                              <span className="flex items-center space-x-1">
-                                <Smartphone className="h-3 w-3" />
-                                <span className="truncate max-w-xs">
-                                  {event.user_agent.split(' ')[0]}
-                                </span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+          {events.length === 0 ? (
+            <div className="text-center py-8">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum evento de segurança recente</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {events.map((event) => (
+                <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <Badge className={getSeverityColor(event.severity)}>
+                        {event.severity.toUpperCase()}
+                      </Badge>
+                      <span className="font-medium">{event.event_type}</span>
                     </div>
-                    <Badge 
-                      className={
-                        getEventSeverity(event.event_type) === 'high' ? 'bg-red-100 text-red-800' :
-                        getEventSeverity(event.event_type) === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }
-                    >
-                      {event.event_type.replace('_', ' ')}
-                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      {event.event_description}
+                    </p>
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                      <span>{new Date(event.created_at).toLocaleString('pt-BR')}</span>
+                      {event.ip_address && <span>IP: {event.ip_address}</span>}
+                    </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Security Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5" />
-            <span>Recomendações de Segurança</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {metrics.failed_logins > 5 && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Muitos logins falhados detectados. Considere ativar autenticação de dois fatores.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {metrics.successful_2fa === 0 && (
-              <Alert>
-                <Shield className="h-4 w-4" />
-                <AlertDescription>
-                  Ative a autenticação de dois fatores para maior segurança da sua conta.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {metrics.suspicious_activities > 0 && (
-              <Alert>
-                <Eye className="h-4 w-4" />
-                <AlertDescription>
-                  Atividades suspeitas detectadas. Monitore sua conta regularmente.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {metrics.total_events === 0 && (
-              <Alert>
-                <Activity className="h-4 w-4" />
-                <AlertDescription>
-                  Sua conta está segura. Continue seguindo as melhores práticas de segurança.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
