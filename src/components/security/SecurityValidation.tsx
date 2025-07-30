@@ -28,7 +28,7 @@ const SecurityValidation = () => {
     const validationResults: ValidationResult[] = [];
 
     try {
-      // 1. Verificar configurações de 2FA
+      // 1. Verificar configurações de segurança do usuário
       const { data: securitySettings } = await supabase
         .from('user_security_settings')
         .select('*')
@@ -36,15 +36,12 @@ const SecurityValidation = () => {
         .single();
 
       if (securitySettings) {
+        // Verificar se configurações básicas existem
         validationResults.push({
-          check: 'Autenticação de Dois Fatores',
-          status: securitySettings.two_factor_enabled ? 'pass' : 'warning',
-          message: securitySettings.two_factor_enabled ? 
-            'Autenticação de dois fatores ativada' : 
-            'Autenticação de dois fatores desativada',
-          details: securitySettings.two_factor_enabled ? 
-            `Ativada em ${new Date(securitySettings.two_factor_activated_at).toLocaleDateString('pt-BR')}` : 
-            'Recomenda-se ativar para maior segurança'
+          check: 'Configurações de Segurança',
+          status: 'pass',
+          message: 'Configurações de segurança encontradas',
+          details: `Criadas em ${new Date(securitySettings.created_at).toLocaleDateString('pt-BR')}`
         });
 
         validationResults.push({
@@ -63,6 +60,15 @@ const SecurityValidation = () => {
           details: securitySettings.max_failed_attempts <= 5 ? 
             'Configuração segura' : 
             'Recomenda-se reduzir para máximo de 5 tentativas'
+        });
+
+        validationResults.push({
+          check: 'Bloqueio Automático',
+          status: securitySettings.auto_lock_enabled ? 'pass' : 'warning',
+          message: securitySettings.auto_lock_enabled ? 'Bloqueio automático ativado' : 'Bloqueio automático desativado',
+          details: securitySettings.auto_lock_enabled ? 
+            'Sistema bloqueará automaticamente após tentativas falhadas' : 
+            'Recomenda-se ativar o bloqueio automático'
         });
       } else {
         validationResults.push({
@@ -127,6 +133,32 @@ const SecurityValidation = () => {
         message: 'Sistema de monitoramento ativo',
         details: 'Eventos de segurança sendo monitorados em tempo real'
       });
+
+      // 6. Validar usando a edge function
+      try {
+        const { data: healthCheck } = await supabase.functions.invoke('security-monitor', {
+          body: { action: 'security_health_check' }
+        });
+
+        if (healthCheck?.security_health) {
+          const health = healthCheck.security_health;
+          validationResults.push({
+            check: 'Saúde Geral do Sistema',
+            status: health.status === 'healthy' ? 'pass' : 
+                   health.status === 'warning' ? 'warning' : 'fail',
+            message: `Score de segurança: ${health.overall_score}/100`,
+            details: `${health.checks?.length || 0} verificações realizadas`
+          });
+        }
+      } catch (error) {
+        console.error('Error in security health check:', error);
+        validationResults.push({
+          check: 'Verificação Externa',
+          status: 'warning',
+          message: 'Não foi possível executar verificação completa',
+          details: 'Algumas funcionalidades podem estar indisponíveis'
+        });
+      }
 
       setResults(validationResults);
 

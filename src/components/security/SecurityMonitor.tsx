@@ -24,6 +24,13 @@ interface SecurityEvent {
   severity: 'low' | 'medium' | 'high';
 }
 
+interface SecurityReport {
+  failed_logins: number;
+  suspicious_activities: number;
+  unique_ips: number;
+  security_score: string;
+}
+
 const SecurityMonitor = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -43,44 +50,69 @@ const SecurityMonitor = () => {
     try {
       setLoading(true);
 
-      // Carregar métricas de segurança
-      const { data: securityReport } = await supabase.rpc('generate_security_report', {
-        p_user_id: user?.id,
-        p_days: 7
-      });
+      // Carregar dados básicos de segurança usando queries diretas
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      if (securityReport) {
-        const newMetrics: SecurityMetric[] = [
-          {
-            name: 'Login Failures',
-            value: securityReport.failed_logins || 0,
-            status: (securityReport.failed_logins || 0) > 5 ? 'critical' : 
-                   (securityReport.failed_logins || 0) > 2 ? 'warning' : 'good',
-            description: 'Tentativas de login falhadas nos últimos 7 dias'
-          },
-          {
-            name: 'Suspicious Activities',
-            value: securityReport.suspicious_activities || 0,
-            status: (securityReport.suspicious_activities || 0) > 0 ? 'critical' : 'good',
-            description: 'Atividades suspeitas detectadas'
-          },
-          {
-            name: 'Unique IPs',
-            value: securityReport.unique_ips || 0,
-            status: (securityReport.unique_ips || 0) > 5 ? 'warning' : 'good',
-            description: 'Diferentes IPs utilizados para acesso'
-          },
-          {
-            name: 'Security Score',
-            value: securityReport.security_score === 'alto' ? 100 : 
-                   securityReport.security_score === 'médio' ? 75 : 50,
-            status: securityReport.security_score === 'alto' ? 'good' : 
-                   securityReport.security_score === 'médio' ? 'warning' : 'critical',
-            description: 'Pontuação geral de segurança'
-          }
-        ];
-        setMetrics(newMetrics);
-      }
+      // Contar tentativas de login falhadas
+      const { count: failedLogins } = await supabase
+        .from('security_audit_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .eq('event_type', 'failed_login')
+        .gte('created_at', sevenDaysAgo);
+
+      // Contar atividades suspeitas
+      const { count: suspiciousActivities } = await supabase
+        .from('security_audit_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .eq('event_type', 'suspicious_activity')
+        .gte('created_at', sevenDaysAgo);
+
+      // Contar IPs únicos
+      const { data: ipData } = await supabase
+        .from('security_audit_logs')
+        .select('ip_address')
+        .eq('user_id', user?.id)
+        .gte('created_at', sevenDaysAgo)
+        .not('ip_address', 'is', null);
+
+      const uniqueIps = new Set(ipData?.map(item => item.ip_address)).size;
+
+      // Calcular score de segurança
+      const securityScore = suspiciousActivities && suspiciousActivities > 0 ? 'baixo' : 
+                           failedLogins && failedLogins > 10 ? 'médio' : 'alto';
+
+      const newMetrics: SecurityMetric[] = [
+        {
+          name: 'Login Failures',
+          value: failedLogins || 0,
+          status: (failedLogins || 0) > 5 ? 'critical' : 
+                 (failedLogins || 0) > 2 ? 'warning' : 'good',
+          description: 'Tentativas de login falhadas nos últimos 7 dias'
+        },
+        {
+          name: 'Suspicious Activities',
+          value: suspiciousActivities || 0,
+          status: (suspiciousActivities || 0) > 0 ? 'critical' : 'good',
+          description: 'Atividades suspeitas detectadas'
+        },
+        {
+          name: 'Unique IPs',
+          value: uniqueIps || 0,
+          status: (uniqueIps || 0) > 5 ? 'warning' : 'good',
+          description: 'Diferentes IPs utilizados para acesso'
+        },
+        {
+          name: 'Security Score',
+          value: securityScore === 'alto' ? 100 : 
+                 securityScore === 'médio' ? 75 : 50,
+          status: securityScore === 'alto' ? 'good' : 
+                 securityScore === 'médio' ? 'warning' : 'critical',
+          description: 'Pontuação geral de segurança'
+        }
+      ];
+      setMetrics(newMetrics);
 
       // Carregar eventos recentes de segurança
       const { data: recentEvents } = await supabase
@@ -178,22 +210,37 @@ const SecurityMonitor = () => {
         description: "Analisando sua conta...",
       });
 
-      // Executar função de detecção de atividade suspeita
-      const { data: result } = await supabase.rpc('detect_suspicious_activity', {
-        p_user_id: user?.id,
-        p_ip_address: 'manual_scan',
-        p_user_agent: navigator.userAgent
+      // Usar a edge function para detecção
+      const { data: result, error } = await supabase.functions.invoke('security-monitor', {
+        body: {
+          action: 'real_time_threat_detection',
+          ip_address: 'manual_scan',
+          user_agent: navigator.userAgent
+        }
       });
+
+      if (error) {
+        console.error('Error in security scan:', error);
+        toast({
+          title: "Erro no Scan",
+          description: "Falha ao executar scan de segurança",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Recarregar dados após o scan
       await loadSecurityData();
 
+      const threatDetection = result?.threat_detection;
+      const hasThreats = threatDetection?.threats_detected > 0;
+
       toast({
-        title: result ? "⚠️ Atividade Suspeita Detectada" : "✅ Scan Completo",
-        description: result ? 
-          "Foram detectadas atividades suspeitas em sua conta" :
+        title: hasThreats ? "⚠️ Atividade Suspeita Detectada" : "✅ Scan Completo",
+        description: hasThreats ? 
+          `${threatDetection.threats_detected} ameaças detectadas` :
           "Nenhuma atividade suspeita encontrada",
-        variant: result ? "destructive" : "default"
+        variant: hasThreats ? "destructive" : "default"
       });
     } catch (error) {
       console.error('Error running security scan:', error);
