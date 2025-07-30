@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Brain, BarChart3, Users, Plus, FileText } from 'lucide-react';
+import { Sparkles, Brain, BarChart3, Users, Plus, FileText, Settings, Layers } from 'lucide-react';
 import IntelligentProjectWizard from './IntelligentProjectWizard';
 import PredictiveAnalyticsDashboard from './PredictiveAnalyticsDashboard';
 import AIProjectTemplates from './AIProjectTemplates';
+import AdaptiveProjectTemplates from './AdaptiveProjectTemplates';
+import CollaborativeGovernance from './CollaborativeGovernance';
+import HybridMethodologyEngine from './HybridMethodologyEngine';
 
 const EnhancedProjectsPage: React.FC = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -22,7 +25,9 @@ const EnhancedProjectsPage: React.FC = () => {
       ai_generated: true,
       success_probability: 85,
       status: 'in_progress',
-      created_at: '2024-01-15'
+      created_at: '2024-01-15',
+      methodology: 'hybrid',
+      governance_score: 92
     },
     {
       id: '2',  
@@ -31,7 +36,9 @@ const EnhancedProjectsPage: React.FC = () => {
       ai_generated: true,
       success_probability: 92,
       status: 'active',
-      created_at: '2024-01-20'
+      created_at: '2024-01-20',
+      methodology: 'pmbok',
+      governance_score: 88
     }
   ];
 
@@ -45,6 +52,14 @@ const EnhancedProjectsPage: React.FC = () => {
     setIsWizardOpen(true);
   };
 
+  const handleGovernanceUpdated = (governance: any) => {
+    console.log('Governance updated:', governance);
+  };
+
+  const handleMethodologyConfigured = (config: any) => {
+    console.log('Methodology configured:', config);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -54,7 +69,7 @@ const EnhancedProjectsPage: React.FC = () => {
             Gestão de Projetos Inteligente
           </h1>
           <p className="text-gray-600 mt-2">
-            Projetos otimizados com IA para máxima eficiência e sucesso
+            Projetos otimizados com IA, metodologias híbridas e governança colaborativa
           </p>
         </div>
         <div className="flex space-x-2">
@@ -68,8 +83,8 @@ const EnhancedProjectsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -97,6 +112,18 @@ const EnhancedProjectsPage: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
+              <Layers className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-sm text-gray-600">Metodologias Híbridas</p>
+                <p className="text-2xl font-bold">8</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-sm text-gray-600">Colaborações</p>
@@ -109,10 +136,10 @@ const EnhancedProjectsPage: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-orange-500" />
+              <Settings className="h-5 w-5 text-indigo-500" />
               <div>
-                <p className="text-sm text-gray-600">Templates IA</p>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-sm text-gray-600">Governança Score</p>
+                <p className="text-2xl font-bold text-indigo-600">94%</p>
               </div>
             </div>
           </CardContent>
@@ -121,11 +148,13 @@ const EnhancedProjectsPage: React.FC = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="projects">Meus Projetos</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics Preditivo</TabsTrigger>
-          <TabsTrigger value="templates">Templates IA</TabsTrigger>
+          <TabsTrigger value="projects">Projetos</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="methodology">Metodologia</TabsTrigger>
+          <TabsTrigger value="governance">Governança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -143,12 +172,17 @@ const EnhancedProjectsPage: React.FC = () => {
                     <div key={project.id} className="border rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold">{project.title}</h4>
-                        {project.ai_generated && (
-                          <Badge className="bg-purple-100 text-purple-800">
-                            <Brain className="h-3 w-3 mr-1" />
-                            IA
+                        <div className="flex space-x-1">
+                          {project.ai_generated && (
+                            <Badge className="bg-purple-100 text-purple-800">
+                              <Brain className="h-3 w-3 mr-1" />
+                              IA
+                            </Badge>
+                          )}
+                          <Badge variant="outline">
+                            {project.methodology.toUpperCase()}
                           </Badge>
-                        )}
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">{project.description}</p>
                       <div className="flex items-center space-x-4">
@@ -156,6 +190,12 @@ const EnhancedProjectsPage: React.FC = () => {
                           <span className="text-gray-500">Sucesso: </span>
                           <span className="font-semibold text-green-600">
                             {project.success_probability}%
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-gray-500">Governança: </span>
+                          <span className="font-semibold text-blue-600">
+                            {project.governance_score}%
                           </span>
                         </div>
                         <Badge variant="outline">{project.status}</Badge>
@@ -170,38 +210,48 @@ const EnhancedProjectsPage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-blue-500" />
-                  <span>Performance IA</span>
+                  <span>Performance Avançada</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Precisão das Previsões</span>
-                      <span>92%</span>
+                      <span>Precisão das Previsões IA</span>
+                      <span>94%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '92%'}}></div>
+                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '94%'}}></div>
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Otimização de Cronograma</span>
-                      <span>78%</span>
+                      <span>Eficiência Metodologias Híbridas</span>
+                      <span>89%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{width: '78%'}}></div>
+                      <div className="bg-green-600 h-2 rounded-full" style={{width: '89%'}}></div>
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Redução de Riscos</span>
-                      <span>85%</span>
+                      <span>Score Governança Colaborativa</span>
+                      <span>91%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '85%'}}></div>
+                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '91%'}}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Redução Tempo Planejamento</span>
+                      <span>73%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-orange-600 h-2 rounded-full" style={{width: '73%'}}></div>
                     </div>
                   </div>
                 </div>
@@ -219,19 +269,31 @@ const EnhancedProjectsPage: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="text-lg font-semibold">{project.title}</h3>
-                        {project.ai_generated && (
-                          <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            IA Assistido
+                        <div className="flex space-x-1">
+                          {project.ai_generated && (
+                            <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              IA Assistido
+                            </Badge>
+                          )}
+                          <Badge variant="outline">
+                            <Layers className="h-3 w-3 mr-1" />
+                            {project.methodology.toUpperCase()}
                           </Badge>
-                        )}
+                        </div>
                       </div>
                       <p className="text-gray-600">{project.description}</p>
-                      <div className="flex items-center space-x-4 mt-3">
+                      <div className="flex items-center space-x-6 mt-3">
                         <div className="text-sm">
                           <span className="text-gray-500">Probabilidade de Sucesso: </span>
                           <span className="font-semibold text-green-600">
                             {project.success_probability}%
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-gray-500">Governança: </span>
+                          <span className="font-semibold text-blue-600">
+                            {project.governance_score}%
                           </span>
                         </div>
                         <Badge variant="outline">{project.status}</Badge>
@@ -264,7 +326,36 @@ const EnhancedProjectsPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="templates">
-          <AIProjectTemplates onSelectTemplate={handleSelectTemplate} />
+          <Tabs defaultValue="ai-templates" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="ai-templates">Templates IA</TabsTrigger>
+              <TabsTrigger value="adaptive-templates">Templates Adaptativos</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="ai-templates">
+              <AIProjectTemplates onSelectTemplate={handleSelectTemplate} />
+            </TabsContent>
+            
+            <TabsContent value="adaptive-templates">
+              <AdaptiveProjectTemplates onTemplateSelected={handleSelectTemplate} />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="methodology">
+          <HybridMethodologyEngine
+            projectType="pharmaceutical"
+            teamSize={8}
+            complexity="high"
+            onMethodologyConfigured={handleMethodologyConfigured}
+          />
+        </TabsContent>
+
+        <TabsContent value="governance">
+          <CollaborativeGovernance
+            partners={[]}
+            onGovernanceUpdated={handleGovernanceUpdated}
+          />
         </TabsContent>
       </Tabs>
 
