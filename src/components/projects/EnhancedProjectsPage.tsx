@@ -4,13 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Brain, BarChart3, Users, Plus, FileText, Settings, Layers } from 'lucide-react';
+import { Sparkles, Brain, BarChart3, Users, Plus, FileText, Settings, Layers, BookOpen, Lightbulb } from 'lucide-react';
 import IntelligentProjectWizard from './IntelligentProjectWizard';
 import PredictiveAnalyticsDashboard from './PredictiveAnalyticsDashboard';
 import AIProjectTemplates from './AIProjectTemplates';
 import AdaptiveProjectTemplates from './AdaptiveProjectTemplates';
 import CollaborativeGovernance from './CollaborativeGovernance';
 import HybridMethodologyEngine from './HybridMethodologyEngine';
+import IntelligentOnboardingGuide from './IntelligentOnboardingGuide';
+import AutomatedLessonsLearned from './AutomatedLessonsLearned';
+import IntelligentKnowledgeBase from './IntelligentKnowledgeBase';
 
 const EnhancedProjectsPage: React.FC = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -148,13 +151,15 @@ const EnhancedProjectsPage: React.FC = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="projects">Projetos</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="methodology">Metodologia</TabsTrigger>
           <TabsTrigger value="governance">Governança</TabsTrigger>
+          <TabsTrigger value="learning">Capacitação</TabsTrigger>
+          <TabsTrigger value="knowledge">Conhecimento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -356,6 +361,27 @@ const EnhancedProjectsPage: React.FC = () => {
             partners={[]}
             onGovernanceUpdated={handleGovernanceUpdated}
           />
+        </TabsContent>
+
+        <TabsContent value="learning">
+          <Tabs defaultValue="onboarding" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="onboarding">Guia de Capacitação</TabsTrigger>
+              <TabsTrigger value="lessons">Lições Aprendidas</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="onboarding">
+              <IntelligentOnboardingGuide />
+            </TabsContent>
+            
+            <TabsContent value="lessons">
+              <AutomatedLessonsLearned />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="knowledge">
+          <IntelligentKnowledgeBase />
         </TabsContent>
       </Tabs>
 
