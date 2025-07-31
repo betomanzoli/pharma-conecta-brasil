@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { createMatchFeedbackNotification } from '@/utils/notificationSeeder';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -35,6 +37,32 @@ const AIMatchingEngine = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [autoMatching, setAutoMatching] = useState(false);
+  const [hasRealData, setHasRealData] = useState(false);
+
+  // Verificar se existem dados reais na plataforma
+  useEffect(() => {
+    checkForRealData();
+  }, []);
+
+  const checkForRealData = async () => {
+    try {
+      const [
+        { data: companies, count: companiesCount },
+        { data: laboratories, count: labsCount },
+        { data: consultants, count: consultantsCount }
+      ] = await Promise.all([
+        supabase.from('companies').select('*', { count: 'exact', head: true }),
+        supabase.from('laboratories').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('user_type', 'consultant')
+      ]);
+
+      const totalEntities = (companiesCount || 0) + (labsCount || 0) + (consultantsCount || 0);
+      setHasRealData(totalEntities >= 5); // Considerar "dados reais" quando houver pelo menos 5 entidades
+    } catch (error) {
+      console.error('Error checking for real data:', error);
+      setHasRealData(false);
+    }
+  };
 
   const generateMatches = async (preferences?: any) => {
     if (!user) return;
@@ -71,12 +99,19 @@ const AIMatchingEngine = () => {
           .single();
         entityData = data;
       } else if (profile.user_type === 'consultant') {
-        const { data } = await supabase
-          .from('consultants')
-          .select('*')
-          .eq('profile_id', user.id)
-          .single();
-        entityData = data;
+        // Para consultores, usar dados do perfil
+        entityData = profile;
+      }
+
+      // Se não há dados reais suficientes, mostrar aviso
+      if (!hasRealData) {
+        toast({
+          title: "Dados Insuficientes",
+          description: "A plataforma precisa de mais usuários cadastrados para gerar matches precisos.",
+          variant: "destructive"
+        });
+        setMatches([]);
+        return;
       }
 
       // Preferências inteligentes baseadas no perfil
@@ -102,7 +137,7 @@ const AIMatchingEngine = () => {
 
       if (error) throw error;
 
-      if (data?.success && data?.matches) {
+      if (data?.success && data?.matches && data.matches.length > 0) {
         // Converter e enriquecer dados do match
         const formattedMatches: Match[] = data.matches.map((match: any) => ({
           id: match.id,
@@ -157,7 +192,12 @@ const AIMatchingEngine = () => {
           description: `${highQualityMatches.length} matches de alta qualidade encontrados em ${processingTime}ms`,
         });
       } else {
-        throw new Error('Nenhum match de qualidade encontrado. Tente ajustar suas preferências.');
+        // Quando não há matches suficientes
+        setMatches([]);
+        toast({
+          title: "Nenhum match encontrado",
+          description: "Tente ajustar suas preferências ou aguarde mais usuários se cadastrarem na plataforma.",
+        });
       }
     } catch (error) {
       console.error('Error generating matches:', error);
@@ -205,7 +245,9 @@ const AIMatchingEngine = () => {
 
       toast({
         title: "Match aceito! 🎉",
-        description: "O provedor foi notificado e entrará em contato em breve. Seu feedback melhora nosso AI!",
+        description: hasRealData 
+          ? "O provedor foi notificado e entrará em contato em breve. Seu feedback melhora nosso AI!" 
+          : "Feedback registrado! Na versão completa, o provedor seria notificado automaticamente.",
       });
       
       setMatches(prev => prev.filter(m => m.id !== matchId));
@@ -311,12 +353,33 @@ const AIMatchingEngine = () => {
             <span>{autoMatching ? 'Parar Auto-Match' : 'Ativar Auto-Match'}</span>
           </Button>
         </div>
+        
+        {!hasRealData && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <Info className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>Plataforma em crescimento:</strong> Para matches mais precisos, precisamos de mais usuários cadastrados. 
+              Experimente a <a href="/demo" className="underline font-medium">versão demo</a> para ver o potencial completo.
+            </AlertDescription>
+          </Alert>
+        )}
       </CardHeader>
       <CardContent>
         {matches.length === 0 ? (
           <div className="text-center py-8">
             <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Clique em "Gerar Matches" para encontrar oportunidades</p>
+            <p className="text-gray-600">
+              {hasRealData 
+                ? 'Clique em "Gerar Matches" para encontrar oportunidades'
+                : 'Aguardando mais usuários na plataforma para gerar matches precisos'
+              }
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              {hasRealData 
+                ? 'Os matches são baseados em dados reais dos usuários cadastrados'
+                : 'Visite nossa demonstração para ver como o AI Matching funciona'
+              }
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

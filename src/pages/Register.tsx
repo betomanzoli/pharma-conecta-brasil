@@ -1,245 +1,336 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import Logo from "@/components/ui/logo";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+const cleanupAuthState = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
 
 const Register = () => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    currentRole: "",
-    company: "",
-    yearsExperience: "",
-    expertiseArea: "",
-    location: "",
-    linkedinUrl: ""
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    userType: '',
+    phone: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const expertiseAreas = [
-    "P&D (Pesquisa e Desenvolvimento)",
-    "Controle de Qualidade",
-    "Assuntos Regulatórios",
-    "Produção",
-    "Comercial"
-  ];
-
-  const brazilianStates = [
-    "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
-    "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul",
-    "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí",
-    "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia",
-    "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (loading) return;
+
+    // Validate form
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
-        variant: "destructive"
-      });
+      setError('As senhas não coincidem');
       return;
     }
 
-    toast({
-      title: "Conta criada com sucesso!",
-      description: "Verifique seu email para ativar sua conta.",
-    });
-    
-    console.log("Dados do registro:", formData);
+    if (formData.password.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    if (!formData.userType) {
+      setError('Selecione o tipo de usuário');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Clean up existing state
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout failed, continuing...');
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email.trim(),
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            user_type: formData.userType,
+            phone: formData.phone
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Bem-vindo ao PharmaConnect Brasil. Complete seu perfil para começar.",
+        });
+        // Force page reload for clean state
+        window.location.href = '/profile';
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setError(
+        error.message.includes('already registered')
+          ? 'Este email já está cadastrado'
+          : 'Erro ao criar conta. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
   };
 
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full space-y-8">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Logo size="lg" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            Crie sua Conta Profissional
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Conecte-se com os melhores profissionais da indústria farmacêutica
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="mb-8">
+          <Link 
+            to="/" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao início
+          </Link>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-center text-primary">Informações Profissionais</CardTitle>
+        <Card className="shadow-xl border-0">
+          <CardHeader className="space-y-1 pb-6">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">PC</span>
+              </div>
+            </div>
+            <CardTitle className="text-2xl text-center font-bold">
+              Criar Conta
+            </CardTitle>
+            <CardDescription className="text-center text-gray-600">
+              Junte-se ao ecossistema farmacêutico brasileiro
+            </CardDescription>
           </CardHeader>
+          
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo *</Label>
+                  <Label htmlFor="firstName">Nome</Label>
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
+                    placeholder="Seu nome"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
                     required
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Seu nome completo"
+                    disabled={loading}
                   />
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail Profissional *</Label>
+                  <Label htmlFor="lastName">Sobrenome</Label>
                   <Input
-                    id="email"
-                    type="email"
+                    id="lastName"
+                    type="text"
+                    placeholder="Seu sobrenome"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
                     required
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="seu@email.com"
+                    disabled={loading}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="userType">Tipo de Usuário</Label>
+                <Select 
+                  value={formData.userType} 
+                  onValueChange={(value) => handleInputChange('userType', value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione seu tipo de usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pharmaceutical_company">Empresa Farmacêutica</SelectItem>
+                    <SelectItem value="laboratory">Laboratório</SelectItem>
+                    <SelectItem value="consultant">Consultor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
                   <Input
                     id="password"
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Mínimo 8 caracteres"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    required
+                    disabled={loading}
+                    className="pr-12"
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    )}
+                  </Button>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type="password"
-                    required
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Digite a senha novamente"
                     value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                    placeholder="Confirme sua senha"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentRole">Cargo Atual *</Label>
-                  <Input
-                    id="currentRole"
-                    type="text"
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     required
-                    value={formData.currentRole}
-                    onChange={(e) => handleInputChange("currentRole", e.target.value)}
-                    placeholder="Ex: Analista de P&D"
+                    disabled={loading}
+                    className="pr-12"
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="company">Empresa *</Label>
-                  <Input
-                    id="company"
-                    type="text"
-                    required
-                    value={formData.company}
-                    onChange={(e) => handleInputChange("company", e.target.value)}
-                    placeholder="Nome da empresa"
-                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={loading}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    )}
+                  </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="yearsExperience">Anos de Experiência *</Label>
-                  <Select onValueChange={(value) => handleInputChange("yearsExperience", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0-2">0-2 anos</SelectItem>
-                      <SelectItem value="3-5">3-5 anos</SelectItem>
-                      <SelectItem value="6-10">6-10 anos</SelectItem>
-                      <SelectItem value="11-15">11-15 anos</SelectItem>
-                      <SelectItem value="16+">16+ anos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="expertiseArea">Área de Expertise *</Label>
-                  <Select onValueChange={(value) => handleInputChange("expertiseArea", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione sua área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {expertiseAreas.map((area) => (
-                        <SelectItem key={area} value={area}>
-                          {area}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="location">Estado *</Label>
-                  <Select onValueChange={(value) => handleInputChange("location", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione seu estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brazilianStates.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="linkedinUrl">LinkedIn (opcional)</Label>
-                  <Input
-                    id="linkedinUrl"
-                    type="url"
-                    value={formData.linkedinUrl}
-                    onChange={(e) => handleInputChange("linkedinUrl", e.target.value)}
-                    placeholder="https://linkedin.com/in/seuperfil"
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full bg-primary hover:bg-primary-600 text-lg py-3">
-                Criar Conta Profissional
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Criando conta...
+                  </>
+                ) : (
+                  'Criar Conta'
+                )}
               </Button>
-
-              <div className="text-center">
-                <p className="text-gray-600">
-                  Já tem uma conta?{" "}
-                  <a href="#" className="text-primary hover:text-primary-600 font-medium">
-                    Faça login
-                  </a>
-                </p>
-              </div>
             </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Já tem uma conta?{' '}
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                  Faça login
+                </Link>
+              </p>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-center text-xs text-gray-500">
+                Ao criar uma conta, você concorda com nossos{' '}
+                <Link to="/terms" className="text-blue-600 hover:text-blue-700">
+                  Termos de Uso
+                </Link>{' '}
+                e{' '}
+                <Link to="/privacy" className="text-blue-600 hover:text-blue-700">
+                  Política de Privacidade
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 mb-4">Quer conhecer a plataforma primeiro?</p>
+          <Link to="/demo">
+            <Button variant="outline" className="w-full">
+              Acessar Demonstração
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
