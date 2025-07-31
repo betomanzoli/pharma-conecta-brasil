@@ -6,7 +6,7 @@ import RealPlatformStats from '@/components/sections/RealPlatformStats';
 import UserTypeSolutions from '@/components/sections/UserTypeSolutions';
 import PlatformFeatures from '@/components/sections/PlatformFeatures';
 import TestimonialsSection from '@/components/sections/TestimonialsSection';
-import SecurityCompliance from '@/components/sections/SecurityCompliance';
+import { SecurityCompliance } from '@/components/sections/SecurityCompliance';
 import CallToAction from '@/components/sections/CallToAction';
 import ComplianceFooter from '@/components/ComplianceFooter';
 
