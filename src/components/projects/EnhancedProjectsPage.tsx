@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Brain, BarChart3, Users, Plus, FileText, Settings, Layers, BookOpen, Lightbulb } from 'lucide-react';
+import { Sparkles, Brain, BarChart3, Users, Plus, FileText, Settings, Layers, BookOpen, Lightbulb, Crown, Network, PieChart } from 'lucide-react';
 import IntelligentProjectWizard from './IntelligentProjectWizard';
 import PredictiveAnalyticsDashboard from './PredictiveAnalyticsDashboard';
 import AIProjectTemplates from './AIProjectTemplates';
@@ -14,6 +13,9 @@ import HybridMethodologyEngine from './HybridMethodologyEngine';
 import IntelligentOnboardingGuide from './IntelligentOnboardingGuide';
 import AutomatedLessonsLearned from './AutomatedLessonsLearned';
 import IntelligentKnowledgeBase from './IntelligentKnowledgeBase';
+import ConstellationAnalysis from './ConstellationAnalysis';
+import SharedValueSystem from './SharedValueSystem';
+import GomesCasseresExecutiveDashboard from './GomesCasseresExecutiveDashboard';
 
 const EnhancedProjectsPage: React.FC = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -47,7 +49,6 @@ const EnhancedProjectsPage: React.FC = () => {
 
   const handleProjectCreated = (project: any) => {
     console.log('New intelligent project created:', project);
-    // Refresh projects list
   };
 
   const handleSelectTemplate = (template: any) => {
@@ -87,7 +88,7 @@ const EnhancedProjectsPage: React.FC = () => {
       </div>
 
       {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -106,7 +107,7 @@ const EnhancedProjectsPage: React.FC = () => {
               <BarChart3 className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-sm text-gray-600">Taxa de Sucesso</p>
-                <p className="text-2xl font-bold text-green-600">87%</p>
+                <p className="text-2xl font-bold text-green-600">89%</p>
               </div>
             </div>
           </CardContent>
@@ -115,10 +116,10 @@ const EnhancedProjectsPage: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Layers className="h-5 w-5 text-orange-500" />
+              <Network className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-600">Metodologias Híbridas</p>
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-sm text-gray-600">Constelações</p>
+                <p className="text-2xl font-bold">6</p>
               </div>
             </div>
           </CardContent>
@@ -127,7 +128,19 @@ const EnhancedProjectsPage: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-500" />
+              <PieChart className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-sm text-gray-600">Valor Compartilhado</p>
+                <p className="text-2xl font-bold text-orange-600">R$ 3.6M</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-indigo-500" />
               <div>
                 <p className="text-sm text-gray-600">Colaborações</p>
                 <p className="text-2xl font-bold">34</p>
@@ -139,10 +152,10 @@ const EnhancedProjectsPage: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Settings className="h-5 w-5 text-indigo-500" />
+              <Crown className="h-5 w-5 text-yellow-500" />
               <div>
-                <p className="text-sm text-gray-600">Governança Score</p>
-                <p className="text-2xl font-bold text-indigo-600">94%</p>
+                <p className="text-sm text-gray-600">Score Gomes-Casseres</p>
+                <p className="text-2xl font-bold text-yellow-600">94%</p>
               </div>
             </div>
           </CardContent>
@@ -151,7 +164,7 @@ const EnhancedProjectsPage: React.FC = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="projects">Projetos</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -160,6 +173,8 @@ const EnhancedProjectsPage: React.FC = () => {
           <TabsTrigger value="governance">Governança</TabsTrigger>
           <TabsTrigger value="learning">Capacitação</TabsTrigger>
           <TabsTrigger value="knowledge">Conhecimento</TabsTrigger>
+          <TabsTrigger value="constellation">Constelação</TabsTrigger>
+          <TabsTrigger value="executive">Executivo</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -214,49 +229,49 @@ const EnhancedProjectsPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-blue-500" />
-                  <span>Performance Avançada</span>
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                  <span>Performance Gomes-Casseres</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Precisão das Previsões IA</span>
-                      <span>94%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '94%'}}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Eficiência Metodologias Híbridas</span>
+                      <span>Saúde da Constelação</span>
                       <span>89%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{width: '89%'}}></div>
+                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '89%'}}></div>
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Score Governança Colaborativa</span>
-                      <span>91%</span>
+                      <span>Criação de Valor</span>
+                      <span>85%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '91%'}}></div>
+                      <div className="bg-green-600 h-2 rounded-full" style={{width: '85%'}}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Posição Competitiva</span>
+                      <span>92%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-red-600 h-2 rounded-full" style={{width: '92%'}}></div>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Redução Tempo Planejamento</span>
-                      <span>73%</span>
+                      <span>Governança Colaborativa</span>
+                      <span>91%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-orange-600 h-2 rounded-full" style={{width: '73%'}}></div>
+                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '91%'}}></div>
                     </div>
                   </div>
                 </div>
@@ -382,6 +397,27 @@ const EnhancedProjectsPage: React.FC = () => {
 
         <TabsContent value="knowledge">
           <IntelligentKnowledgeBase />
+        </TabsContent>
+
+        <TabsContent value="constellation">
+          <Tabs defaultValue="analysis" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="analysis">Análise de Constelação</TabsTrigger>
+              <TabsTrigger value="value">Sistema de Valor</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="analysis">
+              <ConstellationAnalysis />
+            </TabsContent>
+            
+            <TabsContent value="value">
+              <SharedValueSystem />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="executive">
+          <GomesCasseresExecutiveDashboard />
         </TabsContent>
       </Tabs>
 
