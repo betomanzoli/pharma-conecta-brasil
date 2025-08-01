@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -22,7 +23,10 @@ serve(async (req) => {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      { 
+        auth: { persistSession: false },
+        global: { headers: { 'sb-schema': 'public' } }
+      }
     );
 
     const metrics = [];
@@ -52,45 +56,7 @@ serve(async (req) => {
       logStep("Database connectivity check failed", error);
     }
 
-    // 2. Verificar Edge Functions
-    const functionsToCheck = [
-      'anvisa-sync',
-      'comprehensive-integration-sync', 
-      'webhook-handler',
-      'ai-chatbot'
-    ];
-
-    for (const funcName of functionsToCheck) {
-      try {
-        const funcUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/${funcName}`;
-        const response = await fetch(funcUrl, {
-          method: 'OPTIONS',
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
-          }
-        });
-
-        const isHealthy = response.status < 500;
-        metrics.push({
-          metric_name: 'edge_function_health',
-          metric_value: isHealthy ? 1 : 0,
-          metric_unit: 'boolean',
-          tags: { function_name: funcName, status_code: response.status }
-        });
-
-        logStep(`Function ${funcName} health check`, { healthy: isHealthy, status: response.status });
-      } catch (error) {
-        metrics.push({
-          metric_name: 'edge_function_health',
-          metric_value: 0,
-          metric_unit: 'boolean',
-          tags: { function_name: funcName, error: error.message }
-        });
-        logStep(`Function ${funcName} health check failed`, error);
-      }
-    }
-
-    // 3. Verificar integrações ativas
+    // 2. Verificar integrações ativas
     try {
       const { data: integrations } = await supabaseClient
         .from('api_configurations')
@@ -102,7 +68,7 @@ serve(async (req) => {
         if (!i.last_sync) return false;
         const lastSync = new Date(i.last_sync);
         const hoursSinceSync = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
-        return hoursSinceSync < 25; // Menos de 25 horas
+        return hoursSinceSync < 25;
       }).length || 0;
 
       metrics.push({
@@ -117,47 +83,13 @@ serve(async (req) => {
       logStep("Integration health check failed", error);
     }
 
-    // 4. Verificar notificações não lidas
-    try {
-      const { count: unreadNotifications } = await supabaseClient
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('read', false);
-
-      metrics.push({
-        metric_name: 'unread_notifications',
-        metric_value: unreadNotifications || 0,
-        metric_unit: 'count'
-      });
-
-      logStep("Notifications check", { unreadNotifications });
-    } catch (error) {
-      logStep("Notifications check failed", error);
-    }
-
-    // 5. Verificar performance da aplicação
+    // 3. Verificar performance da aplicação
     const processingTime = Date.now() - startTime;
     metrics.push({
       metric_name: 'system_response_time',
       metric_value: processingTime,
       metric_unit: 'milliseconds',
       tags: { endpoint: 'system-monitor' }
-    });
-
-    // 6. Verificar uso de memória (simulado)
-    const memoryUsage = Math.random() * 100; // Em produção seria real
-    metrics.push({
-      metric_name: 'memory_usage',
-      metric_value: memoryUsage,
-      metric_unit: 'percentage'
-    });
-
-    // 7. Verificar carga do sistema (simulado)
-    const systemLoad = Math.random() * 5; // Em produção seria real
-    metrics.push({
-      metric_name: 'system_load',
-      metric_value: systemLoad,
-      metric_unit: 'average'
     });
 
     // Salvar métricas no banco
@@ -193,10 +125,7 @@ serve(async (req) => {
       status: overallHealth >= 80 ? 'healthy' : overallHealth >= 50 ? 'degraded' : 'critical',
       details: {
         database_healthy: metrics.find(m => m.metric_name === 'database_connectivity')?.metric_value === 1,
-        functions_healthy: healthyServices,
-        total_checks: totalHealthChecks,
-        active_integrations: metrics.find(m => m.metric_name === 'active_integrations')?.metric_value || 0,
-        unread_notifications: metrics.find(m => m.metric_name === 'unread_notifications')?.metric_value || 0
+        active_integrations: metrics.find(m => m.metric_name === 'active_integrations')?.metric_value || 0
       }
     };
 

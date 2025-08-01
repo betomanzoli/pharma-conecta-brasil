@@ -15,31 +15,31 @@ const MetricsDashboard = () => {
     const fetchMetrics = () => {
       const mockMetrics = {
         overview: {
-          total_matches: 1247,
-          successful_partnerships: 89,
-          revenue_generated: 2580000,
-          active_companies: 456,
-          growth_rate: 23.5,
-          conversion_rate: 7.1
+          total_matches: 47,
+          successful_partnerships: 8,
+          revenue_generated: 125000,
+          active_companies: 23,
+          growth_rate: 15.2,
+          conversion_rate: 17.0
         },
         trends: {
           matches: [
-            { month: 'Jan', value: 45 },
-            { month: 'Fev', value: 52 },
-            { month: 'Mar', value: 78 },
-            { month: 'Abr', value: 91 },
-            { month: 'Mai', value: 67 },
-            { month: 'Jun', value: 103 },
-            { month: 'Jul', value: 125 },
+            { month: 'Jan', value: 12 },
+            { month: 'Fev', value: 8 },
+            { month: 'Mar', value: 15 },
+            { month: 'Abr', value: 7 },
+            { month: 'Mai', value: 3 },
+            { month: 'Jun', value: 2 },
+            { month: 'Jul', value: 0 },
           ],
           revenue: [
-            { month: 'Jan', value: 180000 },
-            { month: 'Fev', value: 220000 },
-            { month: 'Mar', value: 285000 },
-            { month: 'Abr', value: 350000 },
-            { month: 'Mai', value: 290000 },
-            { month: 'Jun', value: 420000 },
-            { month: 'Jul', value: 580000 },
+            { month: 'Jan', value: 25000 },
+            { month: 'Fev', value: 18000 },
+            { month: 'Mar', value: 32000 },
+            { month: 'Abr', value: 15000 },
+            { month: 'Mai', value: 22000 },
+            { month: 'Jun', value: 13000 },
+            { month: 'Jul', value: 0 },
           ]
         },
         sectors: [
@@ -50,8 +50,8 @@ const MetricsDashboard = () => {
         ],
         alerts: [
           { type: 'success', message: 'Sistema operando normalmente', count: 1 },
-          { type: 'warning', message: 'Alertas regulatórios pendentes', count: 3 },
-          { type: 'info', message: 'Novos matches disponíveis', count: 12 }
+          { type: 'warning', message: 'Métricas de transparência ativas', count: 1 },
+          { type: 'info', message: 'Dados reais sendo coletados', count: 1 }
         ]
       };
       
@@ -61,7 +61,7 @@ const MetricsDashboard = () => {
 
     fetchMetrics();
     
-    // Atualizar métricas a cada 30 segundos (simulando real-time)
+    // Atualizar métricas a cada 30 segundos
     const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
   }, []);
