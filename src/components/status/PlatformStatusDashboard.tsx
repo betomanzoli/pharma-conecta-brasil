@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,38 +30,40 @@ const PlatformStatusDashboard = () => {
   const [isDemo, setIsDemo] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  // Real data queries
-  const { data: profilesCount } = useSupabaseQuery({
-    queryKey: ['profiles-count'],
+  // Real data queries - using array length instead of count parameter
+  const { data: profilesData } = useSupabaseQuery({
+    queryKey: ['profiles-list'],
     table: 'profiles',
-    select: 'count',
-    count: 'exact',
+    select: 'id',
     enabled: !isDemo
   });
 
-  const { data: companiesCount } = useSupabaseQuery({
-    queryKey: ['companies-count'],
+  const { data: companiesData } = useSupabaseQuery({
+    queryKey: ['companies-list'],
     table: 'companies',
-    select: 'count',
-    count: 'exact',
+    select: 'id',
     enabled: !isDemo
   });
 
-  const { data: laboratoriesCount } = useSupabaseQuery({
-    queryKey: ['laboratories-count'],
+  const { data: laboratoriesData } = useSupabaseQuery({
+    queryKey: ['laboratories-list'],
     table: 'laboratories',
-    select: 'count',
-    count: 'exact',
+    select: 'id',
     enabled: !isDemo
   });
 
-  const { data: projectsCount } = useSupabaseQuery({
-    queryKey: ['projects-count'],
-    table: 'project_requests',
-    select: 'count',
-    count: 'exact',
+  const { data: projectsData } = useSupabaseQuery({
+    queryKey: ['projects-list'],
+    table: 'partnership_opportunities',
+    select: 'id',
     enabled: !isDemo
   });
+
+  // Calculate counts from arrays
+  const profilesCount = Array.isArray(profilesData) ? profilesData.length : 0;
+  const companiesCount = Array.isArray(companiesData) ? companiesData.length : 0;
+  const laboratoriesCount = Array.isArray(laboratoriesData) ? laboratoriesData.length : 0;
+  const projectsCount = Array.isArray(projectsData) ? projectsData.length : 0;
 
   useEffect(() => {
     setIsDemo(isDemoMode());
@@ -117,32 +118,32 @@ const PlatformStatusDashboard = () => {
       const realMetrics: StatusMetric[] = [
         {
           label: 'Usuários Ativos',
-          value: profilesCount || 0,
-          status: (profilesCount || 0) > 0 ? 'healthy' : 'warning',
+          value: profilesCount,
+          status: profilesCount > 0 ? 'healthy' : 'warning',
           icon: Users,
           description: 'Usuários reais cadastrados na plataforma',
           lastUpdated: new Date().toISOString()
         },
         {
           label: 'Empresas Farmacêuticas',
-          value: companiesCount || 0,
-          status: (companiesCount || 0) > 5 ? 'healthy' : 'warning',
+          value: companiesCount,
+          status: companiesCount > 5 ? 'healthy' : 'warning',
           icon: Building2,
           description: 'Empresas reais na rede',
           lastUpdated: new Date().toISOString()
         },
         {
           label: 'Laboratórios Analíticos',
-          value: laboratoriesCount || 0,
-          status: (laboratoriesCount || 0) > 5 ? 'healthy' : 'warning',
+          value: laboratoriesCount,
+          status: laboratoriesCount > 5 ? 'healthy' : 'warning',
           icon: FlaskConical,
           description: 'Laboratórios reais certificados',
           lastUpdated: new Date().toISOString()
         },
         {
           label: 'Projetos Concluídos',
-          value: projectsCount || 0,
-          status: (projectsCount || 0) > 0 ? 'healthy' : 'critical',
+          value: projectsCount,
+          status: projectsCount > 0 ? 'healthy' : 'critical',
           icon: FolderOpen,
           description: 'Parcerias reais estabelecidas',
           lastUpdated: new Date().toISOString()
@@ -307,11 +308,11 @@ const PlatformStatusDashboard = () => {
                 <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-blue-600 h-2 rounded-full" 
-                    style={{ width: `${Math.min((profilesCount || 1) / 100 * 100, 100)}%` }}
+                    style={{ width: `${Math.min(profilesCount / 100 * 100, 100)}%` }}
                   ></div>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {Math.round((profilesCount || 1) / 100 * 100)}%
+                  {Math.round(profilesCount / 100 * 100)}%
                 </span>
               </div>
             </div>
