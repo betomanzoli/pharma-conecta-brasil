@@ -11,6 +11,12 @@ interface TouchOptimizationsProps {
   onSwipeDown?: () => void;
 }
 
+// Extend CSSStyleDeclaration to include webkit properties
+interface ExtendedCSSStyleDeclaration extends CSSStyleDeclaration {
+  webkitTouchCallout?: string;
+  webkitTapHighlightColor?: string;
+}
+
 const TouchOptimizations: React.FC<TouchOptimizationsProps> = ({
   children,
   enableFastTap = true,
@@ -29,9 +35,12 @@ const TouchOptimizations: React.FC<TouchOptimizationsProps> = ({
     if (!container) return;
 
     // Otimizações de CSS para touch
-    container.style.touchAction = enableSwipeGestures ? 'manipulation' : 'auto';
-    container.style.webkitTouchCallout = 'none';
-    container.style.webkitTapHighlightColor = 'transparent';
+    const containerStyle = container.style as ExtendedCSSStyleDeclaration;
+    containerStyle.touchAction = enableSwipeGestures ? 'manipulation' : 'auto';
+    
+    // Use type assertion para propriedades webkit
+    (containerStyle as any).webkitTouchCallout = 'none';
+    (containerStyle as any).webkitTapHighlightColor = 'transparent';
 
     if (enableFastTap) {
       // Implementar FastClick-like behavior
@@ -117,7 +126,7 @@ const TouchOptimizations: React.FC<TouchOptimizationsProps> = ({
         WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent',
         touchAction: enableSwipeGestures ? 'manipulation' : 'auto'
-      }}
+      } as React.CSSProperties}
     >
       {children}
     </div>

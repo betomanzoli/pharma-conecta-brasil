@@ -11,6 +11,15 @@ interface PrefetchRule {
   dependencies?: string[];
 }
 
+// Type for experimental navigator.connection API
+interface NavigatorConnection extends Navigator {
+  connection?: {
+    effectiveType: '2g' | '3g' | '4g' | 'slow-2g';
+    addEventListener: (event: string, handler: () => void) => void;
+    removeEventListener: (event: string, handler: () => void) => void;
+  };
+}
+
 const IntelligentPrefetching: React.FC = () => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -39,7 +48,10 @@ const IntelligentPrefetching: React.FC = () => {
       dependencies: ['user:profile']
     },
     {
-      condition: () => window.navigator.connection?.effectiveType === '4g',
+      condition: () => {
+        const nav = navigator as NavigatorConnection;
+        return nav.connection?.effectiveType === '4g';
+      },
       queryKey: ['analytics', 'dashboard'],
       queryFn: () => fetchDashboardAnalytics(),
       priority: 'low'
@@ -88,19 +100,21 @@ const IntelligentPrefetching: React.FC = () => {
     }, 2000);
 
     // Prefetch de baixa prioridade quando idle
-    requestIdleCallback(() => {
-      const lowPriorityRules = prefetchRules.filter(rule => 
-        rule.priority === 'low' && rule.condition()
-      );
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(() => {
+        const lowPriorityRules = prefetchRules.filter(rule => 
+          rule.priority === 'low' && rule.condition()
+        );
 
-      lowPriorityRules.forEach(rule => {
-        const key = rule.queryKey.join(':');
-        if (!prefetchedRefs.current.has(key)) {
-          executePrefetch(rule);
-          prefetchedRefs.current.add(key);
-        }
+        lowPriorityRules.forEach(rule => {
+          const key = rule.queryKey.join(':');
+          if (!prefetchedRefs.current.has(key)) {
+            executePrefetch(rule);
+            prefetchedRefs.current.add(key);
+          }
+        });
       });
-    });
+    }
   };
 
   const setupIntersectionObserver = () => {
@@ -130,8 +144,9 @@ const IntelligentPrefetching: React.FC = () => {
   };
 
   const setupNetworkObserver = () => {
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
+    const nav = navigator as NavigatorConnection;
+    if (nav.connection) {
+      const connection = nav.connection;
       
       const handleNetworkChange = () => {
         const effectiveType = connection.effectiveType;
@@ -200,14 +215,6 @@ const IntelligentPrefetching: React.FC = () => {
 
   const fetchDashboardAnalytics = async () => {
     return Promise.resolve({});
-  };
-
-  // Expor API para componentes externos
-  const addPrefetchTarget = (element: HTMLElement, queryKey: string[]) => {
-    element.dataset.prefetch = queryKey.join(':');
-    if (observerRef.current) {
-      observerRef.current.observe(element);
-    }
   };
 
   return null; // Componente invisível
