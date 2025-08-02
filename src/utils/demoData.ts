@@ -1,4 +1,3 @@
-
 // Sistema de gerenciamento de modo demo expandido com dados internacionais
 export const isDemoMode = () => {
   return window.location.pathname.startsWith('/demo') || 
@@ -694,9 +693,21 @@ export const demoAPI = {
   
   searchGlobalEntities: (query: string, filters?: any) => {
     const allEntities = [
-      ...demoData.companies.map(c => ({ ...c, entity_type: 'company' })),
-      ...demoData.laboratories.map(l => ({ ...l, entity_type: 'laboratory' })),
-      ...demoData.consultants.map(c => ({ ...c, entity_type: 'consultant' }))
+      ...demoData.companies.map(c => ({ 
+        ...c, 
+        entity_type: 'company',
+        location: `${c.city}, ${c.state}, ${c.country}`,
+        international_experience: c.recent_partnerships || [],
+        regulatory_expertise: c.certifications || []
+      })),
+      ...demoData.laboratories.map(l => ({ 
+        ...l, 
+        entity_type: 'laboratory'
+      })),
+      ...demoData.consultants.map(c => ({ 
+        ...c, 
+        entity_type: 'consultant'
+      }))
     ];
     
     let filtered = allEntities.filter(entity => 
@@ -705,17 +716,32 @@ export const demoAPI = {
 
     // Filtros adicionais
     if (filters?.region) {
-      filtered = filtered.filter(entity => 
-        entity.location?.includes(filters.region) || 
-        entity.international_experience?.some(exp => exp.includes(filters.region))
-      );
+      filtered = filtered.filter(entity => {
+        if (entity.entity_type === 'company') {
+          return entity.location?.includes(filters.region) || 
+                 entity.international_experience?.some((exp: string) => exp.includes(filters.region));
+        } else if (entity.entity_type === 'laboratory') {
+          return entity.location?.includes(filters.region) || 
+                 entity.international_presence?.some((exp: string) => exp.includes(filters.region));
+        } else if (entity.entity_type === 'consultant') {
+          return entity.location?.includes(filters.region) || 
+                 entity.international_experience?.some((exp: string) => exp.includes(filters.region));
+        }
+        return false;
+      });
     }
 
     if (filters?.regulatory) {
-      filtered = filtered.filter(entity => 
-        entity.regulatory_expertise?.includes(filters.regulatory) ||
-        entity.certifications?.includes(filters.regulatory)
-      );
+      filtered = filtered.filter(entity => {
+        if (entity.entity_type === 'company') {
+          return entity.regulatory_expertise?.includes(filters.regulatory);
+        } else if (entity.entity_type === 'laboratory') {
+          return entity.regulatory_expertise?.includes(filters.regulatory);
+        } else if (entity.entity_type === 'consultant') {
+          return entity.regulatory_networks?.includes(filters.regulatory);
+        }
+        return false;
+      });
     }
 
     return filtered;
