@@ -1,6 +1,6 @@
-import React from 'react';
-import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+import React, { useEffect, useState } from 'react';
+import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import { Button } from './button';
 
 export interface EnhancedToastProps {
@@ -19,36 +19,16 @@ export interface EnhancedToastProps {
 
 const iconMap = {
   success: CheckCircle,
-  error: XCircle,
-  warning: AlertCircle,
+  error: AlertCircle,
+  warning: AlertTriangle,
   info: Info,
 };
 
 const colorMap = {
-  success: {
-    background: 'bg-secondary-50 border-secondary-200',
-    icon: 'text-secondary-600',
-    title: 'text-secondary-900',
-    description: 'text-secondary-700',
-  },
-  error: {
-    background: 'bg-red-50 border-red-200',
-    icon: 'text-red-600',
-    title: 'text-red-900',
-    description: 'text-red-700',
-  },
-  warning: {
-    background: 'bg-yellow-50 border-yellow-200',
-    icon: 'text-yellow-600',
-    title: 'text-yellow-900',
-    description: 'text-yellow-700',
-  },
-  info: {
-    background: 'bg-primary-50 border-primary-200',
-    icon: 'text-primary-600',
-    title: 'text-primary-900',
-    description: 'text-primary-700',
-  },
+  success: 'bg-green-50 border-green-200 text-green-800',
+  error: 'bg-red-50 border-red-200 text-red-800',
+  warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+  info: 'bg-blue-50 border-blue-200 text-blue-800',
 };
 
 export const EnhancedToast: React.FC<EnhancedToastProps> = ({
@@ -56,77 +36,92 @@ export const EnhancedToast: React.FC<EnhancedToastProps> = ({
   type,
   title,
   description,
+  duration = 5000,
   dismissible = true,
   action,
-  onDismiss,
+  onDismiss
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
+
   const Icon = iconMap[type];
-  const colors = colorMap[type];
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
+  useEffect(() => {
+    if (duration > 0) {
+      const timer = setTimeout(() => {
+        handleDismiss();
+      }, duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [duration]);
+
+  const handleDismiss = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsVisible(false);
       onDismiss(id);
-    }, 5000);
+    }, 300);
+  };
 
-    return () => clearTimeout(timer);
-  }, [id, onDismiss]);
+  if (!isVisible) return null;
 
   return (
     <div
-      className={cn(
-        'relative flex items-start gap-3 p-4 rounded-lg border shadow-sm',
-        'animate-slide-up',
-        colors.background
-      )}
+      className={`
+        ${colorMap[type]}
+        border rounded-lg p-4 shadow-lg max-w-sm w-full
+        transform transition-all duration-300 ease-in-out
+        ${isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'}
+      `}
     >
-      <Icon className={cn('h-5 w-5 mt-0.5 flex-shrink-0', colors.icon)} />
-      
-      <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-medium', colors.title)}>
-          {title}
-        </p>
-        {description && (
-          <p className={cn('mt-1 text-sm', colors.description)}>
-            {description}
-          </p>
-        )}
+      <div className="flex items-start space-x-3">
+        <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
         
-        {action && (
-          <div className="mt-3">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={action.onClick}
-              className="text-xs"
-            >
-              {action.label}
-            </Button>
-          </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm">{title}</p>
+          {description && (
+            <p className="text-sm opacity-90 mt-1">{description}</p>
+          )}
+        </div>
+
+        {dismissible && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDismiss}
+            className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         )}
       </div>
 
-      {dismissible && (
-        <button
-          onClick={() => onDismiss(id)}
-          className={cn(
-            'flex-shrink-0 rounded-md p-1.5',
-            'hover:bg-black/5 transition-colors',
-            colors.icon
-          )}
-        >
-          <X className="h-4 w-4" />
-        </button>
+      {action && (
+        <div className="mt-3 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              action.onClick();
+              handleDismiss();
+            }}
+            className="text-xs"
+          >
+            {action.label}
+          </Button>
+        </div>
       )}
     </div>
   );
 };
 
-interface ToastContainerProps {
+export interface ToastContainerProps {
   toasts: EnhancedToastProps[];
   position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
 }
 
-const positionMap = {
+const positionClasses = {
   'top-right': 'top-4 right-4',
   'top-left': 'top-4 left-4',
   'bottom-right': 'bottom-4 right-4',
@@ -137,17 +132,14 @@ const positionMap = {
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({
   toasts,
-  position = 'top-right',
+  position = 'top-right'
 }) => {
   return (
-    <div
-      className={cn(
-        'fixed z-50 flex flex-col gap-2 w-96 max-w-sm',
-        positionMap[position]
-      )}
-    >
+    <div className={`fixed ${positionClasses[position]} z-50 space-y-2 pointer-events-none`}>
       {toasts.map((toast) => (
-        <EnhancedToast key={toast.id} {...toast} />
+        <div key={toast.id} className="pointer-events-auto">
+          <EnhancedToast {...toast} />
+        </div>
       ))}
     </div>
   );

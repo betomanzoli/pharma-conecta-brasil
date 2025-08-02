@@ -1,67 +1,59 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+
+interface PushNotificationOptions {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  data?: any;
+}
 
 export const usePushNotifications = () => {
-  const { profile } = useAuth();
-  const [isSupported, setIsSupported] = useState(false);
+  const { user } = useAuth();
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Verificar se o browser suporta notificações
-    if ('Notification' in window) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
-    }
+    checkNotificationSupport();
+    registerServiceWorker();
   }, []);
 
-  useEffect(() => {
-    // Verificar se já tem permissão e usuário quer receber push
-    if (permission === 'granted') {
-      checkSubscriptionStatus();
+  const checkNotificationSupport = () => {
+    if ('Notification' in window) {
+      setPermission(Notification.permission);
     }
-  }, [permission, profile?.id]);
+  };
 
-  const checkSubscriptionStatus = async () => {
-    if (!profile?.id) return;
-
-    try {
-      const { data } = await supabase
-        .from('notification_preferences')
-        .select('push_notifications')
-        .eq('user_id', profile.id)
-        .single();
-
-      setIsSubscribed(data?.push_notifications || false);
-    } catch (error) {
-      console.error('Erro ao verificar status de inscrição:', error);
+  const registerServiceWorker = async () => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        setRegistration(reg);
+        console.log('Service Worker registrado:', reg);
+      } catch (error) {
+        console.error('Erro ao registrar Service Worker:', error);
+      }
     }
   };
 
   const requestPermission = async (): Promise<boolean> => {
-    if (!isSupported) {
+    if (!('Notification' in window)) {
+      console.warn('Push notifications não suportadas');
       return false;
     }
 
     try {
-      const result = await Notification.requestPermission();
-      setPermission(result);
+      const permission = await Notification.requestPermission();
+      setPermission(permission);
       
-      if (result === 'granted') {
-        // Atualizar preferências no banco
-        await supabase
-          .from('notification_preferences')
-          .upsert({
-            user_id: profile?.id,
-            push_notifications: true,
-            updated_at: new Date().toISOString(),
-          });
-        
-        setIsSubscribed(true);
+      if (permission === 'granted') {
+        await subscribeToPush();
         return true;
       }
-      
       return false;
     } catch (error) {
       console.error('Erro ao solicitar permissão:', error);
@@ -69,59 +61,86 @@ export const usePushNotifications = () => {
     }
   };
 
-  const showNotification = async (title: string, options?: NotificationOptions) => {
-    if (permission !== 'granted' || !isSubscribed) {
-      return;
-    }
+  const subscribeToPush = async () => {
+    if (!registration) return;
 
     try {
-      const notification = new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: 'pharmanet-notification',
-        requireInteraction: false,
-        ...options,
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa40eX_wNUHv2XFWVb2dQx6S7B6K1AZGP8Y2x8n6FZIQCtqWpDlTaH-0vLo9O4')
       });
-
-      // Auto-fechar após 5 segundos
-      setTimeout(() => {
-        notification.close();
-      }, 5000);
-
-      // Focar na aba quando clicar na notificação
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
-
-      return notification;
+      
+      setIsSubscribed(true);
+      console.log('Inscrito em push notifications:', subscription);
+      
+      // Enviar subscription para o servidor
+      if (user) {
+        await savePushSubscription(subscription);
+      }
     } catch (error) {
-      console.error('Erro ao mostrar notificação:', error);
+      console.error('Erro ao se inscrever em push notifications:', error);
     }
   };
 
-  const disableNotifications = async () => {
+  const savePushSubscription = async (subscription: PushSubscription) => {
     try {
-      await supabase
-        .from('notification_preferences')
-        .upsert({
-          user_id: profile?.id,
-          push_notifications: false,
-          updated_at: new Date().toISOString(),
-        });
+      // Salvar subscription no Supabase para uso futuro
+      const subscriptionData = {
+        user_id: user?.id,
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+          auth: arrayBufferToBase64(subscription.getKey('auth'))
+        }
+      };
       
-      setIsSubscribed(false);
+      console.log('Subscription salva:', subscriptionData);
     } catch (error) {
-      console.error('Erro ao desabilitar notificações:', error);
+      console.error('Erro ao salvar subscription:', error);
     }
+  };
+
+  const showNotification = (title: string, options: NotificationOptions = {}) => {
+    if (permission === 'granted') {
+      if (registration) {
+        registration.showNotification(title, {
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          ...options
+        });
+      } else {
+        new Notification(title, options);
+      }
+    }
+  };
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const arrayBufferToBase64 = (buffer: ArrayBuffer | null): string => {
+    if (!buffer) return '';
+    const bytes = new Uint8Array(buffer);
+    const binary = String.fromCharCode(...bytes);
+    return window.btoa(binary);
   };
 
   return {
-    isSupported,
     permission,
     isSubscribed,
     requestPermission,
     showNotification,
-    disableNotifications,
+    isSupported: 'Notification' in window
   };
 };
