@@ -695,18 +695,16 @@ export const demoAPI = {
     const allEntities = [
       ...demoData.companies.map(c => ({ 
         ...c, 
-        entity_type: 'company',
-        location: `${c.city}, ${c.state}, ${c.country}`,
-        international_experience: c.recent_partnerships || [],
-        regulatory_expertise: c.certifications || []
+        entity_type: 'company' as const,
+        location: `${c.city}, ${c.state}, ${c.country}`
       })),
       ...demoData.laboratories.map(l => ({ 
         ...l, 
-        entity_type: 'laboratory'
+        entity_type: 'laboratory' as const
       })),
       ...demoData.consultants.map(c => ({ 
         ...c, 
-        entity_type: 'consultant'
+        entity_type: 'consultant' as const
       }))
     ];
     
@@ -719,7 +717,7 @@ export const demoAPI = {
       filtered = filtered.filter(entity => {
         if (entity.entity_type === 'company') {
           return entity.location?.includes(filters.region) || 
-                 entity.international_experience?.some((exp: string) => exp.includes(filters.region));
+                 entity.recent_partnerships?.some((exp: string) => exp.includes(filters.region));
         } else if (entity.entity_type === 'laboratory') {
           return entity.location?.includes(filters.region) || 
                  entity.international_presence?.some((exp: string) => exp.includes(filters.region));
@@ -734,7 +732,7 @@ export const demoAPI = {
     if (filters?.regulatory) {
       filtered = filtered.filter(entity => {
         if (entity.entity_type === 'company') {
-          return entity.regulatory_expertise?.includes(filters.regulatory);
+          return entity.certifications?.includes(filters.regulatory);
         } else if (entity.entity_type === 'laboratory') {
           return entity.regulatory_expertise?.includes(filters.regulatory);
         } else if (entity.entity_type === 'consultant') {
