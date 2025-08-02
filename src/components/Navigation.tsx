@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Sheet,
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/navbar";
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotification } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -60,14 +61,14 @@ import {
 } from "lucide-react";
 
 const Navigation = () => {
-  const { profile, logout } = useAuth();
-  const { notifications } = useNotification();
+  const { profile, signOut } = useAuth();
+  const { notifications } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const unreadNotifications = notifications?.filter(notification => !notification.read);
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
   };
 
   const navigationItems = [
@@ -85,11 +86,6 @@ const Navigation = () => {
       label: "Marketplace",
       href: "/marketplace",
       icon: Building2
-    },
-    {
-      label: "Projetos",
-      href: "/projects",
-      icon: FileSearch
     },
     {
       label: "Segurança",
@@ -120,7 +116,7 @@ const Navigation = () => {
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
               {item.badge && (
-                <Badge color="secondary" className="ml-2">{item.badge}</Badge>
+                <Badge className="ml-2">{item.badge}</Badge>
               )}
             </Link>
           </NavbarItem>
@@ -135,7 +131,6 @@ const Navigation = () => {
               <Bell className="h-5 w-5" />
               {unreadNotifications?.length > 0 && (
                 <Badge
-                  color="secondary"
                   className="absolute -top-1 -right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs"
                 >
                   {unreadNotifications.length}
@@ -158,7 +153,7 @@ const Navigation = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar_url} alt={profile?.first_name} />
+                <AvatarImage src="" alt={profile?.first_name} />
                 <AvatarFallback>{profile?.first_name?.charAt(0)}{profile?.last_name?.charAt(0)}</AvatarFallback>
               </Avatar>
             </Button>
@@ -189,7 +184,7 @@ const Navigation = () => {
             <Link to={item.href} className="w-full">
               {item.label}
               {item.badge && (
-                <Badge color="secondary" className="ml-2">{item.badge}</Badge>
+                <Badge className="ml-2">{item.badge}</Badge>
               )}
             </Link>
           </NavbarMenuItem>
