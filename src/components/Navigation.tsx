@@ -14,7 +14,8 @@ import {
   Zap,
   Star,
   Menu,
-  X
+  X,
+  LogIn
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -79,36 +80,52 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {user && navigationItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`
-                    flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    ${isActivePath(item.path)
-                      ? item.special
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                        : 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : item.special
-                        ? 'text-purple-600 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <IconComponent className={`h-4 w-4 ${item.special && !isActivePath(item.path) ? 'text-purple-600' : ''}`} />
-                  <span>{item.label}</span>
-                  {item.special && (
-                    <Badge className="bg-yellow-400 text-yellow-900 text-xs ml-1">
-                      NEW
-                    </Badge>
-                  )}
+          {user ? (
+            <div className="hidden md:flex items-center space-x-1">
+              {navigationItems.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`
+                      flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${isActivePath(item.path)
+                        ? item.special
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : item.special
+                          ? 'text-purple-600 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <IconComponent className={`h-4 w-4 ${item.special && !isActivePath(item.path) ? 'text-purple-600' : ''}`} />
+                    <span>{item.label}</span>
+                    {item.special && (
+                      <Badge className="bg-yellow-400 text-yellow-900 text-xs ml-1">
+                        NEW
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center space-x-4">
+              <Button variant="ghost" asChild>
+                <Link to="/login">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Entrar
                 </Link>
-              );
-            })}
-          </div>
+              </Button>
+              <Button asChild>
+                <Link to="/register">
+                  Cadastrar
+                </Link>
+              </Button>
+            </div>
+          )}
 
           {/* User Profile & Mobile Menu Button */}
           <div className="flex items-center space-x-4">
@@ -132,48 +149,66 @@ const Navigation = () => {
         </div>
 
         {/* Mobile Navigation */}
-        {isMobileMenuOpen && user && (
+        {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigationItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`
-                      flex items-center space-x-3 px-3 py-3 rounded-lg text-base font-medium
-                      ${isActivePath(item.path)
-                        ? item.special
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                          : 'bg-blue-50 text-blue-700'
-                        : item.special
-                          ? 'text-purple-600'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }
-                    `}
-                  >
-                    <IconComponent className="h-5 w-5" />
-                    <span>{item.label}</span>
-                    {item.special && (
-                      <Badge className="bg-yellow-400 text-yellow-900 text-xs">
-                        NEW
-                      </Badge>
-                    )}
-                  </Link>
-                );
-              })}
-              
-              <div className="border-t border-gray-200 mt-4 pt-4">
-                <Button
-                  onClick={signOut}
-                  variant="ghost"
-                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  Sair
-                </Button>
-              </div>
+              {user ? (
+                <>
+                  {navigationItems.map((item) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`
+                          flex items-center space-x-3 px-3 py-3 rounded-lg text-base font-medium
+                          ${isActivePath(item.path)
+                            ? item.special
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                              : 'bg-blue-50 text-blue-700'
+                            : item.special
+                              ? 'text-purple-600'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          }
+                        `}
+                      >
+                        <IconComponent className="h-5 w-5" />
+                        <span>{item.label}</span>
+                        {item.special && (
+                          <Badge className="bg-yellow-400 text-yellow-900 text-xs">
+                            NEW
+                          </Badge>
+                        )}
+                      </Link>
+                    );
+                  })}
+                  
+                  <div className="border-t border-gray-200 mt-4 pt-4">
+                    <Button
+                      onClick={signOut}
+                      variant="ghost"
+                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      Sair
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Entrar
+                    </Link>
+                  </Button>
+                  <Button className="w-full" asChild>
+                    <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                      Cadastrar
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}

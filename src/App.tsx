@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import Analytics from "./pages/Analytics";
 import EnhancedDashboard from "./pages/EnhancedDashboard";
@@ -15,6 +16,9 @@ import AIDashboardPage from "./pages/AIDashboardPage";
 import ChatPage from "./pages/ChatPage";
 import Verification from "./pages/Verification";
 import MasterAIHub from "./pages/MasterAIHub";
+import Profile from "./pages/Profile";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +31,10 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<EnhancedDashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/enhanced-dashboard" element={<EnhancedDashboard />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/analytics-page" element={<AnalyticsPage />} />
             <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
@@ -36,6 +43,7 @@ const App = () => (
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/verification" element={<Verification />} />
             <Route path="/master-ai" element={<MasterAIHub />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
