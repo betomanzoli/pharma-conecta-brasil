@@ -1147,6 +1147,59 @@ export type Database = {
           },
         ]
       }
+      cnpj_validations: {
+        Row: {
+          anvisa_registration_data: Json | null
+          cnpj: string
+          company_name: string
+          created_at: string
+          id: string
+          last_check: string | null
+          profile_id: string
+          receita_federal_data: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+          validated_at: string | null
+        }
+        Insert: {
+          anvisa_registration_data?: Json | null
+          cnpj: string
+          company_name: string
+          created_at?: string
+          id?: string
+          last_check?: string | null
+          profile_id: string
+          receita_federal_data?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          validated_at?: string | null
+        }
+        Update: {
+          anvisa_registration_data?: Json | null
+          cnpj?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          last_check?: string | null
+          profile_id?: string
+          receita_federal_data?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          validated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cnpj_validations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -3586,6 +3639,116 @@ export type Database = {
         }
         Relationships: []
       }
+      user_verification_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          document_url: string
+          file_name: string
+          file_size: number
+          id: string
+          mime_type: string
+          profile_id: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          document_url: string
+          file_name: string
+          file_size: number
+          id?: string
+          mime_type: string
+          profile_id: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          document_url?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          profile_id?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_verification_documents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_verification_status: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          profile_id: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          verification_data: Json | null
+          verification_type: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          profile_id: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_data?: Json | null
+          verification_type: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          profile_id?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_data?: Json | null
+          verification_type?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_verification_status_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_verification_status_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -3609,6 +3772,65 @@ export type Database = {
           role?: string
         }
         Relationships: []
+      }
+      verification_badges: {
+        Row: {
+          badge_color: string | null
+          badge_description: string | null
+          badge_icon: string | null
+          badge_name: string
+          badge_type: string
+          created_at: string
+          earned_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          profile_id: string
+          updated_at: string
+          user_id: string
+          verification_criteria: Json | null
+        }
+        Insert: {
+          badge_color?: string | null
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_name: string
+          badge_type: string
+          created_at?: string
+          earned_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          profile_id: string
+          updated_at?: string
+          user_id: string
+          verification_criteria?: Json | null
+        }
+        Update: {
+          badge_color?: string | null
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_name?: string
+          badge_type?: string
+          created_at?: string
+          earned_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          profile_id?: string
+          updated_at?: string
+          user_id?: string
+          verification_criteria?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_badges_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_sessions: {
         Row: {
