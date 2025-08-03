@@ -1,66 +1,46 @@
 
-import React, { useEffect } from 'react';
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { useAuth } from './contexts/AuthContext';
-import Register from './pages/Register';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import Subscription from './pages/Subscription';
-import Reports from './pages/Reports';
-import Analytics from './pages/Analytics';
-import SecurityDashboard from './components/security/SecurityDashboard';
-import AdminRoute from './components/AdminRoute';
-import ProtectedRoute from './components/ProtectedRoute';
-import Verification from "@/pages/Verification";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import Index from "./pages/Index";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import Analytics from "./pages/Analytics";
+import EnhancedDashboard from "./pages/EnhancedDashboard";
+import AdvancedAnalyticsPage from "./pages/AdvancedAnalyticsPage";
+import AIPage from "./pages/AIPage";
+import AIDashboardPage from "./pages/AIDashboardPage";
+import ChatPage from "./pages/ChatPage";
+import Verification from "./pages/Verification";
+import MasterAIHub from "./pages/MasterAIHub";
 
-function App() {
-  const { session, loading, supabase } = useAuth();
+const queryClient = new QueryClient();
 
-  useEffect(() => {
-    document.title = 'PharmaConnect Brasil';
-  }, []);
-
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Carregando...</div>;
-  }
-
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/auth" element={
-          <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-              <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">Autenticação</h1>
-              <Auth
-                supabaseClient={supabase}
-                appearance={{ theme: ThemeSupa }}
-                providers={['google', 'facebook', 'github']}
-                redirectTo="https://lovable.dev/dashboard"
-              />
-            </div>
-          </div>
-        } />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-        <Route path="/security" element={<ProtectedRoute><SecurityDashboard /></ProtectedRoute>} />
-        <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
-      </Routes>
-    </Router>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<EnhancedDashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/analytics-page" element={<AnalyticsPage />} />
+            <Route path="/advanced-analytics" element={<AdvancedAnalyticsPage />} />
+            <Route path="/ai" element={<AIPage />} />
+            <Route path="/ai-dashboard" element={<AIDashboardPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/verification" element={<Verification />} />
+            <Route path="/master-ai" element={<MasterAIHub />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
