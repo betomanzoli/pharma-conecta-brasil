@@ -3,6 +3,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type VerificationStatusRow = Database['public']['Tables']['user_verification_status']['Row'];
+type VerificationDocumentRow = Database['public']['Tables']['user_verification_documents']['Row'];
+type VerificationBadgeRow = Database['public']['Tables']['verification_badges']['Row'];
 
 interface VerificationStatus {
   id: string;
@@ -55,7 +60,19 @@ export const useVerification = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      setVerificationStatus(data || []);
+      
+      // Converter os dados do banco para o formato esperado
+      const mappedData: VerificationStatus[] = (data || []).map((row: VerificationStatusRow) => ({
+        id: row.id,
+        verification_type: row.verification_type,
+        status: row.status as 'pending' | 'in_review' | 'verified' | 'rejected' | 'expired',
+        verified_at: row.verified_at || undefined,
+        expires_at: row.expires_at || undefined,
+        rejection_reason: row.rejection_reason || undefined,
+        verification_data: row.verification_data || undefined,
+      }));
+
+      setVerificationStatus(mappedData);
     } catch (error) {
       console.error('Erro ao buscar status de verificação:', error);
     }
@@ -73,7 +90,19 @@ export const useVerification = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      
+      // Converter os dados do banco para o formato esperado
+      const mappedData: VerificationDocument[] = (data || []).map((row: VerificationDocumentRow) => ({
+        id: row.id,
+        document_type: row.document_type,
+        document_url: row.document_url,
+        file_name: row.file_name,
+        file_size: row.file_size,
+        mime_type: row.mime_type,
+        uploaded_at: row.uploaded_at,
+      }));
+
+      setDocuments(mappedData);
     } catch (error) {
       console.error('Erro ao buscar documentos:', error);
     }
@@ -92,7 +121,21 @@ export const useVerification = () => {
         .order('earned_at', { ascending: false });
 
       if (error) throw error;
-      setBadges(data || []);
+      
+      // Converter os dados do banco para o formato esperado
+      const mappedData: VerificationBadge[] = (data || []).map((row: VerificationBadgeRow) => ({
+        id: row.id,
+        badge_type: row.badge_type,
+        badge_name: row.badge_name,
+        badge_description: row.badge_description || undefined,
+        badge_icon: row.badge_icon || undefined,
+        badge_color: row.badge_color,
+        earned_at: row.earned_at,
+        expires_at: row.expires_at || undefined,
+        is_active: row.is_active,
+      }));
+
+      setBadges(mappedData);
     } catch (error) {
       console.error('Erro ao buscar badges:', error);
     }

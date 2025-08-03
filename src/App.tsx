@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -8,14 +9,9 @@ import {
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { useAuth } from './contexts/AuthContext';
-import Account from './pages/Account';
-import Home from './pages/Home';
-import Pricing from './pages/Pricing';
-import Demo from './pages/Demo';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import Subscription from './pages/Subscription';
 import Reports from './pages/Reports';
@@ -23,7 +19,6 @@ import Analytics from './pages/Analytics';
 import SecurityDashboard from './components/security/SecurityDashboard';
 import AdminRoute from './components/AdminRoute';
 import ProtectedRoute from './components/ProtectedRoute';
-import UserTypeSelection from './pages/UserTypeSelection';
 import Verification from "@/pages/Verification";
 
 function App() {
@@ -33,12 +28,14 @@ function App() {
     document.title = 'PharmaConnect Brasil';
   }, []);
 
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Carregando...</div>;
+  }
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/demo" element={<Demo />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth" element={
@@ -54,9 +51,7 @@ function App() {
             </div>
           </div>
         } />
-        <Route path="/select-user-type" element={<ProtectedRoute><UserTypeSelection /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
