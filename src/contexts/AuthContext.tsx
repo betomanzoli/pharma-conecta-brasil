@@ -85,17 +85,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle to avoid errors when no profile exists
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // Don't show error toast here - profile might not exist yet for new users
         return;
       }
 
       if (data) {
-        // Type assertion to ensure user_type is properly typed
-        const profileData = data as Profile;
+        // Expandir tipos de usuário para incluir novos tipos
+        const validUserTypes = [
+          'company', 'laboratory', 'consultant', 'individual', 'admin',
+          'professional', 'regulatory_body', 'sector_entity', 
+          'research_institution', 'supplier', 'funding_agency', 'healthcare_provider'
+        ];
+        
+        const profileData = {
+          ...data,
+          user_type: validUserTypes.includes(data.user_type) ? data.user_type : 'individual'
+        } as Profile;
+        
         setProfile(profileData);
       }
     } catch (error) {
