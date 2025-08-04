@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import MobileHeader from './MobileHeader';
 import MobileNavigation from './MobileNavigation';
 import PullToRefresh from './PullToRefresh';
@@ -36,7 +36,7 @@ const MobileOptimizedLayout: React.FC<MobileOptimizedLayoutProps> = ({
   headerProps = {}
 }) => {
   const { user, profile, signOut } = useAuth();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
 
   const handleNavigate = () => {
