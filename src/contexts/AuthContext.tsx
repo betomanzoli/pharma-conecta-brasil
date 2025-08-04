@@ -9,7 +9,10 @@ interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  user_type: 'company' | 'laboratory' | 'consultant' | 'individual' | 'admin';
+  organization_name?: string;
+  user_type: 'company' | 'laboratory' | 'consultant' | 'individual' | 'admin' | 
+            'professional' | 'regulatory_body' | 'sector_entity' | 
+            'research_institution' | 'supplier' | 'funding_agency' | 'healthcare_provider';
   phone?: string;
   linkedin_url?: string;
   created_at: string;

@@ -153,7 +153,7 @@ const Navigation = () => {
             
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">
-                {profile?.first_name || profile?.organization_name || 'Usuário'}
+                {profile?.organization_name || profile?.first_name || 'Usuário'}
               </span>
               <Button 
                 variant="ghost" 
