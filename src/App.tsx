@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -27,7 +27,7 @@ const Verification = lazy(() => import('@/pages/Verification'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
-// Additional pages
+// Entity pages
 const Companies = lazy(() => import('@/pages/Companies'));
 const Laboratories = lazy(() => import('@/pages/Laboratories'));
 const Consultants = lazy(() => import('@/pages/Consultants'));
@@ -37,6 +37,13 @@ const Projects = lazy(() => import('@/pages/Projects'));
 const MentorshipHub = lazy(() => import('@/pages/MentorshipHub'));
 const Regulatory = lazy(() => import('@/pages/Regulatory'));
 const Reports = lazy(() => import('@/pages/Reports'));
+
+// Knowledge and Forum pages
+const KnowledgeLibrary = lazy(() => import('@/pages/KnowledgeLibrary'));
+const Forums = lazy(() => import('@/pages/Forums'));
+
+// Regulatory pages
+const ANVISAAlerts = lazy(() => import('@/pages/ANVISAAlerts'));
 
 const queryClient = new QueryClient();
 
@@ -62,7 +69,7 @@ function App() {
                     <Route path="/register" element={<Register />} />
                     <Route path="/demo" element={<PlatformDemo />} />
                     
-                    {/* Protected Routes */}
+                    {/* Protected Routes - Main Navigation */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
                         <Dashboard />
@@ -71,16 +78,6 @@ function App() {
                     <Route path="/profile" element={
                       <ProtectedRoute>
                         <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/analytics" element={
-                      <ProtectedRoute>
-                        <Analytics />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/ai" element={
-                      <ProtectedRoute>
-                        <AIPage />
                       </ProtectedRoute>
                     } />
                     <Route path="/chat" element={
@@ -93,13 +90,12 @@ function App() {
                         <MasterAIHub />
                       </ProtectedRoute>
                     } />
-                    <Route path="/verification" element={
-                      <ProtectedRoute>
-                        <Verification />
-                      </ProtectedRoute>
-                    } />
                     
-                    {/* Entity-specific routes */}
+                    {/* Redirect old AI routes */}
+                    <Route path="/ai" element={<Navigate to="/master-ai" replace />} />
+                    <Route path="/ai-dashboard" element={<Navigate to="/master-ai" replace />} />
+                    
+                    {/* Business & Network Routes */}
                     <Route path="/companies" element={
                       <ProtectedRoute>
                         <Companies />
@@ -135,14 +131,47 @@ function App() {
                         <MentorshipHub />
                       </ProtectedRoute>
                     } />
+                    
+                    {/* Knowledge & Communication Routes */}
+                    <Route path="/knowledge" element={
+                      <ProtectedRoute>
+                        <KnowledgeLibrary />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/forums" element={
+                      <ProtectedRoute>
+                        <Forums />
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* Regulatory Routes */}
                     <Route path="/regulatory" element={
                       <ProtectedRoute>
                         <Regulatory />
                       </ProtectedRoute>
                     } />
+                    <Route path="/anvisa-alerts" element={
+                      <ProtectedRoute>
+                        <ANVISAAlerts />
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* Analytics & Reports */}
+                    <Route path="/analytics" element={
+                      <ProtectedRoute>
+                        <Analytics />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/reports" element={
                       <ProtectedRoute>
                         <Reports />
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* Verification */}
+                    <Route path="/verification" element={
+                      <ProtectedRoute>
+                        <Verification />
                       </ProtectedRoute>
                     } />
                     

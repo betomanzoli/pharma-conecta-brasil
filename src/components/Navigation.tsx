@@ -12,20 +12,14 @@ import {
   User,
   LogOut,
   Shield,
-  Scale,
   University,
-  Factory,
-  FileText,
-  Heart,
-  Home,
-  Settings,
-  Search,
-  BookOpen,
+  ShoppingCart,
   Briefcase,
   Network,
-  ShoppingCart,
-  Calendar,
-  FileBarChart
+  BookOpen,
+  FileText,
+  Home,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -37,34 +31,36 @@ const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Navegação baseada no tipo de usuário
+  // Navegação baseada no tipo de usuário - organizada por contextos
   const getNavigationItems = () => {
     const baseItems = [
       { path: '/dashboard', icon: Home, label: 'Dashboard' },
       { path: '/profile', icon: User, label: 'Perfil' },
+      { path: '/chat', icon: MessageSquare, label: 'Chat IA' },
+      { path: '/master-ai', icon: Bot, label: 'Master AI Hub' }
     ];
 
-    const userTypeItems = {
-      professional: [
-        { path: '/network', icon: Network, label: 'Rede Profissional' },
-        { path: '/mentorship', icon: Calendar, label: 'Mentorias' },
-        { path: '/marketplace', icon: ShoppingCart, label: 'Oportunidades' },
-      ],
+    const businessItems = {
       company: [
-        { path: '/laboratories', icon: FlaskConical, label: 'Buscar Laboratórios' },
-        { path: '/consultants', icon: Users, label: 'Buscar Consultores' },
+        { path: '/laboratories', icon: FlaskConical, label: 'Laboratórios' },
+        { path: '/consultants', icon: Users, label: 'Consultores' },
         { path: '/marketplace', icon: ShoppingCart, label: 'Marketplace' },
         { path: '/projects', icon: Briefcase, label: 'Projetos' },
       ],
       laboratory: [
-        { path: '/companies', icon: Building2, label: 'Empresas Cliente' },
+        { path: '/companies', icon: Building2, label: 'Empresas' },
         { path: '/marketplace', icon: ShoppingCart, label: 'Serviços' },
         { path: '/projects', icon: Briefcase, label: 'Projetos' },
       ],
       consultant: [
-        { path: '/companies', icon: Building2, label: 'Empresas Cliente' },
+        { path: '/companies', icon: Building2, label: 'Clientes' },
         { path: '/marketplace', icon: ShoppingCart, label: 'Projetos' },
         { path: '/network', icon: Network, label: 'Network' },
+      ],
+      professional: [
+        { path: '/network', icon: Network, label: 'Rede' },
+        { path: '/mentorship', icon: Calendar, label: 'Mentorias' },
+        { path: '/marketplace', icon: ShoppingCart, label: 'Oportunidades' },
       ],
       regulatory_body: [
         { path: '/companies', icon: Building2, label: 'Empresas' },
@@ -74,7 +70,7 @@ const Navigation = () => {
       sector_entity: [
         { path: '/network', icon: Network, label: 'Membros' },
         { path: '/companies', icon: Building2, label: 'Empresas' },
-        { path: '/regulatory', icon: Shield, label: 'Regulatório' },
+        { path: '/regulatory', icon: Shield, label: 'Setor' },
       ],
       research_institution: [
         { path: '/companies', icon: Building2, label: 'Parcerias' },
@@ -89,7 +85,7 @@ const Navigation = () => {
       funding_agency: [
         { path: '/projects', icon: Briefcase, label: 'Projetos' },
         { path: '/companies', icon: Building2, label: 'Beneficiários' },
-        { path: '/research_institution', icon: University, label: 'Instituições' },
+        { path: '/network', icon: University, label: 'Instituições' },
       ],
       healthcare_provider: [
         { path: '/companies', icon: Building2, label: 'Fornecedores' },
@@ -98,17 +94,34 @@ const Navigation = () => {
       ]
     };
 
-    const commonItems = [
-      { path: '/ai', icon: Bot, label: 'AI Hub' },
-      { path: '/chat', icon: MessageSquare, label: 'Chat IA' },
-      { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-      { path: '/reports', icon: FileBarChart, label: 'Relatórios' }
+    // Itens de conhecimento e comunicação (para todos)
+    const knowledgeItems = [
+      { path: '/forums', icon: BookOpen, label: 'Fóruns' },
+      { path: '/knowledge', icon: FileText, label: 'Conhecimento' }
     ];
 
-    const userType = profile?.user_type as keyof typeof userTypeItems;
-    const specificItems = userTypeItems[userType] || [];
+    // Itens regulatórios (para todos)
+    const regulatoryItems = [
+      { path: '/regulatory', icon: Shield, label: 'Regulatório' },
+      { path: '/anvisa-alerts', icon: Shield, label: 'Alertas ANVISA' }
+    ];
 
-    return [...baseItems, ...specificItems, ...commonItems];
+    // Itens de análise (para todos)
+    const analysisItems = [
+      { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+      { path: '/reports', icon: FileText, label: 'Relatórios' }
+    ];
+
+    const userType = profile?.user_type as keyof typeof businessItems;
+    const specificBusinessItems = businessItems[userType] || [];
+
+    return [
+      ...baseItems,
+      ...specificBusinessItems,
+      ...knowledgeItems,
+      ...regulatoryItems,
+      ...analysisItems
+    ];
   };
 
   const navigationItems = getNavigationItems();
