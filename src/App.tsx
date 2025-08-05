@@ -1,200 +1,69 @@
 
-import { Suspense, lazy } from 'react';
-import { Toaster } from '@/components/ui/toaster';
-import { Toaster as Sonner } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { NotificationProvider } from '@/contexts/NotificationContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import AdminRoute from '@/components/AdminRoute';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { Loader2 } from 'lucide-react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { AuthProvider } from "@/contexts/AuthContext";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Lazy load components
-const Index = lazy(() => import('@/pages/Index'));
-const Login = lazy(() => import('@/pages/Login'));
-const Register = lazy(() => import('@/pages/Register'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const Analytics = lazy(() => import('@/pages/Analytics'));
-const AIPage = lazy(() => import('@/pages/AIPage'));
-const ChatPage = lazy(() => import('@/pages/ChatPage'));
-const MasterAIHub = lazy(() => import('@/pages/MasterAIHub'));
-const PlatformDemo = lazy(() => import('@/pages/PlatformDemo'));
-const Verification = lazy(() => import('@/pages/Verification'));
-const AdminPage = lazy(() => import('@/pages/AdminPage'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ChatPage = lazy(() => import("./pages/ChatPage"));
+const AutomationPage = lazy(() => import("./pages/AutomationPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const PlatformDemo = lazy(() => import("./pages/PlatformDemo"));
+const KnowledgeLibrary = lazy(() => import("./pages/KnowledgeLibrary"));
 
-// Entity pages
-const Companies = lazy(() => import('@/pages/Companies'));
-const Laboratories = lazy(() => import('@/pages/Laboratories'));
-const Consultants = lazy(() => import('@/pages/Consultants'));
-const Network = lazy(() => import('@/pages/Network'));
-const Marketplace = lazy(() => import('@/pages/Marketplace'));
-const Projects = lazy(() => import('@/pages/Projects'));
-const MentorshipHub = lazy(() => import('@/pages/MentorshipHub'));
-const Regulatory = lazy(() => import('@/pages/Regulatory'));
-const Reports = lazy(() => import('@/pages/Reports'));
-
-// Knowledge and Forum pages
-const KnowledgeLibrary = lazy(() => import('@/pages/KnowledgeLibrary'));
-const Forums = lazy(() => import('@/pages/Forums'));
-
-// Regulatory pages
-const ANVISAAlerts = lazy(() => import('@/pages/ANVISAAlerts'));
+// User type specific dashboards
+const DashboardGeneral = lazy(() => import("./pages/DashboardGeneral"));
+const DashboardCompany = lazy(() => import("./pages/DashboardCompany"));
+const DashboardLaboratory = lazy(() => import("./pages/DashboardLaboratory"));
+const DashboardConsultant = lazy(() => import("./pages/DashboardConsultant"));
 
 const queryClient = new QueryClient();
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="h-8 w-8 animate-spin" />
-  </div>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/demo" element={<PlatformDemo />} />
+              
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/automation" element={<AutomationPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/knowledge" element={<KnowledgeLibrary />} />
+              
+              {/* Dashboard variants for different user types */}
+              <Route path="/dashboard/general" element={<DashboardGeneral />} />
+              <Route path="/dashboard/company" element={<DashboardCompany />} />
+              <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
+              <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <NotificationProvider>
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/demo" element={<PlatformDemo />} />
-                    
-                    {/* Protected Routes - Main Navigation */}
-                    <Route path="/dashboard" element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/chat" element={
-                      <ProtectedRoute>
-                        <ChatPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/master-ai" element={
-                      <ProtectedRoute>
-                        <MasterAIHub />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Redirect old AI routes */}
-                    <Route path="/ai" element={<Navigate to="/master-ai" replace />} />
-                    <Route path="/ai-dashboard" element={<Navigate to="/master-ai" replace />} />
-                    
-                    {/* Business & Network Routes */}
-                    <Route path="/companies" element={
-                      <ProtectedRoute>
-                        <Companies />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/laboratories" element={
-                      <ProtectedRoute>
-                        <Laboratories />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/consultants" element={
-                      <ProtectedRoute>
-                        <Consultants />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/network" element={
-                      <ProtectedRoute>
-                        <Network />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/marketplace" element={
-                      <ProtectedRoute>
-                        <Marketplace />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/projects" element={
-                      <ProtectedRoute>
-                        <Projects />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/mentorship" element={
-                      <ProtectedRoute>
-                        <MentorshipHub />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Knowledge & Communication Routes */}
-                    <Route path="/knowledge" element={
-                      <ProtectedRoute>
-                        <KnowledgeLibrary />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/forums" element={
-                      <ProtectedRoute>
-                        <Forums />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Regulatory Routes */}
-                    <Route path="/regulatory" element={
-                      <ProtectedRoute>
-                        <Regulatory />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/anvisa-alerts" element={
-                      <ProtectedRoute>
-                        <ANVISAAlerts />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Analytics & Reports */}
-                    <Route path="/analytics" element={
-                      <ProtectedRoute>
-                        <Analytics />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/reports" element={
-                      <ProtectedRoute>
-                        <Reports />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Verification */}
-                    <Route path="/verification" element={
-                      <ProtectedRoute>
-                        <Verification />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Admin Routes */}
-                    <Route path="/admin" element={
-                      <AdminRoute>
-                        <AdminPage />
-                      </AdminRoute>
-                    } />
-                    
-                    {/* 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-                <Toaster />
-                <Sonner />
-              </NotificationProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  );
-}
 
 export default App;
