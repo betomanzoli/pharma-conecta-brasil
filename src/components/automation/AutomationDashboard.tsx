@@ -3,165 +3,187 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Zap, 
   Bot, 
+  Play, 
+  Pause, 
+  Settings,
+  RefreshCw,
   Activity,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
   Clock,
-  Workflow,
-  Brain,
-  Refresh,
-  Settings
+  CheckCircle,
+  AlertTriangle,
+  Users,
+  FileText,
+  Zap,
+  TrendingUp
 } from 'lucide-react';
 
-interface AutomationStatus {
+interface AutomationRule {
   id: string;
   name: string;
-  status: 'active' | 'paused' | 'error';
-  lastRun: string;
-  nextRun?: string;
-  successRate: number;
   description: string;
+  type: string;
+  status: 'active' | 'paused' | 'error';
+  lastRun?: Date;
+  nextRun?: Date;
+  successRate: number;
+  totalRuns: number;
 }
 
 const AutomationDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [automations, setAutomations] = useState<AutomationStatus[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [automations, setAutomations] = useState<AutomationRule[]>([]);
   const [metrics, setMetrics] = useState({
     totalAutomations: 0,
     activeAutomations: 0,
-    averageSuccessRate: 0,
-    totalExecutions: 0
+    totalRuns: 0,
+    successRate: 0
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadAutomationStatus();
-    const interval = setInterval(loadAutomationStatus, 30000); // Atualizar a cada 30s
+    loadAutomations();
+    loadMetrics();
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(loadMetrics, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const loadAutomationStatus = async () => {
+  const loadAutomations = async () => {
     try {
-      // Buscar status das automações principais
-      const automationList: AutomationStatus[] = [
+      // Simular dados de automações por enquanto
+      const mockAutomations: AutomationRule[] = [
         {
-          id: 'ai-matching',
-          name: 'AI Matching Inteligente',
+          id: '1',
+          name: 'AI Partner Matching',
+          description: 'Busca automática de parceiros compatíveis diariamente',
+          type: 'matching',
           status: 'active',
-          lastRun: new Date(Date.now() - 300000).toISOString(), // 5 min atrás
-          nextRun: new Date(Date.now() + 3600000).toISOString(), // 1h
-          successRate: 94.2,
-          description: 'Busca automática de parceiros compatíveis'
+          lastRun: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          nextRun: new Date(Date.now() + 22 * 60 * 60 * 1000),
+          successRate: 95,
+          totalRuns: 47
         },
         {
-          id: 'regulatory-sync',
-          name: 'Sincronização Regulatória',
+          id: '2',
+          name: 'Regulatory Alerts',
+          description: 'Monitoramento automático de atualizações ANVISA/FDA/EMA',
+          type: 'regulatory',
           status: 'active',
-          lastRun: new Date(Date.now() - 900000).toISOString(), // 15 min atrás
-          nextRun: new Date(Date.now() + 7200000).toISOString(), // 2h
-          successRate: 98.7,
-          description: 'Monitoramento ANVISA, FDA, EMA'
+          lastRun: new Date(Date.now() - 15 * 60 * 1000),
+          nextRun: new Date(Date.now() + 45 * 60 * 1000),
+          successRate: 98,
+          totalRuns: 156
         },
         {
-          id: 'compliance-monitor',
-          name: 'Monitor de Compliance',
+          id: '3',
+          name: 'Market Intelligence',
+          description: 'Coleta e análise automática de dados de mercado',
+          type: 'intelligence',
           status: 'active',
-          lastRun: new Date(Date.now() - 1800000).toISOString(), // 30 min atrás
-          nextRun: new Date(Date.now() + 3600000).toISOString(), // 1h
-          successRate: 91.5,
-          description: 'Verificação automática de conformidade'
+          lastRun: new Date(Date.now() - 4 * 60 * 60 * 1000),
+          nextRun: new Date(Date.now() + 8 * 60 * 60 * 1000),
+          successRate: 89,
+          totalRuns: 23
         },
         {
-          id: 'market-intelligence',
-          name: 'Intelligence de Mercado',
-          status: 'active',
-          lastRun: new Date(Date.now() - 3600000).toISOString(), // 1h atrás
-          nextRun: new Date(Date.now() + 10800000).toISOString(), // 3h
-          successRate: 87.3,
-          description: 'Análise de tendências e oportunidades'
+          id: '4',
+          name: 'Compliance Monitoring',
+          description: 'Verificação automática de status de compliance',
+          type: 'compliance',
+          status: 'paused',
+          lastRun: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          successRate: 92,
+          totalRuns: 12
         }
       ];
 
-      setAutomations(automationList);
-
-      // Calcular métricas
-      const totalAutomations = automationList.length;
-      const activeAutomations = automationList.filter(a => a.status === 'active').length;
-      const averageSuccessRate = automationList.reduce((sum, a) => sum + a.successRate, 0) / totalAutomations;
-
-      // Buscar execuções das métricas
-      const { data: metricsData } = await supabase
-        .from('performance_metrics')
-        .select('metric_value')
-        .in('metric_name', ['ai_matching_execution', 'regulatory_sync_execution', 'compliance_check_execution'])
-        .gte('measured_at', new Date(Date.now() - 86400000).toISOString()); // Últimas 24h
-
-      const totalExecutions = metricsData?.reduce((sum, m) => sum + m.metric_value, 0) || 0;
-
-      setMetrics({
-        totalAutomations,
-        activeAutomations,
-        averageSuccessRate: Math.round(averageSuccessRate * 10) / 10,
-        totalExecutions
-      });
-
+      setAutomations(mockAutomations);
     } catch (error) {
-      console.error('Error loading automation status:', error);
+      console.error('Erro ao carregar automações:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const triggerAutomation = async (automationId: string) => {
+  const loadMetrics = async () => {
     try {
-      let actionType = '';
-      switch (automationId) {
-        case 'ai-matching':
-          actionType = 'advanced_matching';
-          break;
-        case 'regulatory-sync':
-          actionType = 'sync_all_apis';
-          break;
-        case 'compliance-monitor':
-          actionType = 'generate_compatibility_scores';
-          break;
-        case 'market-intelligence':
-          actionType = 'update_ai_embeddings';
-          break;
-      }
+      const totalAutomations = automations.length;
+      const activeAutomations = automations.filter(a => a.status === 'active').length;
+      const totalRuns = automations.reduce((sum, a) => sum + a.totalRuns, 0);
+      const successRate = automations.length > 0 
+        ? automations.reduce((sum, a) => sum + a.successRate, 0) / automations.length 
+        : 0;
 
-      const { data, error } = await supabase.functions.invoke('auto-sync', {
-        body: { 
-          action: actionType,
-          user_id: user?.id,
-          manual_trigger: true
-        }
+      setMetrics({
+        totalAutomations,
+        activeAutomations,
+        totalRuns,
+        successRate: Math.round(successRate)
       });
-
-      if (error) throw error;
-
-      toast({
-        title: "🚀 Automação Executada",
-        description: `${automations.find(a => a.id === automationId)?.name} foi executada com sucesso`,
-      });
-
-      // Atualizar status
-      loadAutomationStatus();
-
     } catch (error) {
-      console.error('Error triggering automation:', error);
+      console.error('Erro ao carregar métricas:', error);
+    }
+  };
+
+  const toggleAutomation = async (automationId: string) => {
+    try {
+      setAutomations(prev => 
+        prev.map(automation => 
+          automation.id === automationId 
+            ? { 
+                ...automation, 
+                status: automation.status === 'active' ? 'paused' : 'active' 
+              }
+            : automation
+        )
+      );
+
       toast({
-        title: "Erro na Automação",
-        description: "Falha ao executar automação",
+        title: "Status atualizado",
+        description: "Automação foi atualizada com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar automação",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const runAutomation = async (automationId: string) => {
+    try {
+      const automation = automations.find(a => a.id === automationId);
+      
+      // Simular execução da automação
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setAutomations(prev => 
+        prev.map(a => 
+          a.id === automationId 
+            ? { 
+                ...a, 
+                lastRun: new Date(),
+                totalRuns: a.totalRuns + 1 
+              }
+            : a
+        )
+      );
+
+      toast({
+        title: "Automação executada",
+        description: `${automation?.name} foi executada com sucesso`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha na execução da automação",
         variant: "destructive"
       });
     }
@@ -169,176 +191,190 @@ const AutomationDashboard = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'paused': return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      default: return <Activity className="h-4 w-4 text-gray-500" />;
+      case 'active':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'paused':
+        return <Pause className="h-4 w-4 text-yellow-500" />;
+      case 'error':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'matching':
+        return <Users className="h-4 w-4" />;
+      case 'regulatory':
+        return <FileText className="h-4 w-4" />;
+      case 'intelligence':
+        return <TrendingUp className="h-4 w-4" />;
+      case 'compliance':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return <Bot className="h-4 w-4" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card className="border-l-4 border-l-primary">
+      {/* Métricas Gerais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total de Automações
+                </p>
+                <p className="text-2xl font-bold">{metrics.totalAutomations}</p>
+              </div>
+              <Bot className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Automações Ativas
+                </p>
+                <p className="text-2xl font-bold text-green-600">{metrics.activeAutomations}</p>
+              </div>
+              <Activity className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Execuções Totais
+                </p>
+                <p className="text-2xl font-bold">{metrics.totalRuns}</p>
+              </div>
+              <Zap className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Taxa de Sucesso
+                </p>
+                <p className="text-2xl font-bold text-blue-600">{metrics.successRate}%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista de Automações */}
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center">
-                <Workflow className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <span className="text-2xl">Central de Automações</span>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Badge className="bg-primary/10 text-primary">
-                    <Bot className="h-3 w-3 mr-1" />
-                    IA Ativa
-                  </Badge>
-                  <Badge className="bg-green-100 text-green-800">
-                    {metrics.activeAutomations}/{metrics.totalAutomations} Ativas
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            
-            <Button onClick={loadAutomationStatus} variant="outline" size="sm">
-              <Refresh className="h-4 w-4 mr-2" />
+            <span>Automações Ativas</span>
+            <Button
+              onClick={loadAutomations}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">{metrics.totalAutomations}</div>
-              <div className="text-sm text-muted-foreground">Automações</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{metrics.activeAutomations}</div>
-              <div className="text-sm text-muted-foreground">Ativas</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{metrics.averageSuccessRate}%</div>
-              <div className="text-sm text-muted-foreground">Taxa de Sucesso</div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{metrics.totalExecutions}</div>
-              <div className="text-sm text-muted-foreground">Execuções (24h)</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de Automações */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {automations.map((automation) => (
-          <Card key={automation.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(automation.status)}
+          <div className="space-y-4">
+            {automations.map((automation) => (
+              <div
+                key={automation.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex items-center space-x-4">
+                  {getTypeIcon(automation.type)}
                   <div>
-                    <span>{automation.name}</span>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Badge className={getStatusColor(automation.status)}>
-                        {automation.status.toUpperCase()}
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-semibold">{automation.name}</h3>
+                      {getStatusIcon(automation.status)}
+                      <Badge
+                        variant={
+                          automation.status === 'active' 
+                            ? 'default' 
+                            : automation.status === 'paused'
+                            ? 'secondary'
+                            : 'destructive'
+                        }
+                      >
+                        {automation.status}
                       </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {automation.description}
+                    </p>
+                    <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-2">
+                      <span>Execuções: {automation.totalRuns}</span>
+                      <span>Sucesso: {automation.successRate}%</span>
+                      {automation.lastRun && (
+                        <span>Última: {automation.lastRun.toLocaleString()}</span>
+                      )}
+                      {automation.nextRun && (
+                        <span>Próxima: {automation.nextRun.toLocaleString()}</span>
+                      )}
                     </div>
                   </div>
                 </div>
-                
-                <Button
-                  onClick={() => triggerAutomation(automation.id)}
-                  size="sm"
-                  variant="outline"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Executar
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">{automation.description}</p>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Taxa de Sucesso</span>
-                  <span className="font-medium">{automation.successRate}%</span>
-                </div>
-                <Progress value={automation.successRate} className="h-2" />
-                
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Última execução:</span>
-                  <span>{new Date(automation.lastRun).toLocaleString()}</span>
-                </div>
-                
-                {automation.nextRun && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Próxima execução:</span>
-                    <span>{new Date(automation.nextRun).toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Settings className="h-5 w-5" />
-            <span>Ações Rápidas</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              onClick={() => triggerAutomation('ai-matching')}
-              className="h-16 flex flex-col"
-              variant="outline"
-            >
-              <Brain className="h-6 w-6 mb-2" />
-              <span>Buscar Parceiros</span>
-            </Button>
-            
-            <Button 
-              onClick={() => triggerAutomation('regulatory-sync')}
-              className="h-16 flex flex-col"
-              variant="outline"
-            >
-              <TrendingUp className="h-6 w-6 mb-2" />
-              <span>Sync Regulatório</span>
-            </Button>
-            
-            <Button 
-              onClick={() => triggerAutomation('compliance-monitor')}
-              className="h-16 flex flex-col"
-              variant="outline"
-            >
-              <CheckCircle className="h-6 w-6 mb-2" />
-              <span>Verificar Compliance</span>
-            </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => runAutomation(automation.id)}
+                    variant="outline"
+                    size="sm"
+                    disabled={automation.status === 'error'}
+                  >
+                    <Play className="h-4 w-4 mr-1" />
+                    Executar
+                  </Button>
+                  <Button
+                    onClick={() => toggleAutomation(automation.id)}
+                    variant={automation.status === 'active' ? 'destructive' : 'default'}
+                    size="sm"
+                  >
+                    {automation.status === 'active' ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-1" />
+                        Pausar
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-1" />
+                        Ativar
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

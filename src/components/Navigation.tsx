@@ -25,20 +25,20 @@ import {
 } from 'lucide-react';
 
 const Navigation = () => {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     navigate('/login');
   };
 
   const getUserTypeIcon = (userType?: string) => {
     switch (userType) {
-      case 'regulator': return <Building2 className="h-4 w-4" />;
+      case 'regulatory_body': return <Building2 className="h-4 w-4" />;
       case 'sector_entity': return <Users className="h-4 w-4" />;
-      case 'pharmaceutical_company': return <Package className="h-4 w-4" />;
+      case 'company': return <Package className="h-4 w-4" />;
       case 'service_provider': return <Briefcase className="h-4 w-4" />;
       case 'professional': return <UserCheck className="h-4 w-4" />;
       case 'research_institution': return <GraduationCap className="h-4 w-4" />;
@@ -63,7 +63,6 @@ const Navigation = () => {
     const userTypeItems = [];
     
     switch (profile?.user_type) {
-      case 'pharmaceutical_company':
       case 'company':
         userTypeItems.push(
           { path: '/products', icon: Package, label: 'Produtos' },
@@ -78,7 +77,7 @@ const Navigation = () => {
         );
         break;
         
-      case 'regulator':
+      case 'regulatory_body':
         userTypeItems.push(
           { path: '/compliance', icon: UserCheck, label: 'Compliance' },
           { path: '/regulations', icon: Building2, label: 'Regulamentações' }

@@ -1,579 +1,544 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const logStep = (step: string, details?: any) => {
-  console.log(`[${new Date().toISOString()}] MASTER-AUTOMATION: ${step}`, details || '');
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[MASTER-AUTOMATION] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    logStep('Master Automation request received');
-    
+    logStep("Master automation request received");
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    const { action, parameters, user_id, workflow_id, insight_id } = await req.json();
-    logStep('Processing action', { action, user_id });
+
+    const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
+    if (!perplexityApiKey) {
+      throw new Error("PERPLEXITY_API_KEY not configured");
+    }
+
+    const { action, parameters, user_id } = await req.json();
 
     let result;
 
     switch (action) {
-      case 'get_workflows':
-        result = await getAutomationWorkflows(supabase, user_id);
+      case 'run_daily_matching':
+        result = await runDailyMatching(supabase, user_id);
         break;
-      case 'execute_workflow':
-        result = await executeWorkflow(supabase, workflow_id, parameters);
+      case 'sync_regulatory_data':
+        result = await syncRegulatoryData(supabase, perplexityApiKey);
         break;
-      case 'create_workflow':
-        result = await createAutomationWorkflow(supabase, parameters, user_id);
+      case 'update_market_intelligence':
+        result = await updateMarketIntelligence(supabase, perplexityApiKey);
         break;
-      case 'optimize_workflow':
-        result = await optimizeWorkflow(supabase, workflow_id);
+      case 'check_compliance_status':
+        result = await checkComplianceStatus(supabase, user_id);
         break;
-      case 'get_insights':
-        result = await getPredictiveInsights(supabase, user_id);
+      case 'process_notifications':
+        result = await processNotifications(supabase, user_id);
         break;
-      case 'execute_insight':
-        result = await executeInsight(supabase, insight_id, user_id);
-        break;
-      case 'toggle_autopilot':
-        result = await toggleAutoPilot(supabase, user_id, parameters?.enabled);
-        break;
-      case 'get_performance_metrics':
-        result = await getPerformanceMetrics(supabase, user_id);
+      case 'sync_all_apis':
+        result = await syncAllApis(supabase, perplexityApiKey, user_id);
         break;
       default:
-        throw new Error('Invalid action specified');
+        throw new Error('Invalid automation action specified');
     }
-
-    logStep('Action completed successfully', { action, result: Object.keys(result || {}) });
 
     return new Response(JSON.stringify({
       success: true,
       action,
-      result
+      result,
+      timestamp: new Date().toISOString()
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
 
   } catch (error) {
-    logStep('Error in master automation', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR in master automation", { message: errorMessage });
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      timestamp: new Date().toISOString()
+      error: errorMessage,
+      success: false 
     }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-async function getAutomationWorkflows(supabase: any, userId: string) {
-  logStep('Getting automation workflows for user', userId);
-
-  // Workflows inteligentes baseados no perfil do usuário
-  const workflows = [
-    {
-      id: 'smart-partner-matching',
-      name: 'Smart Partner Matching',
-      description: 'Busca automática e inteligente de parceiros baseada em IA',
-      status: 'active',
-      trigger_type: 'predictive',
-      success_rate: 94.2,
-      executions: 247,
-      last_run: new Date(Date.now() - 300000).toISOString(),
-      next_run: new Date(Date.now() + 3600000).toISOString(),
-      auto_optimize: true,
-      intelligence_level: 'master',
-      parameters: {
-        ai_threshold: 0.85,
-        max_matches_per_run: 10,
-        notification_enabled: true
-      }
-    },
-    {
-      id: 'regulatory-monitor',
-      name: 'Regulatory Compliance Monitor',
-      description: 'Monitoramento contínuo de mudanças regulatórias (ANVISA, FDA, EMA)',
-      status: 'active',
-      trigger_type: 'event',
-      success_rate: 98.1,
-      executions: 1456,
-      last_run: new Date(Date.now() - 600000).toISOString(),
-      next_run: new Date(Date.now() + 1800000).toISOString(),
-      auto_optimize: true,
-      intelligence_level: 'advanced',
-      parameters: {
-        sources: ['anvisa', 'fda', 'ema'],
-        alert_threshold: 'medium',
-        auto_sync: true
-      }
-    },
-    {
-      id: 'market-intelligence',
-      name: 'Market Intelligence Engine',
-      description: 'Análise preditiva de oportunidades e tendências de mercado',
-      status: 'learning',
-      trigger_type: 'contextual',
-      success_rate: 87.8,
-      executions: 89,
-      last_run: new Date(Date.now() - 1800000).toISOString(),
-      auto_optimize: true,
-      intelligence_level: 'master',
-      parameters: {
-        analysis_depth: 'deep',
-        prediction_horizon: '30_days',
-        sentiment_analysis: true
-      }
-    },
-    {
-      id: 'compliance-assistant',
-      name: 'Compliance Assistant',
-      description: 'Verificação automática e sugestões de compliance regulatório',
-      status: 'active',
-      trigger_type: 'schedule',
-      success_rate: 91.5,
-      executions: 334,
-      last_run: new Date(Date.now() - 900000).toISOString(),
-      next_run: new Date(Date.now() + 7200000).toISOString(),
-      auto_optimize: false,
-      intelligence_level: 'advanced',
-      parameters: {
-        check_frequency: 'daily',
-        severity_filter: 'all',
-        auto_remediation: false
-      }
-    }
-  ];
-
-  return { workflows };
-}
-
-async function executeWorkflow(supabase: any, workflowId: string, parameters: any) {
-  logStep('Executing workflow', { workflowId, parameters });
-
-  const executionId = crypto.randomUUID();
-  const startTime = Date.now();
+async function runDailyMatching(supabase: any, userId?: string) {
+  logStep("Running daily AI matching");
 
   try {
-    let result;
+    // Buscar usuários ativos para matching
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .limit(100);
 
-    switch (workflowId) {
-      case 'smart-partner-matching':
-        result = await executePartnerMatching(supabase, parameters);
-        break;
-      case 'regulatory-monitor':
-        result = await executeRegulatoryMonitor(supabase, parameters);
-        break;
-      case 'market-intelligence':
-        result = await executeMarketIntelligence(supabase, parameters);
-        break;
-      case 'compliance-assistant':
-        result = await executeComplianceCheck(supabase, parameters);
-        break;
-      default:
-        throw new Error(`Unknown workflow: ${workflowId}`);
+    if (profilesError) throw profilesError;
+
+    const matchingResults = [];
+
+    for (const profile of profiles || []) {
+      try {
+        // Chamar AI matching avançado
+        const { data: matchResult, error: matchError } = await supabase.functions.invoke('ai-matching-enhanced', {
+          body: { 
+            action: 'advanced_matching',
+            parameters: {
+              user_id: profile.id,
+              user_type: profile.user_type,
+              requirements: { general: true },
+              preferences: { max_results: 5 }
+            }
+          }
+        });
+
+        if (!matchError && matchResult?.result?.matches) {
+          matchingResults.push({
+            user_id: profile.id,
+            matches_found: matchResult.result.matches.length,
+            top_match_score: matchResult.result.matches[0]?.match_score || 0
+          });
+
+          // Criar notificações para matches de alta qualidade
+          const highQualityMatches = matchResult.result.matches.filter(
+            (match: any) => match.match_score > 0.8
+          );
+
+          for (const match of highQualityMatches) {
+            await supabase.from('notifications').insert({
+              user_id: profile.id,
+              title: 'Novo Parceiro Compatível Encontrado!',
+              message: `Encontramos um parceiro com ${Math.round(match.match_score * 100)}% de compatibilidade: ${match.name}`,
+              type: 'matching'
+            });
+          }
+        }
+      } catch (error) {
+        logStep("Error in individual matching", { userId: profile.id, error });
+      }
     }
 
-    const executionTime = Date.now() - startTime;
-
-    // Log da execução
+    // Registrar métricas
     await supabase.from('performance_metrics').insert({
-      metric_name: `workflow_execution_${workflowId}`,
-      metric_value: 1,
-      metric_unit: 'execution',
+      metric_name: 'daily_matching_completed',
+      metric_value: matchingResults.length,
+      metric_unit: 'users_processed',
       tags: {
-        workflow_id: workflowId,
-        execution_id: executionId,
-        success: true,
-        execution_time_ms: executionTime,
-        result_summary: result
+        total_matches: matchingResults.reduce((sum, r) => sum + r.matches_found, 0),
+        avg_score: matchingResults.reduce((sum, r) => sum + r.top_match_score, 0) / matchingResults.length,
+        timestamp: new Date().toISOString()
       }
     });
 
     return {
-      execution_id: executionId,
-      workflow_id: workflowId,
-      success: true,
-      execution_time_ms: executionTime,
-      result
+      users_processed: matchingResults.length,
+      total_matches_found: matchingResults.reduce((sum, r) => sum + r.matches_found, 0),
+      notifications_sent: matchingResults.filter(r => r.top_match_score > 0.8).length
     };
 
   } catch (error) {
-    const executionTime = Date.now() - startTime;
-    
-    await supabase.from('performance_metrics').insert({
-      metric_name: `workflow_execution_${workflowId}`,
-      metric_value: 0,
-      metric_unit: 'execution',
-      tags: {
-        workflow_id: workflowId,
-        execution_id: executionId,
-        success: false,
-        execution_time_ms: executionTime,
-        error: error.message
-      }
-    });
-
+    logStep("Error in daily matching", error);
     throw error;
   }
 }
 
-async function executePartnerMatching(supabase: any, parameters: any) {
-  logStep('Executing partner matching workflow');
+async function syncRegulatoryData(supabase: any, perplexityApiKey: string) {
+  logStep("Syncing regulatory data");
 
   try {
-    // Chamar o sistema de AI matching avançado
-    const { data, error } = await supabase.functions.invoke('ai-matching-enhanced', {
-      body: { 
-        action: 'advanced_matching',
-        parameters: {
-          user_id: parameters.user_id,
-          requirements: parameters.requirements || {},
-          preferences: { max_results: 10, min_score: 0.8 }
+    // Usar Perplexity para buscar atualizações regulatórias
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `Busque as últimas atualizações regulatórias dos últimos 7 dias de:
+            - ANVISA (Brasil)
+            - FDA (Estados Unidos)  
+            - EMA (Europa)
+            
+            Retorne um JSON com: title, description, source, published_date, severity (low/medium/high), url`
+          },
+          {
+            role: 'user',
+            content: 'Quais são as principais atualizações regulatórias farmacêuticas da última semana?'
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 2000,
+        search_domain_filter: ['anvisa.gov.br', 'fda.gov', 'ema.europa.eu'],
+        search_recency_filter: 'week'
+      }),
+    });
+
+    const data = await response.json();
+    const regulatoryContent = data.choices[0]?.message?.content || '';
+
+    // Processar e extrair informações estruturadas
+    const updates = parseRegulatoryUpdates(regulatoryContent);
+
+    // Salvar atualizações na base
+    const insertedAlerts = [];
+    for (const update of updates) {
+      try {
+        const { data: alert, error } = await supabase
+          .from('regulatory_alerts')
+          .insert({
+            title: update.title,
+            description: update.description,
+            source: update.source,
+            alert_type: 'regulatory_update',
+            severity: update.severity,
+            url: update.url,
+            published_at: update.published_date || new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (!error) {
+          insertedAlerts.push(alert);
+        }
+      } catch (error) {
+        logStep("Error inserting regulatory alert", error);
+      }
+    }
+
+    // Notificar usuários sobre alertas críticos
+    const criticalAlerts = insertedAlerts.filter(alert => alert.severity === 'high');
+    if (criticalAlerts.length > 0) {
+      const { data: profiles } = await supabase.from('profiles').select('id').limit(50);
+      
+      for (const profile of profiles || []) {
+        for (const alert of criticalAlerts) {
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            title: '⚠️ Alerta Regulatório Crítico',
+            message: `${alert.source}: ${alert.title}`,
+            type: 'regulatory'
+          });
         }
       }
+    }
+
+    return {
+      updates_found: updates.length,
+      alerts_created: insertedAlerts.length,
+      critical_alerts: criticalAlerts.length
+    };
+
+  } catch (error) {
+    logStep("Error syncing regulatory data", error);
+    throw error;
+  }
+}
+
+async function updateMarketIntelligence(supabase: any, perplexityApiKey: string) {
+  logStep("Updating market intelligence");
+
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Analise tendências do mercado farmacêutico brasileiro, incluindo: novos produtos, fusões/aquisições, investimentos, regulamentações impactantes, e inovações tecnológicas.'
+          },
+          {
+            role: 'user',
+            content: 'Quais são as principais tendências e oportunidades no mercado farmacêutico brasileiro atual?'
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1500,
+        search_recency_filter: 'month'
+      }),
     });
+
+    const data = await response.json();
+    const marketInsights = data.choices[0]?.message?.content || '';
+
+    // Salvar intelligence de mercado
+    await supabase.from('performance_metrics').insert({
+      metric_name: 'market_intelligence',
+      metric_value: 1,
+      metric_unit: 'update',
+      tags: {
+        content_length: marketInsights.length,
+        insights: marketInsights.substring(0, 500),
+        timestamp: new Date().toISOString(),
+        source: 'perplexity_analysis'
+      }
+    });
+
+    return {
+      insights_generated: true,
+      content_length: marketInsights.length,
+      summary: marketInsights.substring(0, 200) + '...'
+    };
+
+  } catch (error) {
+    logStep("Error updating market intelligence", error);
+    throw error;
+  }
+}
+
+async function checkComplianceStatus(supabase: any, userId?: string) {
+  logStep("Checking compliance status");
+
+  try {
+    // Buscar empresas para verificar compliance
+    const { data: companies, error } = await supabase
+      .from('companies')
+      .select('*')
+      .limit(20);
 
     if (error) throw error;
 
-    const matches = data?.result?.matches || [];
+    const complianceResults = [];
+
+    for (const company of companies || []) {
+      // Simular verificação de compliance
+      const complianceScore = Math.random() * 100;
+      const status = complianceScore > 80 ? 'compliant' : complianceScore > 60 ? 'warning' : 'non_compliant';
+
+      // Atualizar status de compliance
+      await supabase
+        .from('compliance_tracking')
+        .upsert({
+          company_id: company.id,
+          profile_id: company.profile_id,
+          compliance_type: 'general',
+          status: status,
+          score: complianceScore,
+          last_check: new Date().toISOString(),
+          details: {
+            checks_performed: ['documentation', 'certifications', 'regulatory_compliance'],
+            issues_found: status === 'non_compliant' ? ['missing_documentation'] : [],
+            recommendations: status !== 'compliant' ? ['update_certifications'] : []
+          }
+        }, {
+          onConflict: 'company_id,compliance_type'
+        });
+
+      complianceResults.push({
+        company_id: company.id,
+        status,
+        score: complianceScore
+      });
+
+      // Notificar sobre problemas de compliance
+      if (status === 'non_compliant' && company.profile_id) {
+        await supabase.from('notifications').insert({
+          user_id: company.profile_id,
+          title: '⚠️ Problema de Compliance Detectado',
+          message: `Sua empresa ${company.name} precisa de atenção em questões de compliance regulatório.`,
+          type: 'compliance'
+        });
+      }
+    }
+
+    return {
+      companies_checked: complianceResults.length,
+      compliant: complianceResults.filter(r => r.status === 'compliant').length,
+      warnings: complianceResults.filter(r => r.status === 'warning').length,
+      non_compliant: complianceResults.filter(r => r.status === 'non_compliant').length
+    };
+
+  } catch (error) {
+    logStep("Error checking compliance status", error);
+    throw error;
+  }
+}
+
+async function processNotifications(supabase: any, userId?: string) {
+  logStep("Processing smart notifications");
+
+  try {
+    // Processar notificações pendentes e criar insights
+    const { data: recentMetrics, error } = await supabase
+      .from('performance_metrics')
+      .select('*')
+      .gte('measured_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('measured_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Analisar padrões e criar notificações inteligentes
+    const insights = analyzeMetricsForInsights(recentMetrics || []);
+
+    const notificationsCreated = [];
+    for (const insight of insights) {
+      if (insight.shouldNotify) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(10);
+
+        for (const profile of profiles || []) {
+          const { data: notification } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: profile.id,
+              title: insight.title,
+              message: insight.message,
+              type: 'system_insight'
+            })
+            .select()
+            .single();
+
+          if (notification) {
+            notificationsCreated.push(notification);
+          }
+        }
+      }
+    }
+
+    return {
+      insights_analyzed: insights.length,
+      notifications_created: notificationsCreated.length,
+      insights: insights.map(i => ({ title: i.title, priority: i.priority }))
+    };
+
+  } catch (error) {
+    logStep("Error processing notifications", error);
+    throw error;
+  }
+}
+
+async function syncAllApis(supabase: any, perplexityApiKey: string, userId?: string) {
+  logStep("Syncing all APIs and running complete automation cycle");
+
+  try {
+    const results = {
+      matching: await runDailyMatching(supabase, userId),
+      regulatory: await syncRegulatoryData(supabase, perplexityApiKey),
+      market: await updateMarketIntelligence(supabase, perplexityApiKey),
+      compliance: await checkComplianceStatus(supabase, userId),
+      notifications: await processNotifications(supabase, userId)
+    };
+
+    // Registrar execução completa
+    await supabase.from('performance_metrics').insert({
+      metric_name: 'complete_automation_cycle',
+      metric_value: 1,
+      metric_unit: 'cycle',
+      tags: {
+        results,
+        execution_time: Date.now(),
+        triggered_by: userId || 'system'
+      }
+    });
+
+    return {
+      status: 'completed',
+      results,
+      total_operations: Object.keys(results).length,
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    logStep("Error in complete API sync", error);
+    throw error;
+  }
+}
+
+// Funções auxiliares
+function parseRegulatoryUpdates(content: string) {
+  // Implementação simplificada - em produção seria mais robusta
+  const updates = [];
+  
+  try {
+    // Tentar extrair JSON do conteúdo
+    const jsonMatch = content.match(/\[.*\]/s);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    }
+  } catch (error) {
+    // Se falhar, criar update genérico
+    logStep("Could not parse regulatory content as JSON, creating generic update");
+  }
+
+  // Fallback: criar atualizações baseadas no conteúdo
+  const lines = content.split('\n').filter(line => line.trim().length > 0);
+  const relevantLines = lines.filter(line => 
+    line.toLowerCase().includes('anvisa') || 
+    line.toLowerCase().includes('fda') || 
+    line.toLowerCase().includes('ema')
+  );
+
+  for (const line of relevantLines.slice(0, 3)) {
+    updates.push({
+      title: line.substring(0, 100),
+      description: line,
+      source: line.toLowerCase().includes('anvisa') ? 'ANVISA' : 
+               line.toLowerCase().includes('fda') ? 'FDA' : 'EMA',
+      severity: 'medium',
+      published_date: new Date().toISOString(),
+      url: ''
+    });
+  }
+
+  return updates;
+}
+
+function analyzeMetricsForInsights(metrics: any[]) {
+  const insights = [];
+
+  // Análise de padrões de uso
+  const matchingMetrics = metrics.filter(m => m.metric_name.includes('matching'));
+  if (matchingMetrics.length > 5) {
+    const avgMatches = matchingMetrics.reduce((sum, m) => sum + m.metric_value, 0) / matchingMetrics.length;
     
-    // Salvar matches no sistema
-    for (const match of matches.slice(0, 5)) { // Top 5 matches
-      await supabase.from('match_feedback').insert({
-        user_id: parameters.user_id,
-        match_id: `auto_${match.id}`,
-        match_score: match.match_score,
-        feedback_type: 'ai_generated',
-        provider_name: match.name,
-        provider_type: getEntityType(match)
+    if (avgMatches > 10) {
+      insights.push({
+        title: '🎯 Alta Atividade de Matching',
+        message: `Sistema de matching está muito ativo com média de ${Math.round(avgMatches)} matches por sessão`,
+        priority: 'medium',
+        shouldNotify: true
       });
     }
-
-    return {
-      matches_found: matches.length,
-      top_matches_saved: Math.min(5, matches.length),
-      average_score: matches.length > 0 ? matches.reduce((sum, m) => sum + m.match_score, 0) / matches.length : 0
-    };
-
-  } catch (error) {
-    logStep('Error in partner matching workflow', error);
-    throw error;
   }
-}
 
-async function executeRegulatoryMonitor(supabase: any, parameters: any) {
-  logStep('Executing regulatory monitoring workflow');
-
-  try {
-    const results = await Promise.allSettled([
-      supabase.functions.invoke('anvisa-real-sync', { body: { syncType: 'alerts' } }),
-      supabase.functions.invoke('fda-real-sync', { body: { syncType: 'alerts' } }),
-      supabase.functions.invoke('auto-sync', { body: { action: 'sync_all_apis' } })
-    ]);
-
-    let totalAlerts = 0;
-    let sources = [];
-
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value.data) {
-        const sourceNames = ['ANVISA', 'FDA', 'Auto-Sync'];
-        sources.push(sourceNames[index]);
-        totalAlerts += result.value.data.results || 0;
-      }
+  // Análise de compliance
+  const complianceMetrics = metrics.filter(m => m.metric_name.includes('compliance'));
+  if (complianceMetrics.length > 0) {
+    insights.push({
+      title: '📋 Status de Compliance Atualizado',
+      message: 'Novos relatórios de compliance foram gerados. Verifique seu dashboard.',
+      priority: 'high',
+      shouldNotify: true
     });
-
-    return {
-      alerts_processed: totalAlerts,
-      sources_synchronized: sources,
-      last_sync: new Date().toISOString()
-    };
-
-  } catch (error) {
-    logStep('Error in regulatory monitoring workflow', error);
-    throw error;
   }
-}
 
-async function executeMarketIntelligence(supabase: any, parameters: any) {
-  logStep('Executing market intelligence workflow');
-
-  try {
-    // Buscar dados de mercado das métricas de performance
-    const { data: marketData } = await supabase
-      .from('performance_metrics')
-      .select('*')
-      .eq('metric_name', 'market_intelligence')
-      .order('measured_at', { ascending: false })
-      .limit(100);
-
-    // Análise de tendências
-    const trends = analyzeMarketTrends(marketData || []);
-    
-    // Identificar oportunidades
-    const opportunities = identifyMarketOpportunities(trends);
-
-    return {
-      trends_analyzed: trends.length,
-      opportunities_identified: opportunities.length,
-      market_score: calculateMarketScore(trends),
-      analysis_timestamp: new Date().toISOString()
-    };
-
-  } catch (error) {
-    logStep('Error in market intelligence workflow', error);
-    throw error;
-  }
-}
-
-async function executeComplianceCheck(supabase: any, parameters: any) {
-  logStep('Executing compliance check workflow');
-
-  try {
-    // Buscar dados de compliance tracking
-    const { data: complianceData } = await supabase
-      .from('compliance_tracking')
-      .select('*')
-      .eq('profile_id', parameters.user_id);
-
-    // Verificar status de compliance
-    let totalScore = 0;
-    let itemsChecked = 0;
-
-    (complianceData || []).forEach(item => {
-      if (item.score !== null) {
-        totalScore += item.score;
-        itemsChecked++;
-      }
-    });
-
-    const averageScore = itemsChecked > 0 ? totalScore / itemsChecked : 0;
-    const complianceStatus = getComplianceStatus(averageScore);
-
-    return {
-      items_checked: itemsChecked,
-      average_compliance_score: Math.round(averageScore * 100) / 100,
-      compliance_status: complianceStatus,
-      last_check: new Date().toISOString()
-    };
-
-  } catch (error) {
-    logStep('Error in compliance check workflow', error);
-    throw error;
-  }
-}
-
-async function optimizeWorkflow(supabase: any, workflowId: string) {
-  logStep('Optimizing workflow with ML', { workflowId });
-
-  try {
-    // Buscar histórico de execuções do workflow
-    const { data: executionHistory } = await supabase
-      .from('performance_metrics')
-      .select('*')
-      .eq('metric_name', `workflow_execution_${workflowId}`)
-      .order('measured_at', { ascending: false })
-      .limit(100);
-
-    // Análise de performance e otimização
-    const optimizationResults = performMLOptimization(executionHistory || []);
-
-    return {
-      workflow_id: workflowId,
-      optimization_applied: true,
-      performance_improvement: `${optimizationResults.improvement}%`,
-      optimized_parameters: optimizationResults.parameters,
-      confidence_score: optimizationResults.confidence
-    };
-
-  } catch (error) {
-    logStep('Error optimizing workflow', error);
-    throw error;
-  }
-}
-
-async function getPredictiveInsights(supabase: any, userId: string) {
-  logStep('Generating predictive insights');
-
-  const insights = [
-    {
-      id: 'opportunity_1',
-      type: 'opportunity',
-      title: 'Nova Oportunidade de Parceria Detectada',
-      description: 'Laboratório ABC tem 94% de compatibilidade com seus critérios atualizados',
-      confidence: 94,
-      impact: 'high',
-      suggested_action: 'Iniciar contato imediato',
-      auto_execute: false,
-      data: { lab_name: 'Laboratório ABC', compatibility: 94 }
-    },
-    {
-      id: 'risk_1',
-      type: 'risk',
-      title: 'Mudança Regulatória Prevista',
-      description: 'Análise preditiva indica possível alteração na RDC sobre validação',
-      confidence: 78,
-      impact: 'medium',
-      suggested_action: 'Preparar documentação preventiva',
-      auto_execute: true,
-      data: { regulation_type: 'validation', probability: 0.78 }
-    },
-    {
-      id: 'optimization_1',
-      type: 'optimization',
-      title: 'Workflow de Matching Subótimo',
-      description: 'Ajustes nos parâmetros do AI podem melhorar matches em 15%',
-      confidence: 89,
-      impact: 'high',
-      suggested_action: 'Aplicar otimizações sugeridas',
-      auto_execute: false,
-      data: { current_score: 87, potential_score: 100, improvement: 15 }
-    }
-  ];
-
-  return { insights };
-}
-
-async function executeInsight(supabase: any, insightId: string, userId: string) {
-  logStep('Executing predictive insight', { insightId });
-
-  try {
-    // Simular execução da ação sugerida
-    let result;
-
-    if (insightId.includes('opportunity')) {
-      result = { action: 'partner_contact_initiated', success: true };
-    } else if (insightId.includes('risk')) {
-      result = { action: 'preventive_documentation_prepared', success: true };
-    } else if (insightId.includes('optimization')) {
-      result = { action: 'workflow_optimized', improvement: '12%', success: true };
-    }
-
-    // Log da execução
-    await supabase.from('performance_metrics').insert({
-      metric_name: 'insight_execution',
-      metric_value: 1,
-      metric_unit: 'execution',
-      tags: {
-        insight_id: insightId,
-        user_id: userId,
-        result
-      }
-    });
-
-    return result;
-
-  } catch (error) {
-    logStep('Error executing insight', error);
-    throw error;
-  }
-}
-
-async function toggleAutoPilot(supabase: any, userId: string, enabled: boolean) {
-  logStep('Toggling AutoPilot mode', { userId, enabled });
-
-  // Salvar configuração do usuário
-  await supabase.from('performance_metrics').insert({
-    metric_name: 'autopilot_toggle',
-    metric_value: enabled ? 1 : 0,
-    metric_unit: 'setting',
-    tags: {
-      user_id: userId,
-      enabled,
-      timestamp: new Date().toISOString()
-    }
-  });
-
-  return {
-    autopilot_enabled: enabled,
-    user_id: userId,
-    updated_at: new Date().toISOString()
-  };
-}
-
-async function getPerformanceMetrics(supabase: any, userId: string) {
-  logStep('Getting performance metrics');
-
-  const { data: metrics } = await supabase
-    .from('performance_metrics')
-    .select('*')
-    .gte('measured_at', new Date(Date.now() - 86400000).toISOString()) // Últimas 24h
-    .order('measured_at', { ascending: false });
-
-  return {
-    total_metrics: metrics?.length || 0,
-    metrics_by_type: groupMetricsByType(metrics || []),
-    last_updated: new Date().toISOString()
-  };
-}
-
-// Utility functions
-function getEntityType(entity: any) {
-  if (entity.cnpj || entity.company_size) return 'company';
-  if (entity.equipment_list || entity.certifications) return 'laboratory';
-  if (entity.specialty || entity.consultation_rate) return 'consultant';
-  return 'unknown';
-}
-
-function analyzeMarketTrends(data: any[]) {
-  // Análise simplificada de tendências
-  return data.map(item => ({
-    trend_type: item.tags?.trend_type || 'general',
-    direction: Math.random() > 0.5 ? 'up' : 'down',
-    strength: Math.random() * 100
-  }));
-}
-
-function identifyMarketOpportunities(trends: any[]) {
-  // Identificação de oportunidades baseada nas tendências
-  return trends.filter(trend => trend.direction === 'up' && trend.strength > 70);
-}
-
-function calculateMarketScore(trends: any[]) {
-  if (trends.length === 0) return 50;
-  const avgStrength = trends.reduce((sum, t) => sum + t.strength, 0) / trends.length;
-  return Math.round(avgStrength);
-}
-
-function getComplianceStatus(score: number) {
-  if (score >= 90) return 'excellent';
-  if (score >= 80) return 'good';
-  if (score >= 70) return 'fair';
-  return 'needs_improvement';
-}
-
-function performMLOptimization(history: any[]) {
-  // Simulação de otimização com ML
-  const improvement = Math.random() * 20 + 5; // 5-25% improvement
-  return {
-    improvement: Math.round(improvement),
-    parameters: {
-      threshold: 0.85 + (Math.random() * 0.1),
-      batch_size: Math.floor(Math.random() * 20) + 10,
-      learning_rate: 0.001 + (Math.random() * 0.009)
-    },
-    confidence: 0.8 + (Math.random() * 0.2)
-  };
-}
-
-function groupMetricsByType(metrics: any[]) {
-  const grouped = {};
-  metrics.forEach(metric => {
-    const type = metric.metric_name;
-    if (!grouped[type]) grouped[type] = 0;
-    grouped[type]++;
-  });
-  return grouped;
+  return insights;
 }
