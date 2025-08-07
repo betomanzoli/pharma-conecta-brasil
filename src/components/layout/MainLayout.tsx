@@ -1,8 +1,9 @@
 
 import React from 'react';
 import PersistentNavigation from './PersistentNavigation';
-import DemoModeIndicator from './DemoModeIndicator';
+import UniversalDemoBanner from './UniversalDemoBanner';
 import { useAuth } from '@/contexts/AuthContext';
+import { isDemoMode } from '@/utils/demoMode';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   showDemoIndicator = true 
 }) => {
   const { user } = useAuth();
+  const isDemo = isDemoMode();
 
   if (!user) {
     return <>{children}</>;
@@ -21,7 +23,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background">
-      {showDemoIndicator && <DemoModeIndicator variant="banner" />}
+      {showDemoIndicator && isDemo && (
+        <UniversalDemoBanner variant="minimal" className="border-b" />
+      )}
       <PersistentNavigation />
       <main className="flex-1">
         {children}

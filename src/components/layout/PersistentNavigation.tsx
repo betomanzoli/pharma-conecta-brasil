@@ -17,31 +17,56 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  FlaskConical
 } from 'lucide-react';
 import { useState } from 'react';
+import { isDemoMode } from '@/utils/demoMode';
+import ModeToggle from './ModeToggle';
 
 const PersistentNavigation = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isDemo = isDemoMode();
 
-  const navigationItems = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/chat', icon: MessageSquare, label: 'AI Assistant' },
-    { path: '/network', icon: Users, label: 'Rede' },
-    { path: '/forums', icon: MessageSquare, label: 'Fóruns' },
-    { path: '/mentorship', icon: User, label: 'Mentoria' },
-    { path: '/marketplace', icon: Building2, label: 'Marketplace' },
-    { path: '/projects', icon: Briefcase, label: 'Projetos' },
-    { path: '/automation', icon: Workflow, label: 'Automações' },
-    { path: '/knowledge', icon: BookOpen, label: 'Biblioteca' },
-    { path: '/reports', icon: BarChart3, label: 'Relatórios' },
-    { path: '/notifications', icon: Bell, label: 'Notificações' },
+  // Itens de navegação diferentes para Demo vs Real
+  const getDemoNavigationItems = () => [
+    { path: '/dashboard', icon: Home, label: 'Dashboard', status: 'active' },
+    { path: '/chat', icon: MessageSquare, label: 'AI Assistant', status: 'active' },
+    { path: '/network', icon: Users, label: 'Rede', status: 'active' },
+    { path: '/forums', icon: MessageSquare, label: 'Fóruns', status: 'active' },
+    { path: '/mentorship', icon: User, label: 'Mentoria', status: 'active' },
+    { path: '/marketplace', icon: Building2, label: 'Marketplace', status: 'active' },
+    { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'active' },
+    { path: '/automation', icon: Workflow, label: 'Automações', status: 'beta' },
+    { path: '/knowledge', icon: BookOpen, label: 'Biblioteca', status: 'active' },
+    { path: '/reports', icon: BarChart3, label: 'Relatórios', status: 'active' },
+    { path: '/analytics', icon: BarChart3, label: 'Analytics', status: 'beta' },
+    { path: '/notifications', icon: Bell, label: 'Notificações', status: 'active' },
   ];
+
+  const getRealNavigationItems = () => [
+    { path: '/dashboard', icon: Home, label: 'Dashboard', status: 'active' },
+    { path: '/chat', icon: MessageSquare, label: 'AI Assistant', status: 'active' },
+    { path: '/network', icon: Users, label: 'Rede', status: 'development' },
+    { path: '/marketplace', icon: Building2, label: 'Marketplace', status: 'development' },
+    { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'development' },
+    { path: '/knowledge', icon: BookBook, label: 'Biblioteca', status: 'active' },
+    { path: '/notifications', icon: Bell, label: 'Notificações', status: 'active' },
+    { path: '/settings', icon: Settings, label: 'Configurações', status: 'active' },
+  ];
+
+  const navigationItems = isDemo ? getDemoNavigationItems() : getRealNavigationItems();
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'beta') return '🟡';
+    if (status === 'development') return '🔴';
+    return '🟢';
   };
 
   return (
@@ -49,31 +74,43 @@ const PersistentNavigation = () => {
       {/* Desktop Navigation */}
       <nav className="hidden md:flex bg-white shadow-sm border-b border-gray-200 px-4 py-2">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-          <Link to="/dashboard" className="text-xl font-bold text-primary">
-            PharmaConnect
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link to="/dashboard" className="text-xl font-bold text-primary">
+              PharmaConnect
+            </Link>
+            <ModeToggle variant="badge" />
+          </div>
           
           <div className="flex items-center space-x-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
+              const isDisabled = item.status === 'development' && !isDemo;
               
               return (
-                <Link key={item.path} to={item.path}>
-                  <Button 
-                    variant={isActive ? "default" : "ghost"}
-                    size="sm"
-                    className="flex items-center space-x-2"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden lg:inline">{item.label}</span>
-                  </Button>
-                </Link>
+                <div key={item.path} className="relative">
+                  <Link to={isDisabled ? '#' : item.path}>
+                    <Button 
+                      variant={isActive ? "default" : "ghost"}
+                      size="sm"
+                      className={`flex items-center space-x-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isDisabled}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden lg:inline">{item.label}</span>
+                      {isDemo && (
+                        <span className="text-xs">{getStatusBadge(item.status)}</span>
+                      )}
+                    </Button>
+                  </Link>
+                </div>
               );
             })}
           </div>
 
           <div className="flex items-center space-x-2">
+            <ModeToggle variant="button" showLabel={false} />
+            
             <Link to="/profile">
               <Button variant="ghost" size="sm">
                 <User className="h-4 w-4" />
@@ -104,9 +141,12 @@ const PersistentNavigation = () => {
       {/* Mobile Navigation */}
       <nav className="md:hidden bg-white shadow-sm border-b border-gray-200">
         <div className="px-4 py-3 flex items-center justify-between">
-          <Link to="/dashboard" className="text-lg font-bold text-primary">
-            PharmaConnect
-          </Link>
+          <div className="flex items-center space-x-3">
+            <Link to="/dashboard" className="text-lg font-bold text-primary">
+              PharmaConnect
+            </Link>
+            <ModeToggle variant="badge" />
+          </div>
           
           <Button
             variant="ghost"
@@ -123,26 +163,35 @@ const PersistentNavigation = () => {
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
+                const isDisabled = item.status === 'development' && !isDemo;
                 
                 return (
                   <Link 
                     key={item.path} 
-                    to={item.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    to={isDisabled ? '#' : item.path}
+                    onClick={() => !isDisabled && setIsMobileMenuOpen(false)}
                   >
                     <Button 
                       variant={isActive ? "default" : "ghost"}
-                      className="w-full justify-start"
+                      className={`w-full justify-start ${isDisabled ? 'opacity-50' : ''}`}
                       size="sm"
+                      disabled={isDisabled}
                     >
                       <Icon className="h-4 w-4 mr-2" />
                       {item.label}
+                      {isDemo && (
+                        <span className="ml-auto text-xs">{getStatusBadge(item.status)}</span>
+                      )}
                     </Button>
                   </Link>
                 );
               })}
               
               <div className="border-t border-gray-200 pt-2 mt-2">
+                <div className="px-3 py-2">
+                  <ModeToggle variant="toggle" />
+                </div>
+                
                 <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start" size="sm">
                     <User className="h-4 w-4 mr-2" />
