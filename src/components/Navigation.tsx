@@ -46,6 +46,8 @@ const Navigation = () => {
       case 'funding_agency': return <DollarSign className="h-4 w-4" />;
       case 'healthcare_provider': return <Hospital className="h-4 w-4" />;
       case 'laboratory': return <FlaskConical className="h-4 w-4" />;
+      case 'individual': return <User className="h-4 w-4" />;
+      case 'admin': return <Settings className="h-4 w-4" />;
       default: return <User className="h-4 w-4" />;
     }
   };
@@ -184,7 +186,8 @@ const Navigation = () => {
           </div>
         </div>
       </div>
-    );
-  };
+    </nav>
+  );
+};
 
 export default Navigation;
