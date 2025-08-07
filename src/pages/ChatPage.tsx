@@ -1,24 +1,26 @@
 
 import React from 'react';
-import Navigation from '@/components/Navigation';
+import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MasterChatbot from '@/components/ai/MasterChatbot';
 
 const ChatPage = () => {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Chat com IA</h1>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              AI Assistant
+            </h1>
             <p className="text-muted-foreground">
-              Converse diretamente com nosso assistente de IA especializado no setor farmacêutico
+              Assistente especializado no setor farmacêutico brasileiro
             </p>
           </div>
+          
           <MasterChatbot />
         </div>
-      </div>
+      </MainLayout>
     </ProtectedRoute>
   );
 };

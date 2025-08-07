@@ -1,161 +1,204 @@
 
 import React, { useState } from 'react';
-import Navigation from '@/components/Navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Upload, Building, CheckSquare } from 'lucide-react';
-import VerificationStatus from '@/components/verification/VerificationStatus';
-import DocumentUpload from '@/components/verification/DocumentUpload';
-import CNPJValidator from '@/components/verification/CNPJValidator';
+import MainLayout from '@/components/layout/MainLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Upload, 
+  FileText,
+  Building2,
+  User,
+  Shield
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
 
 const Verification = () => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  const verificationSteps = [
+    {
+      id: 'identity',
+      title: 'Verificação de Identidade',
+      description: 'Documento de identidade válido (RG, CNH ou Passaporte)',
+      status: 'pending',
+      icon: User,
+      required: true
+    },
+    {
+      id: 'company',
+      title: 'Verificação de Empresa',
+      description: 'Documento de CNPJ e contrato social',
+      status: 'pending',
+      icon: Building2,
+      required: profile?.user_type === 'company' || profile?.user_type === 'laboratory'
+    },
+    {
+      id: 'professional',
+      title: 'Verificação Profissional',
+      description: 'CRF ou certificações profissionais relevantes',
+      status: 'pending',
+      icon: Shield,
+      required: profile?.user_type === 'consultant'
+    },
+    {
+      id: 'anvisa',
+      title: 'Certificação ANVISA',
+      description: 'Licenças e certificações ANVISA aplicáveis',
+      status: 'pending',
+      icon: FileText,
+      required: profile?.user_type === 'laboratory'
+    }
+  ];
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'pending':
+        return <Clock className="h-5 w-5 text-yellow-500" />;
+      case 'rejected':
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
+      default:
+        return <Clock className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Verificado</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+      case 'rejected':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Rejeitado</Badge>;
+      default:
+        return <Badge variant="outline">Não iniciado</Badge>;
+    }
+  };
+
+  const handleFileUpload = async (stepId: string) => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    
+    // Simular upload
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIsUploading(false);
+    setSelectedFile(null);
+    
+    alert(`Documento enviado para verificação: ${stepId}`);
+  };
+
+  const filteredSteps = verificationSteps.filter(step => step.required);
 
   return (
-    <div className="min-h-screen bg-muted">
-      <Navigation />
-      
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header da Página */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Central de Verificação
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Complete sua verificação para aumentar sua credibilidade na plataforma
-          </p>
+    <ProtectedRoute>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Verificação de Conta
+            </h1>
+            <p className="text-muted-foreground">
+              Complete sua verificação para acessar todas as funcionalidades da plataforma
+            </p>
+          </div>
+
+          <DemoModeIndicator variant="alert" className="mb-6" />
+
+          <div className="grid gap-6">
+            {filteredSteps.map((step) => {
+              const Icon = step.icon;
+              
+              return (
+                <Card key={step.id} className="relative">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-lg bg-gray-100">
+                          <Icon className="h-6 w-6 text-gray-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{step.title}</CardTitle>
+                          <CardDescription>{step.description}</CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        {getStatusIcon(step.status)}
+                        {getStatusBadge(step.status)}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    {step.status === 'pending' && (
+                      <div className="space-y-4">
+                        <div className="grid w-full max-w-sm items-center gap-1.5">
+                          <Label htmlFor={`file-${step.id}`}>Selecionar documento</Label>
+                          <Input
+                            id={`file-${step.id}`}
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          />
+                        </div>
+                        
+                        <Button 
+                          onClick={() => handleFileUpload(step.id)}
+                          disabled={!selectedFile || isUploading}
+                          className="w-full sm:w-auto"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Clock className="h-4 w-4 mr-2 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Enviar Documento
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {step.status === 'completed' && (
+                      <Alert className="border-green-200 bg-green-50">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-800">
+                          Verificação concluída com sucesso!
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <Alert className="mt-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Sistema de Verificação:</strong> Esta funcionalidade está em desenvolvimento. 
+              Os uploads de documentos são simulados e não são processados no momento.
+            </AlertDescription>
+          </Alert>
         </div>
-
-        <Tabs defaultValue="status" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="status" className="flex items-center space-x-2">
-              <CheckSquare className="h-4 w-4" />
-              <span>Status</span>
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center space-x-2">
-              <Upload className="h-4 w-4" />
-              <span>Documentos</span>
-            </TabsTrigger>
-            <TabsTrigger value="cnpj" className="flex items-center space-x-2">
-              <Building className="h-4 w-4" />
-              <span>CNPJ</span>
-            </TabsTrigger>
-            <TabsTrigger value="help" className="flex items-center space-x-2">
-              <Shield className="h-4 w-4" />
-              <span>Ajuda</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="status">
-            <VerificationStatus />
-          </TabsContent>
-
-          <TabsContent value="documents">
-            <DocumentUpload />
-          </TabsContent>
-
-          <TabsContent value="cnpj">
-            <CNPJValidator />
-          </TabsContent>
-
-          <TabsContent value="help">
-            <Card>
-              <CardHeader>
-                <CardTitle>Como funciona a verificação?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Para Empresas</h3>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>• Validação de CNPJ junto à Receita Federal</li>
-                      <li>• Upload da certidão de CNPJ atualizada</li>
-                      <li>• Verificação de licenças específicas</li>
-                      <li>• Análise manual pela nossa equipe</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Para Laboratórios</h3>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>• Validação de CNPJ e licenças ANVISA</li>
-                      <li>• Certificados de acreditação (ISO, INMETRO)</li>
-                      <li>• Licenças de funcionamento específicas</li>
-                      <li>• Verificação de especialidades técnicas</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Para Consultores</h3>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>• Verificação de identidade profissional</li>
-                      <li>• Certificados de formação</li>
-                      <li>• Registros em conselhos profissionais</li>
-                      <li>• Validação de experiência profissional</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Benefícios da Verificação</h3>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>• Maior credibilidade no marketplace</li>
-                      <li>• Badges de verificação no perfil</li>
-                      <li>• Prioridade em buscas e matches</li>
-                      <li>• Acesso a recursos premium</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Tipos de Documentos Aceitos</h3>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-medium mb-2">Documentos Empresariais</h4>
-                      <ul className="space-y-1 text-muted-foreground">
-                        <li>• Certidão de CNPJ</li>
-                        <li>• Contrato social</li>
-                        <li>• Licenças de funcionamento</li>
-                      </ul>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-medium mb-2">Certificações</h4>
-                      <ul className="space-y-1 text-muted-foreground">
-                        <li>• ISO 9001, 17025</li>
-                        <li>• Acreditação INMETRO</li>
-                        <li>• Certificados ANVISA</li>
-                      </ul>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-medium mb-2">Formatos Aceitos</h4>
-                      <ul className="space-y-1 text-muted-foreground">
-                        <li>• PDF (preferível)</li>
-                        <li>• JPEG/PNG</li>
-                        <li>• Máximo 10MB</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Tempo de Processamento</h4>
-                  <p className="text-sm text-blue-800">
-                    A verificação geralmente leva de 2 a 5 dias úteis. Documentos com problemas 
-                    podem demorar mais para serem processados. Você receberá notificações sobre 
-                    o status da sua verificação.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+      </MainLayout>
+    </ProtectedRoute>
   );
 };
 

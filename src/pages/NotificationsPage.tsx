@@ -1,24 +1,29 @@
 
 import React from 'react';
-import Navigation from '@/components/Navigation';
+import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import SmartNotificationCenter from '@/components/ai/SmartNotificationCenter';
+import NotificationHistory from '@/components/notifications/NotificationHistory';
+import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
 
 const NotificationsPage = () => {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Central de Notificações</h1>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Central de Notificações
+            </h1>
             <p className="text-muted-foreground">
-              Sistema inteligente de notificações e alertas da plataforma
+              Acompanhe todas as atualizações e alertas importantes
             </p>
           </div>
-          <SmartNotificationCenter />
+
+          <DemoModeIndicator variant="alert" className="mb-6" />
+          
+          <NotificationHistory />
         </div>
-      </div>
+      </MainLayout>
     </ProtectedRoute>
   );
 };
