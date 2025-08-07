@@ -52,7 +52,7 @@ const PersistentNavigation = () => {
     { path: '/network', icon: Users, label: 'Rede', status: 'development' },
     { path: '/marketplace', icon: Building2, label: 'Marketplace', status: 'development' },
     { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'development' },
-    { path: '/knowledge', icon: BookBook, label: 'Biblioteca', status: 'active' },
+    { path: '/knowledge', icon: BookOpen, label: 'Biblioteca', status: 'active' },
     { path: '/notifications', icon: Bell, label: 'Notificações', status: 'active' },
     { path: '/settings', icon: Settings, label: 'Configurações', status: 'active' },
   ];
