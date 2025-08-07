@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ interface State {
   error?: Error;
 }
 
-class ErrorBoundaryComponent extends Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -77,6 +78,4 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundaryComponent;
-
-export { ErrorBoundaryComponent as ErrorBoundary };
+export default ErrorBoundary;

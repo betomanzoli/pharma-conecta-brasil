@@ -39,7 +39,7 @@ const Navigation = () => {
       case 'regulatory_body': return <Building2 className="h-4 w-4" />;
       case 'sector_entity': return <Users className="h-4 w-4" />;
       case 'company': return <Package className="h-4 w-4" />;
-      case 'service_provider': return <Briefcase className="h-4 w-4" />;
+      case 'consultant': return <UserCheck className="h-4 w-4" />;
       case 'professional': return <UserCheck className="h-4 w-4" />;
       case 'research_institution': return <GraduationCap className="h-4 w-4" />;
       case 'supplier': return <Package className="h-4 w-4" />;
@@ -65,29 +65,29 @@ const Navigation = () => {
     switch (profile?.user_type) {
       case 'company':
         userTypeItems.push(
-          { path: '/products', icon: Package, label: 'Produtos' },
-          { path: '/partnerships', icon: Users, label: 'Parcerias' }
+          { path: '/projects', icon: Briefcase, label: 'Projetos' },
+          { path: '/marketplace', icon: Users, label: 'Marketplace' }
         );
         break;
         
       case 'laboratory':
         userTypeItems.push(
-          { path: '/capacity', icon: BarChart3, label: 'Capacidade' },
-          { path: '/certifications', icon: UserCheck, label: 'Certificações' }
+          { path: '/reports', icon: BarChart3, label: 'Relatórios' },
+          { path: '/projects', icon: Briefcase, label: 'Projetos' }
         );
         break;
         
       case 'regulatory_body':
         userTypeItems.push(
-          { path: '/compliance', icon: UserCheck, label: 'Compliance' },
-          { path: '/regulations', icon: Building2, label: 'Regulamentações' }
+          { path: '/reports', icon: BarChart3, label: 'Compliance' },
+          { path: '/projects', icon: Building2, label: 'Regulamentações' }
         );
         break;
         
       case 'research_institution':
         userTypeItems.push(
           { path: '/projects', icon: GraduationCap, label: 'Projetos' },
-          { path: '/publications', icon: BookOpen, label: 'Publicações' }
+          { path: '/reports', icon: BookOpen, label: 'Publicações' }
         );
         break;
     }
@@ -184,8 +184,7 @@ const Navigation = () => {
           </div>
         </div>
       </div>
-    </nav>
-  );
-};
+    );
+  };
 
 export default Navigation;

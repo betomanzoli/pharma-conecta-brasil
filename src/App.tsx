@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 // Lazy load components
@@ -27,40 +29,62 @@ const DashboardCompany = lazy(() => import("./pages/DashboardCompany"));
 const DashboardLaboratory = lazy(() => import("./pages/DashboardLaboratory"));
 const DashboardConsultant = lazy(() => import("./pages/DashboardConsultant"));
 
+// Additional pages that were referenced but missing
+const MasterAIHub = lazy(() => import("./pages/MasterAIHub"));
+const Forums = lazy(() => import("./pages/Forums"));
+const Network = lazy(() => import("./pages/Network"));
+const MentorshipHub = lazy(() => import("./pages/MentorshipHub"));
+const Projects = lazy(() => import("./pages/Projects"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/demo" element={<PlatformDemo />} />
-              
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/automation" element={<AutomationPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/knowledge" element={<KnowledgeLibrary />} />
-              
-              {/* Dashboard variants for different user types */}
-              <Route path="/dashboard/general" element={<DashboardGeneral />} />
-              <Route path="/dashboard/company" element={<DashboardCompany />} />
-              <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
-              <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+        <NotificationProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/demo" element={<PlatformDemo />} />
+                  
+                  {/* Protected Routes */}
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/automation" element={<AutomationPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/knowledge" element={<KnowledgeLibrary />} />
+                  
+                  {/* Dashboard variants for different user types */}
+                  <Route path="/dashboard/general" element={<DashboardGeneral />} />
+                  <Route path="/dashboard/company" element={<DashboardCompany />} />
+                  <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
+                  <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
+                  
+                  {/* Additional functional pages */}
+                  <Route path="/master-ai" element={<MasterAIHub />} />
+                  <Route path="/forums" element={<Forums />} />
+                  <Route path="/network" element={<Network />} />
+                  <Route path="/mentorship" element={<MentorshipHub />} />
+                  <Route path="/projects" element={<Projects />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </ErrorBoundary>
+        </NotificationProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
