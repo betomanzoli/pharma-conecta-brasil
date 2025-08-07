@@ -18,11 +18,17 @@ import {
   LogOut,
   Menu,
   X,
-  FlaskConical
+  ChevronDown
 } from 'lucide-react';
 import { useState } from 'react';
 import { isDemoMode } from '@/utils/demoMode';
 import ModeToggle from './ModeToggle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const PersistentNavigation = () => {
   const { profile, signOut } = useAuth();
@@ -30,34 +36,35 @@ const PersistentNavigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isDemo = isDemoMode();
 
-  // Itens de navegação diferentes para Demo vs Real
-  const getDemoNavigationItems = () => [
+  // Itens principais sempre visíveis
+  const primaryItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard', status: 'active' },
     { path: '/chat', icon: MessageSquare, label: 'AI Assistant', status: 'active' },
-    { path: '/network', icon: Users, label: 'Rede', status: 'active' },
-    { path: '/forums', icon: MessageSquare, label: 'Fóruns', status: 'active' },
-    { path: '/mentorship', icon: User, label: 'Mentoria', status: 'active' },
-    { path: '/marketplace', icon: Building2, label: 'Marketplace', status: 'active' },
-    { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'active' },
-    { path: '/automation', icon: Workflow, label: 'Automações', status: 'beta' },
+    { path: '/marketplace', icon: Building2, label: 'Marketplace', status: isDemo ? 'active' : 'development' },
     { path: '/knowledge', icon: BookOpen, label: 'Biblioteca', status: 'active' },
-    { path: '/reports', icon: BarChart3, label: 'Relatórios', status: 'active' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics', status: 'beta' },
-    { path: '/notifications', icon: Bell, label: 'Notificações', status: 'active' },
   ];
 
-  const getRealNavigationItems = () => [
-    { path: '/dashboard', icon: Home, label: 'Dashboard', status: 'active' },
-    { path: '/chat', icon: MessageSquare, label: 'AI Assistant', status: 'active' },
-    { path: '/network', icon: Users, label: 'Rede', status: 'development' },
-    { path: '/marketplace', icon: Building2, label: 'Marketplace', status: 'development' },
-    { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'development' },
-    { path: '/knowledge', icon: BookOpen, label: 'Biblioteca', status: 'active' },
-    { path: '/notifications', icon: Bell, label: 'Notificações', status: 'active' },
-    { path: '/settings', icon: Settings, label: 'Configurações', status: 'active' },
-  ];
+  // Itens secundários no dropdown
+  const getSecondaryItems = () => {
+    if (isDemo) {
+      return [
+        { path: '/network', icon: Users, label: 'Rede', status: 'active' },
+        { path: '/forums', icon: MessageSquare, label: 'Fóruns', status: 'active' },
+        { path: '/mentorship', icon: User, label: 'Mentoria', status: 'active' },
+        { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'active' },
+        { path: '/automation', icon: Workflow, label: 'Automações', status: 'beta' },
+        { path: '/reports', icon: BarChart3, label: 'Relatórios', status: 'active' },
+        { path: '/analytics', icon: BarChart3, label: 'Analytics', status: 'beta' },
+      ];
+    } else {
+      return [
+        { path: '/network', icon: Users, label: 'Rede', status: 'development' },
+        { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'development' },
+      ];
+    }
+  };
 
-  const navigationItems = isDemo ? getDemoNavigationItems() : getRealNavigationItems();
+  const secondaryItems = getSecondaryItems();
 
   const handleSignOut = async () => {
     await signOut();
@@ -82,7 +89,8 @@ const PersistentNavigation = () => {
           </div>
           
           <div className="flex items-center space-x-1">
-            {navigationItems.map((item) => {
+            {/* Itens principais */}
+            {primaryItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               const isDisabled = item.status === 'development' && !isDemo;
@@ -93,12 +101,12 @@ const PersistentNavigation = () => {
                     <Button 
                       variant={isActive ? "default" : "ghost"}
                       size="sm"
-                      className={`flex items-center space-x-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`flex items-center space-x-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isDisabled}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="hidden lg:inline">{item.label}</span>
-                      {isDemo && (
+                      <span className="hidden lg:inline text-sm">{item.label}</span>
+                      {isDemo && item.status !== 'active' && (
                         <span className="text-xs">{getStatusBadge(item.status)}</span>
                       )}
                     </Button>
@@ -106,6 +114,54 @@ const PersistentNavigation = () => {
                 </div>
               );
             })}
+
+            {/* Dropdown para itens secundários */}
+            {secondaryItems.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                    <span className="hidden lg:inline text-sm">Mais</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {secondaryItems.map((item) => {
+                    const Icon = item.icon;
+                    const isDisabled = item.status === 'development' && !isDemo;
+                    
+                    return (
+                      <DropdownMenuItem
+                        key={item.path}
+                        disabled={isDisabled}
+                      >
+                        <Link 
+                          to={isDisabled ? '#' : item.path} 
+                          className="flex items-center space-x-2 w-full"
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                          {isDemo && item.status !== 'active' && (
+                            <span className="ml-auto text-xs">{getStatusBadge(item.status)}</span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <div className="h-4 w-px bg-gray-300 mx-2" />
+
+            {/* Notificações */}
+            <Link to="/notifications">
+              <Button 
+                variant={location.pathname === '/notifications' ? "default" : "ghost"} 
+                size="sm"
+              >
+                <Bell className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -160,7 +216,7 @@ const PersistentNavigation = () => {
         {isMobileMenuOpen && (
           <div className="border-t border-gray-200 bg-white">
             <div className="px-4 py-2 space-y-1">
-              {navigationItems.map((item) => {
+              {[...primaryItems, ...secondaryItems].map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 const isDisabled = item.status === 'development' && !isDemo;
@@ -179,13 +235,21 @@ const PersistentNavigation = () => {
                     >
                       <Icon className="h-4 w-4 mr-2" />
                       {item.label}
-                      {isDemo && (
+                      {isDemo && item.status !== 'active' && (
                         <span className="ml-auto text-xs">{getStatusBadge(item.status)}</span>
                       )}
                     </Button>
                   </Link>
                 );
               })}
+              
+              {/* Notificações */}
+              <Link to="/notifications" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start" size="sm">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Notificações
+                </Button>
+              </Link>
               
               <div className="border-t border-gray-200 pt-2 mt-2">
                 <div className="px-3 py-2">

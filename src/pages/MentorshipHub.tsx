@@ -1,324 +1,269 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, MessageCircle } from 'lucide-react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import MentorCard from '@/components/mentorship/MentorCard';
-import MentorshipFilters from '@/components/mentorship/MentorshipFilters';
-import SessionCard from '@/components/mentorship/SessionCard';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Mentor {
-  id: string;
-  name: string;
-  expertise: string[];
-  experience_years: number;
-  rating: number;
-  total_sessions: number;
-  location: string;
-  bio: string;
-  hourly_rate: number;
-  avatar_url?: string;
-  available_times: string[];
-}
-
-interface MentorshipSession {
-  id: string;
-  mentor_id: string;
-  mentee_id: string;
-  title: string;
-  description: string;
-  scheduled_at: string;
-  duration_minutes: number;
-  status: string;
-  price: number;
-  mentor_rating?: number;
-  mentee_rating?: number;
-  mentor_notes?: string;
-  mentee_notes?: string;
-}
+import MainLayout from '@/components/layout/MainLayout';
+import UniversalDemoBanner from '@/components/layout/UniversalDemoBanner';
+import { isDemoMode } from '@/utils/demoMode';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Calendar, Clock, Award, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const MentorshipHub = () => {
   const { profile } = useAuth();
-  const { toast } = useToast();
-  const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [sessions, setSessions] = useState<MentorshipSession[]>([]);
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [experienceFilter, setExperienceFilter] = useState('all');
-  const [specialtyFilter, setSpecialtyFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const isDemo = isDemoMode();
 
-  useEffect(() => {
-    fetchMentors();
-    if (profile?.id) {
-      fetchSessions();
-    }
-  }, [profile?.id]);
+  const renderDemoContent = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <User className="h-4 w-4 mr-2" />
+              Mentores Ativos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">24</div>
+            <p className="text-sm text-muted-foreground">Disponíveis</p>
+          </CardContent>
+        </Card>
 
-  useEffect(() => {
-    filterMentors();
-  }, [searchTerm, experienceFilter, specialtyFilter, mentors]);
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Sessões Agendadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">8</div>
+            <p className="text-sm text-muted-foreground">Este mês</p>
+          </CardContent>
+        </Card>
 
-  const fetchSessions = async () => {
-    if (!profile?.id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('mentorship_sessions')
-        .select(`
-          *,
-          mentor:mentors!mentorship_sessions_mentor_id_mentors_fkey(
-            profile_id,
-            specialty,
-            hourly_rate,
-            profiles!mentors_profile_id_fkey(first_name, last_name)
-          )
-        `)
-        .or(`mentor_id.eq.${profile.id},mentee_id.eq.${profile.id}`)
-        .order('scheduled_at', { ascending: false });
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Clock className="h-4 w-4 mr-2" />
+              Horas de Mentoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">32</div>
+            <p className="text-sm text-muted-foreground">Acumuladas</p>
+          </CardContent>
+        </Card>
 
-      if (error) throw error;
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Award className="h-4 w-4 mr-2" />
+              Avaliação Média
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">4.8</div>
+            <p className="text-sm text-muted-foreground">⭐ Excelente</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      const formattedSessions: MentorshipSession[] = (data || []).map(session => ({
-        id: session.id,
-        mentor_id: session.mentor_id,
-        mentee_id: session.mentee_id,
-        title: session.title,
-        description: session.description || '',
-        scheduled_at: session.scheduled_at,
-        duration_minutes: session.duration_minutes,
-        status: session.status,
-        price: Number(session.price) || 0,
-        mentor_rating: session.mentor_rating,
-        mentee_rating: session.mentee_rating,
-        mentor_notes: session.mentor_notes,
-        mentee_notes: session.mentee_notes
-      }));
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Mentores Recomendados (Demo)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { name: 'Dr. Ana Silva', expertise: 'Regulatório ANVISA', rating: 4.9 },
+                { name: 'Prof. Carlos Santos', expertise: 'Desenvolvimento Clínico', rating: 4.8 },
+                { name: 'Dra. Maria Costa', expertise: 'Controle de Qualidade', rating: 4.7 }
+              ].map((mentor, i) => (
+                <div key={i} className="flex items-center space-x-3 p-3 border rounded-lg">
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{mentor.name}</p>
+                    <p className="text-sm text-muted-foreground">{mentor.expertise}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{mentor.rating}</p>
+                    <p className="text-xs text-muted-foreground">⭐ Rating</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-      setSessions(formattedSessions);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-    }
-  };
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximas Sessões</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { mentor: 'Dr. Ana Silva', topic: 'Submissão ANVISA', date: '15 Jan', time: '14:00' },
+                { mentor: 'Prof. Carlos Santos', topic: 'Protocolo Clínico', date: '17 Jan', time: '10:00' },
+                { mentor: 'Dra. Maria Costa', topic: 'Validação de Métodos', date: '20 Jan', time: '16:00' }
+              ].map((session, i) => (
+                <div key={i} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                  <div>
+                    <p className="font-medium">{session.topic}</p>
+                    <p className="text-sm text-muted-foreground">com {session.mentor}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{session.date}</p>
+                    <p className="text-sm text-muted-foreground">{session.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
-  const fetchMentors = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_available_mentors');
+  const renderRealContent = () => (
+    <div className="space-y-6">
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Funcionalidade em Desenvolvimento:</strong> O programa de mentoria está sendo estruturado. 
+          Em breve você poderá conectar-se com mentores especialistas do setor farmacêutico.
+        </AlertDescription>
+      </Alert>
 
-      if (error) throw error;
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <User className="h-4 w-4 mr-2" />
+              Seus Mentores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0</div>
+            <p className="text-sm text-muted-foreground">Nenhum ainda</p>
+          </CardContent>
+        </Card>
 
-      const formattedMentors: Mentor[] = (data || []).map(mentor => ({
-        id: mentor.mentor_id,
-        name: `${mentor.first_name || ''} ${mentor.last_name || ''}`.trim() || 'Mentor',
-        expertise: mentor.specialty || [],
-        experience_years: mentor.experience_years,
-        rating: Number(mentor.average_rating) || 0,
-        total_sessions: mentor.total_sessions,
-        location: 'Brasil', // Pode ser expandido para incluir localização real
-        bio: mentor.bio || 'Mentor experiente na área farmacêutica',
-        hourly_rate: Number(mentor.hourly_rate) || 0,
-        available_times: ['09:00-12:00', '14:00-17:00'] // Pode ser expandido com disponibilidade real
-      }));
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Sessões Realizadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0</div>
+            <p className="text-sm text-muted-foreground">Aguardando lançamento</p>
+          </CardContent>
+        </Card>
 
-      setMentors(formattedMentors);
-      setFilteredMentors(formattedMentors);
-    } catch (error) {
-      console.error('Error fetching mentors:', error);
-      toast({
-        title: "Erro ao carregar mentores",
-        description: "Não foi possível carregar a lista de mentores",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Clock className="h-4 w-4 mr-2" />
+              Tempo de Aprendizado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">0h</div>
+            <p className="text-sm text-muted-foreground">Será contabilizado</p>
+          </CardContent>
+        </Card>
 
-  const filterMentors = () => {
-    let filtered = mentors;
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Award className="h-4 w-4 mr-2" />
+              Certificações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">--</div>
+            <p className="text-sm text-muted-foreground">Em planejamento</p>
+          </CardContent>
+        </Card>
+      </div>
 
-    if (searchTerm) {
-      filtered = filtered.filter(mentor =>
-        mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mentor.expertise.some(skill => 
-          skill.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
+      <Card>
+        <CardHeader>
+          <CardTitle>Programa de Mentoria Planejado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                <User className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-medium">Mentores Especializados</p>
+                <p className="text-sm text-muted-foreground">
+                  Profissionais experientes em regulatório, desenvolvimento e qualidade
+                </p>
+              </div>
+            </div>
 
-    if (experienceFilter !== 'all') {
-      filtered = filtered.filter(mentor => {
-        switch (experienceFilter) {
-          case 'junior': return mentor.experience_years <= 3;
-          case 'mid': return mentor.experience_years >= 4 && mentor.experience_years <= 7;
-          case 'senior': return mentor.experience_years >= 8;
-          default: return true;
-        }
-      });
-    }
+            <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-medium">Sessões Personalizadas</p>
+                <p className="text-sm text-muted-foreground">
+                  Agendamento flexível com foco nas suas necessidades
+                </p>
+              </div>
+            </div>
 
-    if (specialtyFilter !== 'all') {
-      filtered = filtered.filter(mentor =>
-        mentor.expertise.some(skill => 
-          skill.toLowerCase().includes(specialtyFilter.toLowerCase())
-        )
-      );
-    }
-
-    setFilteredMentors(filtered);
-  };
-
-  const handleSchedule = () => {
-    // Refresh sessions after scheduling
-    fetchSessions();
-  };
-
-  const handleMessage = (mentorId: string) => {
-    const selectedMentor = mentors.find(m => m.id === mentorId);
-    toast({
-      title: "Mensagem enviada",
-      description: `Sua mensagem foi enviada para ${selectedMentor?.name}`,
-    });
-  };
+            <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                <Award className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-medium">Certificação de Competências</p>
+                <p className="text-sm text-muted-foreground">
+                  Reconhecimento oficial do aprendizado adquirido
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Hub de Mentoria
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Encontre mentores especializados e acelere seu desenvolvimento profissional
-            </p>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-6">
+          <UniversalDemoBanner variant="minimal" className="mb-6" />
+          
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  Programa de Mentoria
+                </h1>
+                <p className="text-muted-foreground">
+                  {isDemo 
+                    ? 'Conecte-se com mentores especialistas (dados demonstrativos)'
+                    : 'Acelere seu crescimento profissional com mentores especializados'
+                  }
+                </p>
+              </div>
+            </div>
           </div>
 
-          <Tabs defaultValue="find-mentors" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="find-mentors" className="flex items-center space-x-2">
-                <Users className="h-4 w-4" />
-                <span>Encontrar Mentores</span>
-              </TabsTrigger>
-              <TabsTrigger value="my-sessions" className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4" />
-                <span>Minhas Sessões</span>
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="flex items-center space-x-2">
-                <MessageCircle className="h-4 w-4" />
-                <span>Mensagens</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="find-mentors" className="space-y-6">
-              <MentorshipFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                experienceFilter={experienceFilter}
-                setExperienceFilter={setExperienceFilter}
-                specialtyFilter={specialtyFilter}
-                setSpecialtyFilter={setSpecialtyFilter}
-              />
-
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardContent className="p-6">
-                        <div className="h-16 bg-gray-200 rounded mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : filteredMentors.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nenhum mentor encontrado
-                    </h3>
-                    <p className="text-gray-600">
-                      Tente ajustar os filtros de busca
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {filteredMentors.map((mentor) => (
-                    <MentorCard
-                      key={mentor.id}
-                      mentor={mentor}
-                      onSchedule={handleSchedule}
-                      onMessage={handleMessage}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="my-sessions" className="space-y-4">
-              {sessions.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nenhuma sessão agendada
-                    </h3>
-                    <p className="text-gray-600">
-                      Suas sessões de mentoria aparecerão aqui
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {sessions.map((session) => (
-                    <SessionCard
-                      key={session.id}
-                      session={session}
-                      currentUserId={profile?.id || ''}
-                      mentorName="Mentor" // Pode ser expandido para incluir nome real
-                      onJoin={(sessionId) => {
-                        toast({
-                          title: "Iniciando sessão",
-                          description: "Redirecionando para a sala de videoconferência...",
-                        });
-                      }}
-                      onRate={(sessionId, rating) => {
-                        toast({
-                          title: "Avaliação registrada",
-                          description: "Obrigado pelo seu feedback!",
-                        });
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="messages">
-              <Card>
-                <CardContent className="text-center py-12">
-                  <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Nenhuma mensagem
-                  </h3>
-                  <p className="text-gray-600">
-                    Suas conversas com mentores aparecerão aqui
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
+          {isDemo ? renderDemoContent() : renderRealContent()}
+        </div>
+      </MainLayout>
     </ProtectedRoute>
   );
 };
