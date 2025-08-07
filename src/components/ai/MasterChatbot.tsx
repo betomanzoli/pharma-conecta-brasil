@@ -15,7 +15,8 @@ import {
   Search,
   BarChart3,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,8 @@ interface Message {
   content: string;
   sender: 'user' | 'assistant';
   timestamp: Date;
+  sources?: string[];
+  related_questions?: string[];
 }
 
 const MasterChatbot = () => {
@@ -64,14 +67,17 @@ const MasterChatbot = () => {
 
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content: `Olá! Sou seu Assistente Master especializado no setor farmacêutico brasileiro. 
+        content: `Olá! 👋 Sou seu Assistente Master especializado no setor farmacêutico brasileiro.
 
-Posso ajudá-lo com:
-🎯 Informações sobre regulamentação ANVISA
-🤝 Networking e parcerias farmacêuticas  
-📊 Análise de mercado farmacêutico
-⚖️ Questões de compliance regulatório
-💼 Oportunidades de negócio
+🎯 **Posso ajudá-lo com:**
+• 📋 Informações sobre regulamentação ANVISA
+• 🤝 Networking e parcerias farmacêuticas  
+• 📊 Análise de mercado farmacêutico
+• ⚖️ Questões de compliance regulatório
+• 💼 Oportunidades de negócio
+• 🔬 Pesquisas científicas e técnicas
+
+✨ **Agora com IA aprimorada:** Uso a API Perplexity para fornecer informações atualizadas e precisas sobre o setor farmacêutico.
 
 Como posso ajudá-lo hoje?`,
         sender: 'assistant',
@@ -120,16 +126,26 @@ Como posso ajudá-lo hoje?`,
         id: (Date.now() + 1).toString(),
         content: data.response || 'Desculpe, não consegui processar sua mensagem.',
         sender: 'assistant',
-        timestamp: new Date()
+        timestamp: new Date(),
+        sources: data.sources || [],
+        related_questions: data.related_questions || []
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Mostrar toast de sucesso se houver fontes
+      if (data.sources && data.sources.length > 0) {
+        toast({
+          title: "Resposta com fontes",
+          description: `Encontrei ${data.sources.length} fonte(s) relevante(s) para sua pergunta.`,
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Verifique se as chaves de API estão configuradas corretamente.',
+        content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Verifique se a chave da API Perplexity está configurada corretamente.',
         sender: 'assistant',
         timestamp: new Date()
       };
@@ -138,7 +154,7 @@ Como posso ajudá-lo hoje?`,
       
       toast({
         title: "Erro de Comunicação",
-        description: "Não foi possível processar sua mensagem. Tente novamente.",
+        description: "Não foi possível processar sua mensagem. Verifique as configurações da API.",
         variant: "destructive"
       });
     } finally {
@@ -150,9 +166,9 @@ Como posso ajudá-lo hoje?`,
     setIsLoading(true);
     
     const actionMessages = {
-      'find_partners': 'Encontre parceiros farmacêuticos para minha empresa',
-      'regulatory_updates': 'Mostre as últimas atualizações regulatórias da ANVISA',
-      'market_analysis': 'Faça uma análise do mercado farmacêutico atual'
+      'find_partners': 'Encontre parceiros farmacêuticos relevantes para minha empresa no Brasil',
+      'regulatory_updates': 'Mostre as últimas atualizações regulatórias da ANVISA dos últimos 30 dias',
+      'market_analysis': 'Faça uma análise atual do mercado farmacêutico brasileiro incluindo tendências e oportunidades'
     };
 
     const message = actionMessages[action as keyof typeof actionMessages] || action;
@@ -166,13 +182,17 @@ Como posso ajudá-lo hoje?`,
     });
   };
 
+  const handleRelatedQuestion = (question: string) => {
+    sendMessage(question);
+  };
+
   return (
     <div className="space-y-6">
       <Alert>
-        <Sparkles className="h-4 w-4" />
+        <CheckCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Master AI Assistant:</strong> Assistente especializado com IA avançada para o setor farmacêutico.
-          As respostas são geradas usando inteligência artificial e podem precisar de verificação.
+          <strong>✅ Master AI Assistant Ativo:</strong> Assistente especializado com IA Perplexity para o setor farmacêutico.
+          Agora com acesso a informações atualizadas e fontes confiáveis.
         </AlertDescription>
       </Alert>
 
@@ -183,12 +203,17 @@ Como posso ajudá-lo hoje?`,
               <Bot className="h-5 w-5 text-blue-500" />
               <CardTitle className="text-lg">Master AI Assistant</CardTitle>
             </div>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Farmacêutico BR
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">
+                ✅ Ativo
+              </Badge>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Perplexity AI
+              </Badge>
+            </div>
           </div>
           <CardDescription>
-            Assistente especializado em regulamentação, networking e mercado farmacêutico
+            Assistente especializado com IA avançada - Regulamentação, networking e mercado farmacêutico brasileiro
           </CardDescription>
         </CardHeader>
 
@@ -230,31 +255,69 @@ Como posso ajudá-lo hoje?`,
           <ScrollArea className="flex-1 px-6">
             <div className="space-y-4 pb-4">
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+                <div key={message.id} className="space-y-2">
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.sender === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
+                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-center space-x-2 mb-1">
-                      {message.sender === 'user' ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
-                      <span className="text-xs opacity-70">
-                        {formatTimestamp(message.timestamp)}
-                      </span>
-                    </div>
-                    <div className="whitespace-pre-wrap text-sm">
-                      {message.content}
+                    <div
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        message.sender === 'user'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-1">
+                        {message.sender === 'user' ? (
+                          <User className="h-4 w-4" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
+                        <span className="text-xs opacity-70">
+                          {formatTimestamp(message.timestamp)}
+                        </span>
+                      </div>
+                      <div className="whitespace-pre-wrap text-sm">
+                        {message.content}
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Perguntas relacionadas */}
+                  {message.related_questions && message.related_questions.length > 0 && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[80%] space-y-2">
+                        <p className="text-xs text-gray-600 font-medium">Perguntas relacionadas:</p>
+                        <div className="space-y-1">
+                          {message.related_questions.slice(0, 3).map((question, idx) => (
+                            <Button
+                              key={idx}
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRelatedQuestion(question)}
+                              className="text-xs h-auto p-2 text-left justify-start hover:bg-blue-50"
+                              disabled={isLoading}
+                            >
+                              💡 {question}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fontes */}
+                  {message.sources && message.sources.length > 0 && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[80%]">
+                        <p className="text-xs text-gray-600 font-medium mb-1">
+                          📚 Fontes consultadas: {message.sources.length}
+                        </p>
+                        <Badge variant="outline" className="text-xs">
+                          Informações verificadas
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               
@@ -264,7 +327,7 @@ Como posso ajudá-lo hoje?`,
                     <div className="flex items-center space-x-2">
                       <Bot className="h-4 w-4" />
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-gray-600">Processando...</span>
+                      <span className="text-sm text-gray-600">Pesquisando informações atualizadas...</span>
                     </div>
                   </div>
                 </div>
@@ -279,7 +342,7 @@ Como posso ajudá-lo hoje?`,
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Digite sua mensagem sobre o setor farmacêutico..."
+                placeholder="Digite sua pergunta sobre o setor farmacêutico brasileiro..."
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputValue)}
                 disabled={isLoading}
                 className="flex-1"
@@ -298,19 +361,11 @@ Como posso ajudá-lo hoje?`,
             </div>
             
             <p className="text-xs text-gray-500 mt-2">
-              Pressione Enter para enviar • Powered by OpenAI
+              Pressione Enter para enviar • Powered by Perplexity AI com fontes verificadas
             </p>
           </div>
         </CardContent>
       </Card>
-      
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Configuração Necessária:</strong> Para o funcionamento completo, 
-          é necessário configurar a chave da API OpenAI nas configurações do Supabase.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 };

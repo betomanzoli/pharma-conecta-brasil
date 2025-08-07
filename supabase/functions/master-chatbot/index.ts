@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -20,10 +19,10 @@ serve(async (req) => {
   try {
     logStep("Master Chatbot request received");
 
-    // Verificar se temos a chave da API
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiApiKey) {
-      throw new Error("OPENAI_API_KEY não configurada");
+    // Usar Perplexity API Key em vez de OpenAI
+    const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
+    if (!perplexityApiKey) {
+      throw new Error("PERPLEXITY_API_KEY not configured");
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -36,7 +35,7 @@ serve(async (req) => {
 
     switch (action) {
       case 'chat':
-        result = await processChat(message, user_id, context, openaiApiKey);
+        result = await processChat(message, user_id, context, perplexityApiKey);
         break;
       case 'initialize':
         result = await initializeMasterChat(supabase, user_id);
@@ -78,7 +77,7 @@ serve(async (req) => {
   }
 });
 
-async function processChat(message: string, userId: string, context: any, openaiApiKey: string) {
+async function processChat(message: string, userId: string, context: any, perplexityApiKey: string) {
   logStep("Processing chat message", { message: message.substring(0, 50) });
 
   const systemPrompt = `Você é um Assistente Master de IA especializado no setor farmacêutico brasileiro.
@@ -89,28 +88,33 @@ Você ajuda profissionais com:
 - Oportunidades de negócio
 - Compliance regulatório
 
-Sempre forneça respostas precisas, profissionais e relevantes para o setor farmacêutico.`;
+Sempre forneça respostas precisas, profissionais e relevantes para o setor farmacêutico brasileiro.`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
         temperature: 0.7,
         max_tokens: 1000,
+        top_p: 0.9,
+        search_domain_filter: ['anvisa.gov.br', 'gov.br', 'pubmed.ncbi.nlm.nih.gov'],
+        search_recency_filter: 'month',
+        return_images: false,
+        return_related_questions: true,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`Perplexity API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -118,11 +122,12 @@ Sempre forneça respostas precisas, profissionais e relevantes para o setor farm
 
     return {
       response: aiResponse,
-      usage: data.usage,
+      related_questions: data.related_questions || [],
+      sources: data.citations || [],
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    logStep("Error in OpenAI API call", error);
+    logStep("Error in Perplexity API call", error);
     throw new Error('Erro ao processar mensagem com IA');
   }
 }
@@ -167,7 +172,6 @@ async function findPartners(supabase: any, userId: string, query: string) {
   logStep("Finding partners", { userId, query });
 
   try {
-    // Buscar empresas e laboratórios
     const { data: companies } = await supabase
       .from('companies')
       .select('*')
