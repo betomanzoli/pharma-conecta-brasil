@@ -1,7 +1,7 @@
 
 import React from 'react';
-import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import MainLayout from '@/components/layout/MainLayout';
 import ReportBuilder from '@/components/reports/ReportBuilder';
 import CustomReportBuilder from '@/components/reports/CustomReportBuilder';
 import ReportTemplates from '@/components/reports/ReportTemplates';
@@ -10,18 +10,28 @@ import EnhancedReportExporter from '@/components/reports/EnhancedReportExporter'
 import AIReportInsights from '@/components/reports/AIReportInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
+import UniversalDemoBanner from '@/components/layout/UniversalDemoBanner';
 import { FileText, BarChart, Layout, Lightbulb, Settings, Download, Brain } from 'lucide-react';
+import { isDemoMode } from '@/utils/demoMode';
 
 const ReportsPage = () => {
+  const isDemo = isDemoMode();
+
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Relatórios e Analytics</h1>
+      <MainLayout>
+        <div className="container mx-auto px-4 py-6">
+          <UniversalDemoBanner variant="minimal" className="mb-6" />
+          
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Relatórios e Analytics
+            </h1>
             <p className="text-muted-foreground">
-              Sistema completo de relatórios com templates, insights de IA e análises personalizadas
+              {isDemo 
+                ? 'Sistema completo de relatórios com dados demonstrativos'
+                : 'Sistema completo de relatórios com templates, insights de IA e análises personalizadas'
+              }
             </p>
           </div>
 
@@ -86,7 +96,7 @@ const ReportsPage = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+      </MainLayout>
     </ProtectedRoute>
   );
 };
