@@ -1,278 +1,145 @@
 
 import React from 'react';
-import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import MetricsDashboard from '@/components/dashboard/MetricsDashboard';
+import { isDemoMode } from '@/utils/demoMode';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  MessageSquare, 
-  UserCheck, 
-  BarChart3,
-  TrendingUp,
-  Building2,
-  FlaskConical,
-  BookOpen,
-  Bell,
-  ArrowRight,
-  AlertTriangle
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
+import { Info, AlertTriangle } from 'lucide-react';
 
 const DashboardGeneral = () => {
-  const { profile } = useAuth();
+  const isDemo = isDemoMode();
 
-  const quickActions = [
-    {
-      title: 'Explorar Redes',
-      description: 'Encontre e conecte-se com profissionais',
-      icon: Users,
-      href: '/network',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Encontrar Mentor',
-      description: 'Conecte-se com mentores experientes',
-      icon: UserCheck,
-      href: '/mentorship',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Participar de Fóruns',
-      description: 'Discuta temas relevantes da área',
-      icon: MessageSquare,
-      href: '/forums',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'AI Assistant',
-      description: 'Assistente especializado em farmacêutica',
-      icon: MessageSquare,
-      href: '/chat',
-      color: 'bg-orange-500'
-    }
-  ];
+  if (!isDemo) {
+    // Modo REAL - Mostrar estado vazio/inicial
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Modo Real Ativo:</strong> Os dados mostrados refletem informações reais da plataforma. 
+            Configure sua conta e perfil para começar a ver métricas personalizadas.
+          </AlertDescription>
+        </Alert>
 
-  const recentActivity = [
-    {
-      title: 'Nova conexão estabelecida',
-      description: 'Conectou-se com Dr. Silva da BioFarma',
-      time: '2h atrás',
-      type: 'connection'
-    },
-    {
-      title: 'Mensagem no fórum',
-      description: 'Resposta em "Regulamentações ANVISA 2024"',
-      time: '4h atrás',
-      type: 'forum'
-    },
-    {
-      title: 'Documento adicionado',
-      description: 'Novo guia de compliance disponível',
-      time: '1 dia atrás',
-      type: 'knowledge'
-    }
-  ];
-
-  const platformStats = [
-    { label: 'Conexões', value: '24', change: '+12%', icon: Users },
-    { label: 'Projetos', value: '8', change: '+3', icon: Building2 },
-    { label: 'Mentores', value: '156', change: '+8%', icon: UserCheck },
-    { label: 'Laboratórios', value: '89', change: '+15%', icon: FlaskConical }
-  ];
-
-  return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-6">
-        {/* Header com informações do usuário */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Bem-vindo, {profile?.first_name || 'Usuário'}!
-              </h1>
-              <p className="text-muted-foreground">
-                Acompanhe suas atividades e descubra oportunidades
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Conexões Realizadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">0</div>
+              <p className="text-sm text-muted-foreground">
+                Complete seu perfil para começar
               </p>
-            </div>
-            <Badge variant="outline" className="text-sm">
-              {profile?.user_type === 'company' ? 'Empresa' :
-               profile?.user_type === 'laboratory' ? 'Laboratório' :
-               profile?.user_type === 'consultant' ? 'Consultor' : 'Profissional'}
-            </Badge>
-          </div>
+            </CardContent>
+          </Card>
 
-          <DemoModeIndicator variant="alert" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Projetos Ativos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">0</div>
+              <p className="text-sm text-muted-foreground">
+                Nenhum projeto iniciado
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Oportunidades
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">0</div>
+              <p className="text-sm text-muted-foreground">
+                Configure suas preferências
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Score de Atividade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">--</div>
+              <p className="text-sm text-muted-foreground">
+                Não calculado
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Estatísticas rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {platformStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.label}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.label}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.change} desde o último mês
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Ações rápidas */}
-        <Card className="mb-8">
+        <Card>
           <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-            <CardDescription>
-              Acesse rapidamente as principais funcionalidades
-            </CardDescription>
+            <CardTitle>Primeiros Passos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.title} to={action.href}>
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                      <CardContent className="p-4">
-                        <div className="flex items-start space-x-3">
-                          <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-sm">{action.title}</h3>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {action.description}
-                            </p>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold">1</span>
+                </div>
+                <div>
+                  <p className="font-medium">Complete seu perfil</p>
+                  <p className="text-sm text-muted-foreground">
+                    Adicione informações sobre sua empresa ou área de atuação
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold">2</span>
+                </div>
+                <div>
+                  <p className="font-medium">Explore o Marketplace</p>
+                  <p className="text-sm text-muted-foreground">
+                    Encontre laboratórios, consultores e fornecedores
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold">3</span>
+                </div>
+                <div>
+                  <p className="font-medium">Inicie conexões</p>
+                  <p className="text-sm text-muted-foreground">
+                    Conecte-se com parceiros estratégicos para seus projetos
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Atividade recente */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Atividade Recente</CardTitle>
-              <CardDescription>
-                Suas últimas interações na plataforma
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4">
-                <Button variant="outline" size="sm" className="w-full">
-                  Ver Todas as Atividades
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Links úteis */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recursos Essenciais</CardTitle>
-              <CardDescription>
-                Acesse ferramentas e informações importantes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Link to="/knowledge" className="block">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <BookOpen className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="font-medium text-sm">Biblioteca de Conhecimento</p>
-                      <p className="text-xs text-muted-foreground">
-                        Guias, regulamentações e recursos
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-                
-                <Link to="/analytics" className="block">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <BarChart3 className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium text-sm">Analytics</p>
-                      <p className="text-xs text-muted-foreground">
-                        Métricas e relatórios de desempenho
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-                
-                <Link to="/automation" className="block">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <TrendingUp className="h-5 w-5 text-purple-500" />
-                    <div>
-                      <p className="font-medium text-sm">Automações</p>
-                      <p className="text-xs text-muted-foreground">
-                        Configure fluxos automatizados
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-                
-                <Link to="/notifications" className="block">
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <Bell className="h-5 w-5 text-orange-500" />
-                    <div>
-                      <p className="font-medium text-sm">Central de Notificações</p>
-                      <p className="text-xs text-muted-foreground">
-                        Acompanhe atualizações importantes
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Alert className="mt-8">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Plataforma em Desenvolvimento:</strong> Muitas funcionalidades estão sendo implementadas. 
-            Os dados mostrados são exemplos para demonstração da interface e experiência do usuário.
-          </AlertDescription>
-        </Alert>
       </div>
-    </MainLayout>
+    );
+  }
+
+  // Modo DEMO - Mostrar dados simulados
+  return (
+    <div className="space-y-6">
+      <Alert className="border-orange-200 bg-orange-50">
+        <AlertTriangle className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-800">
+          <strong>Modo Demonstração:</strong> Os dados abaixo são simulados para demonstrar 
+          as funcionalidades da plataforma. Ative o modo real para ver seus dados reais.
+        </AlertDescription>
+      </Alert>
+
+      <MetricsDashboard />
+    </div>
   );
 };
 

@@ -20,7 +20,6 @@ serve(async (req) => {
   try {
     logStep("Master Chatbot request received");
 
-    // Verificar se a chave da Perplexity existe
     const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
     logStep("Checking Perplexity API Key", { 
       hasKey: !!perplexityApiKey, 
@@ -120,7 +119,7 @@ CONTEXTO DO USUÁRIO:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'sonar',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
@@ -128,8 +127,6 @@ CONTEXTO DO USUÁRIO:
         temperature: 0.7,
         max_tokens: 1500,
         top_p: 0.9,
-        search_domain_filter: ['anvisa.gov.br', 'gov.br', 'pubmed.ncbi.nlm.nih.gov', 'portal.cfm.org.br'],
-        search_recency_filter: 'month',
         return_images: false,
         return_related_questions: true,
       }),
@@ -170,19 +167,16 @@ CONTEXTO DO USUÁRIO:
       cause: error.cause 
     });
     
-    // Resposta de fallback mais útil
-    const fallbackResponse = `Desculpe, houve um problema ao conectar com o serviço de IA avançada. 
+    const fallbackResponse = `Desculpe, houve um problema temporário com o serviço de IA avançada.
 
-Como seu assistente da PharmaConnect Brasil, posso ajudá-lo com:
+Como seu assistente especializado da PharmaConnect Brasil, posso ajudá-lo com:
 
 • **Regulamentação ANVISA**: Informações sobre registros, licenças e compliance
 • **Networking Farmacêutico**: Conexões com laboratórios, consultores e fornecedores  
 • **Análise de Mercado**: Tendências e oportunidades do setor farmacêutico brasileiro
 • **Suporte Técnico**: Orientações sobre desenvolvimento e produção farmacêutica
 
-**Erro técnico:** ${error.message}
-
-Por favor, tente novamente ou reformule sua pergunta. Se o problema persistir, entre em contato com o suporte técnico.`;
+Por favor, tente novamente em alguns minutos. Se o problema persistir, nossa equipe técnica foi notificada.`;
 
     return {
       response: fallbackResponse,
