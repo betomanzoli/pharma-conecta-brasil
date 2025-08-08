@@ -9,10 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, FileText, Video, Download, AlertCircle, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useUnifiedActions } from '@/hooks/useUnifiedActions';
 
 const KnowledgeLibrary = () => {
   const { profile } = useAuth();
   const isDemo = isDemoMode();
+  const { download } = useUnifiedActions();
 
   const renderDemoContent = () => (
     <div className="space-y-6">
@@ -88,7 +90,7 @@ const KnowledgeLibrary = () => {
                     <p className="font-medium">{doc.title}</p>
                     <p className="text-sm text-muted-foreground">{doc.type} • {doc.downloads} downloads</p>
                   </div>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => download(doc.title, '/placeholder.svg')}>
                     <Download className="h-4 w-4" />
                   </Button>
                 </div>

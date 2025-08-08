@@ -120,7 +120,7 @@ const ServiceProviderCard = ({ provider, onContact, onSchedule, actions }: Servi
             <Button
               size="sm"
               onClick={() => onSchedule(provider.id)}
-              className="flex-1 flex items-center justify-center space-x-1 bg-[#1565C0] hover:bg-[#1565C0]/90"
+              className="flex-1 flex items-center justify-center space-x-1"
             >
               <Calendar className="h-4 w-4" />
               <span>Agendar</span>

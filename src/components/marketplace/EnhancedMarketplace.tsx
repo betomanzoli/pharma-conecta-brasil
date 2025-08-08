@@ -5,11 +5,14 @@ import MarketplaceStats from './MarketplaceStats';
 import ProjectBoard from './ProjectBoard';
 import SupplierDirectory from './SupplierDirectory';
 import ServiceProviderCard from './ServiceProviderCard';
+import MarketplaceActions from './MarketplaceActions';
 import AdvancedAIMatching from '../ai/AdvancedAIMatching';
 import { Brain, Search, Users, TrendingUp, Target } from 'lucide-react';
+import { useUnifiedActions } from '@/hooks/useUnifiedActions';
 
 const EnhancedMarketplace = () => {
   const [activeTab, setActiveTab] = useState('matching');
+  const { contact, scheduleDemo } = useUnifiedActions();
 
   const mockProviders = [
     {
@@ -47,12 +50,16 @@ const EnhancedMarketplace = () => {
     }
   ];
 
-  const handleContact = (providerId: string) => {
-    console.log('Contacting provider:', providerId);
+const handleContact = (providerId: string) => {
+    const provider = mockProviders.find(p => p.id === providerId);
+    if (!provider) return;
+    contact({ entityId: provider.id, entityType: provider.type });
   };
 
   const handleSchedule = (providerId: string) => {
-    console.log('Scheduling with provider:', providerId);
+    const provider = mockProviders.find(p => p.id === providerId);
+    if (!provider) return;
+    scheduleDemo({ entityId: provider.id, entityType: provider.type });
   };
 
   return (
@@ -106,6 +113,7 @@ const EnhancedMarketplace = () => {
                 provider={provider}
                 onContact={handleContact}
                 onSchedule={handleSchedule}
+                actions={<MarketplaceActions entity={{ id: provider.id, name: provider.name, type: provider.type, location: provider.location, description: provider.description, rating: provider.rating, verified: provider.verified }} />}
               />
             ))}
           </div>

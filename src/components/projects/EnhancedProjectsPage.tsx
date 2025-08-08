@@ -323,7 +323,7 @@ const EnhancedProjectsPage: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedProject(project)}
+                        onClick={() => { setSelectedProject(project); setActiveTab('analytics'); }}
                       >
                         Ver Analytics
                       </Button>
