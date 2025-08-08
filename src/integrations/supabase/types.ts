@@ -56,6 +56,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_chat_events: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          intents: string[] | null
+          message: string
+          metadata: Json | null
+          project_id: string | null
+          source: string
+          topics: string[] | null
+          user_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          intents?: string[] | null
+          message: string
+          metadata?: Json | null
+          project_id?: string | null
+          source: string
+          topics?: string[] | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          intents?: string[] | null
+          message?: string
+          metadata?: Json | null
+          project_id?: string | null
+          source?: string
+          topics?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_embedding_cache: {
         Row: {
           cache_key: string

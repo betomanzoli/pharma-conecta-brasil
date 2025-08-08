@@ -22,6 +22,7 @@ import {
   FileText,
   Clock
 } from 'lucide-react';
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 
 interface Message {
   id: string;
@@ -61,6 +62,7 @@ const AIAssistant = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [currentContext, setCurrentContext] = useState('general');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { logAIEvent } = useAIEventLogger();
 
   const aiCapabilities: AICapability[] = [
     {
@@ -120,9 +122,11 @@ const AIAssistant = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    const messageToSend = inputMessage;
+
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage,
+      content: messageToSend,
       type: 'user',
       timestamp: new Date(),
       context: currentContext
@@ -132,15 +136,23 @@ const AIAssistant = () => {
     setInputMessage('');
     setIsLoading(true);
 
+    // Log telemetry (non-blocking)
+    logAIEvent({
+      source: 'ai_assistant',
+      action: 'message',
+      message: messageToSend,
+      metadata: { context: currentContext }
+    });
+
     // Simular resposta da IA
     setTimeout(() => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: generateAIResponse(inputMessage, currentContext),
+        content: generateAIResponse(messageToSend, currentContext),
         type: 'assistant',
         timestamp: new Date(),
         context: currentContext,
-        suggestions: generateSuggestions(inputMessage)
+        suggestions: generateSuggestions(messageToSend)
       };
 
       setMessages(prev => [...prev, assistantMessage]);

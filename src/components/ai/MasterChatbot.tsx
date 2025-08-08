@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 
 interface Message {
   id: string;
@@ -39,6 +40,7 @@ const MasterChatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { logAIEvent } = useAIEventLogger();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,6 +88,8 @@ Como posso ajudá-lo hoje?`,
 
       setMessages([welcomeMessage]);
       setIsInitialized(true);
+      // log init event (non-blocking)
+      logAIEvent({ source: 'master_ai_hub', action: 'init', message: 'initialize' });
     } catch (error) {
       console.error('Error initializing chat:', error);
       toast({
@@ -109,6 +113,9 @@ Como posso ajudá-lo hoje?`,
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+
+    // log user message event (non-blocking)
+    logAIEvent({ source: 'master_ai_hub', action: 'message', message });
 
     try {
       const { data, error } = await supabase.functions.invoke('master-chatbot', {
@@ -172,6 +179,8 @@ Como posso ajudá-lo hoje?`,
     };
 
     const message = actionMessages[action as keyof typeof actionMessages] || action;
+    // log quick action selection (non-blocking)
+    logAIEvent({ source: 'master_ai_hub', action: 'quick_action', message, metadata: { quick_action: action } });
     await sendMessage(message);
   };
 
