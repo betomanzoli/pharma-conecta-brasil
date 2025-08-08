@@ -156,6 +156,15 @@ const AIAssistant = () => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Log assistant response (non-blocking)
+      logAIEvent({
+        source: 'ai_assistant',
+        action: 'assistant_response',
+        message: assistantMessage.content,
+        metadata: { context: currentContext, suggestions: assistantMessage.suggestions || [] }
+      });
+
       setIsLoading(false);
 
       // Síntese de voz se habilitada

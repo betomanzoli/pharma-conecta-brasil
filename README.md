@@ -293,6 +293,20 @@ npm run test:performance
 - ANVISA Guidelines ✅
 - FDA 21 CFR Part 11 (planejado)
 
+## 📚 SOP, Usabilidade e Telemetria de IA
+
+- Registro contínuo de usabilidade: mantemos este README como fonte única de verdade para padrões de uso e melhores práticas.
+- Telemetria de IA ativada: TODAS as perguntas e respostas do Master AI Hub e do AI Assistant são registradas em `public.ai_chat_events` com RLS.
+  - Campos: `user_id, source, action, message, intents[], topics[], project_id, metadata, created_at`.
+  - Finalidade: alimentar o loop de aprendizado (Edge Function `ml-feedback-loop`), personalizar perfis dinâmicos, melhorar o AI Matching e prever sucesso de projetos.
+  - Privacidade: políticas RLS garantem acesso apenas ao dono; admins podem auditar; aderente à LGPD.
+- Boas práticas de uso:
+  - Seja específico nas perguntas (objetivo, prazo, restrições) para melhor contexto de IA.
+  - Vincule a um projeto quando aplicável (project_id) para análises preditivas por projeto.
+  - Dê feedback explícito no matching (aceito/recusado) para acelerar o treinamento (tabela `match_feedback`).
+- Operação padrão (SOP):
+  1) Consultar IA → 2) Gerar recomendações/matches → 3) Criar/atualizar plano no módulo de projetos → 4) Executar automações → 5) Medir KPIs em Analytics → 6) Dar feedback.
+
 ## 📞 Suporte
 
 ### Documentação

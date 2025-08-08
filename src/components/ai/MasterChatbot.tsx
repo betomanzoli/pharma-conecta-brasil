@@ -88,8 +88,9 @@ Como posso ajudá-lo hoje?`,
 
       setMessages([welcomeMessage]);
       setIsInitialized(true);
-      // log init event (non-blocking)
+      // log init and welcome assistant message (non-blocking)
       logAIEvent({ source: 'master_ai_hub', action: 'init', message: 'initialize' });
+      logAIEvent({ source: 'master_ai_hub', action: 'assistant_response', message: welcomeMessage.content, metadata: { type: 'welcome' } });
     } catch (error) {
       console.error('Error initializing chat:', error);
       toast({
@@ -139,6 +140,17 @@ Como posso ajudá-lo hoje?`,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // log assistant response (non-blocking)
+      logAIEvent({
+        source: 'master_ai_hub',
+        action: 'assistant_response',
+        message: assistantMessage.content,
+        metadata: {
+          sources: assistantMessage.sources || [],
+          related_questions: assistantMessage.related_questions || []
+        }
+      });
 
       // Mostrar toast de sucesso se houver fontes
       if (data.sources && data.sources.length > 0) {
