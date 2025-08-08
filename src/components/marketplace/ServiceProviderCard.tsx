@@ -29,9 +29,10 @@ interface ServiceProviderCardProps {
   provider: ServiceProvider;
   onContact: (providerId: string) => void;
   onSchedule: (providerId: string) => void;
+  actions?: React.ReactNode;
 }
 
-const ServiceProviderCard = ({ provider, onContact, onSchedule }: ServiceProviderCardProps) => {
+const ServiceProviderCard = ({ provider, onContact, onSchedule, actions }: ServiceProviderCardProps) => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'laboratory': return <FlaskConical className="h-4 w-4" />;
@@ -106,25 +107,31 @@ const ServiceProviderCard = ({ provider, onContact, onSchedule }: ServiceProvide
           </p>
         </div>
 
-        <div className="flex space-x-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onContact(provider.id)}
-            className="flex-1 flex items-center justify-center space-x-1"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Contatar</span>
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => onSchedule(provider.id)}
-            className="flex-1 flex items-center justify-center space-x-1 bg-[#1565C0] hover:bg-[#1565C0]/90"
-          >
-            <Calendar className="h-4 w-4" />
-            <span>Agendar</span>
-          </Button>
-        </div>
+          <div className="flex space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onContact(provider.id)}
+              className="flex-1 flex items-center justify-center space-x-1"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Contatar</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => onSchedule(provider.id)}
+              className="flex-1 flex items-center justify-center space-x-1 bg-[#1565C0] hover:bg-[#1565C0]/90"
+            >
+              <Calendar className="h-4 w-4" />
+              <span>Agendar</span>
+            </Button>
+          </div>
+
+          {actions && (
+            <div className="mt-3">
+              {actions}
+            </div>
+          )}
       </CardContent>
     </Card>
   );
