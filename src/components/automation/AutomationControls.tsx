@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, Play, Pause, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isDemoMode } from '@/utils/demoMode';
+import { useUnifiedActions } from '@/hooks/useUnifiedActions';
 
 interface AutomationControlsProps {
   automationId: string;
@@ -34,8 +35,17 @@ const AutomationControls: React.FC<AutomationControlsProps> = ({
   const [threshold, setThreshold] = useState('80');
   const { toast } = useToast();
   const isDemo = isDemoMode();
+  const { logMetric } = useUnifiedActions();
 
-  const handleSaveConfig = () => {
+  const handleSaveConfig = async () => {
+    await logMetric('automation_config_saved', {
+      automationId,
+      name,
+      frequency,
+      notifications,
+      threshold: Number(threshold),
+      criteriaLength: criteria.length,
+    });
     toast({
       title: "Configuração salva",
       description: `Automação "${name}" configurada com sucesso.`,
@@ -43,8 +53,13 @@ const AutomationControls: React.FC<AutomationControlsProps> = ({
     setConfigOpen(false);
   };
 
-  const handleExecute = () => {
+  const handleExecute = async () => {
     onExecute(automationId);
+    await logMetric('automation_executed', {
+      automationId,
+      name,
+      isDemo,
+    });
     toast({
       title: "Automação executada",
       description: isDemo 

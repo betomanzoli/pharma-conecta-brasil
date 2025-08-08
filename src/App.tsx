@@ -36,7 +36,7 @@ const Forums = lazy(() => import("./pages/Forums"));
 const Network = lazy(() => import("./pages/Network"));
 const MentorshipHub = lazy(() => import("./pages/MentorshipHub"));
 const Projects = lazy(() => import("./pages/Projects"));
-const Reports = lazy(() => import("./pages/Reports"));
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 
 const queryClient = new QueryClient();
@@ -80,7 +80,7 @@ const App = () => (
                 <Route path="/network" element={<Network />} />
                 <Route path="/mentorship" element={<MentorshipHub />} />
                 <Route path="/projects" element={<Projects />} />
-                <Route path="/reports" element={<Reports />} />
+                <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/marketplace" element={<Marketplace />} />
               </Routes>
             </Suspense>

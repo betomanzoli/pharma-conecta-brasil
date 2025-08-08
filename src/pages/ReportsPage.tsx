@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import ReportBuilder from '@/components/reports/ReportBuilder';
@@ -16,6 +16,22 @@ import { isDemoMode } from '@/utils/demoMode';
 
 const ReportsPage = () => {
   const isDemo = isDemoMode();
+
+  useEffect(() => {
+    const title = 'Relatórios e Analytics | Plataforma';
+    document.title = title;
+
+    const desc = isDemo 
+      ? 'Relatórios e analytics com dados demonstrativos.' 
+      : 'Relatórios personalizados, insights de IA e analytics em uma única página.';
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = desc;
+  }, [isDemo]);
 
   return (
     <ProtectedRoute>
