@@ -18,7 +18,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  Bot
 } from 'lucide-react';
 import { useState } from 'react';
 import { isDemoMode } from '@/utils/demoMode';
@@ -40,6 +41,7 @@ const PersistentNavigation = () => {
   const primaryItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard', status: 'active' },
     { path: '/chat', icon: MessageSquare, label: 'AI Assistant', status: 'active' },
+    { path: '/master-ai', icon: Bot, label: 'Master AI', status: 'beta' },
     { path: '/marketplace', icon: Building2, label: 'Marketplace', status: isDemo ? 'active' : 'development' },
     { path: '/knowledge', icon: BookOpen, label: 'Biblioteca', status: 'active' },
   ];
