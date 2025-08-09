@@ -20,36 +20,57 @@ import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
 import MasterChatbot from '@/components/ai/MasterChatbot';
 
 const MasterAIHub = () => {
-  const aiFeatures = [
-    {
-      title: 'Chat Inteligente',
-      description: 'Converse com IA especializada em farmacêutica',
-      icon: MessageSquare,
-      href: '/chat',
-      status: 'active'
-    },
-    {
-      title: 'Análise Preditiva',
-      description: 'Previsões de mercado e tendências',
-      icon: BarChart3,
-      href: '/analytics',
-      status: 'beta'
-    },
-    {
-      title: 'Matching AI',
-      description: 'Encontre parceiros ideais automaticamente',
-      icon: Users,
-      href: '/network',
-      status: 'active'
-    },
-    {
-      title: 'Automação Inteligente',
-      description: 'Fluxos automatizados com IA',
-      icon: Workflow,
-      href: '/automation',
-      status: 'development'
-    }
-  ];
+const aiFeatures = [
+  {
+    title: 'Chat Inteligente',
+    description: 'Converse com IA especializada em farmacêutica',
+    icon: MessageSquare,
+    href: '/chat',
+    status: 'active'
+  },
+  {
+    title: 'Estrategista IA',
+    description: 'Gere business cases e análises SWOT guiadas',
+    icon: Sparkles,
+    href: '/ai/estrategista',
+    status: 'beta'
+  },
+  {
+    title: 'Técnico‑Regulatório IA',
+    description: 'Parecer técnico e caminho regulatório (ANVISA/FDA/EMA)',
+    icon: BarChart3,
+    href: '/ai/regulatorio',
+    status: 'beta'
+  },
+  {
+    title: 'Gerente de Projetos IA',
+    description: 'Charter, cronograma e stakeholders com IA',
+    icon: Users,
+    href: '/ai/gerente-projetos',
+    status: 'development'
+  },
+  {
+    title: 'Assistente de Documentação',
+    description: 'Preencha CAPA, SOPs e CTD com validação',
+    icon: Workflow,
+    href: '/ai/documentacao',
+    status: 'development'
+  },
+  {
+    title: 'Dashboard de Sinergia',
+    description: 'KPIs e status integrados dos módulos de IA',
+    icon: Bot,
+    href: '/ai/sinergia',
+    status: 'beta'
+  },
+  {
+    title: 'Biblioteca de Prompts',
+    description: 'Prompts por fase do projeto para IA',
+    icon: Sparkles,
+    href: '/ai/prompts',
+    status: 'active'
+  }
+];
 
   return (
     <ProtectedRoute>

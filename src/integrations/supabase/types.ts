@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_embeddings: {
+        Row: {
+          created_at: string
+          dimension: number | null
+          embedding_data: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+          model: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dimension?: number | null
+          embedding_data: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          model?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dimension?: number | null
+          embedding_data?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          model?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anvisa_conjunto_detalhe: {
         Row: {
           conjunto_id: string | null

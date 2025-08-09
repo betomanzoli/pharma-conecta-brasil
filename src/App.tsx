@@ -24,6 +24,14 @@ const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const PlatformDemo = lazy(() => import("./pages/PlatformDemo"));
 const KnowledgeLibrary = lazy(() => import("./pages/KnowledgeLibrary"));
 
+// AI Modules (new)
+const BusinessCaseAssistant = lazy(() => import("./pages/BusinessCaseAssistant"));
+const RegulatoryAssistant = lazy(() => import("./pages/RegulatoryAssistant"));
+const ProjectManagerAI = lazy(() => import("./pages/ProjectManagerAI"));
+const DocumentationAssistant = lazy(() => import("./pages/DocumentationAssistant"));
+const SynergyDashboard = lazy(() => import("./pages/SynergyDashboard"));
+const PromptLibrary = lazy(() => import("./pages/PromptLibrary"));
+
 // User type specific dashboards
 const DashboardGeneral = lazy(() => import("./pages/DashboardGeneral"));
 const DashboardCompany = lazy(() => import("./pages/DashboardCompany"));
@@ -74,14 +82,22 @@ const App = () => (
                 <Route path="/dashboard/laboratory" element={<DashboardLaboratory />} />
                 <Route path="/dashboard/consultant" element={<DashboardConsultant />} />
                 
-                {/* Additional functional pages */}
-                <Route path="/master-ai" element={<MasterAIHub />} />
-                <Route path="/forums" element={<Forums />} />
-                <Route path="/network" element={<Network />} />
-                <Route path="/mentorship" element={<MentorshipHub />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/marketplace" element={<Marketplace />} />
+{/* Additional functional pages */}
+<Route path="/master-ai" element={<MasterAIHub />} />
+<Route path="/forums" element={<Forums />} />
+<Route path="/network" element={<Network />} />
+<Route path="/mentorship" element={<MentorshipHub />} />
+<Route path="/projects" element={<Projects />} />
+<Route path="/reports" element={<ReportsPage />} />
+<Route path="/marketplace" element={<Marketplace />} />
+
+{/* AI Modules */}
+<Route path="/ai/estrategista" element={<BusinessCaseAssistant />} />
+<Route path="/ai/regulatorio" element={<RegulatoryAssistant />} />
+<Route path="/ai/gerente-projetos" element={<ProjectManagerAI />} />
+<Route path="/ai/documentacao" element={<DocumentationAssistant />} />
+<Route path="/ai/sinergia" element={<SynergyDashboard />} />
+<Route path="/ai/prompts" element={<PromptLibrary />} />
               </Routes>
             </Suspense>
           </BrowserRouter>
