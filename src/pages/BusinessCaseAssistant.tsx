@@ -7,11 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
+import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
+import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAICoordinator } from '@/hooks/useAICoordinator';
 import { Link } from 'react-router-dom';
 
 const BusinessCaseAssistant = () => {
   const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
+  const { analyzeTechRegulatory } = useAITechRegulatory();
+  const { analyzeProject } = useAIAgent();
+  const { coordinate } = useAICoordinator();
 
   const [opportunity, setOpportunity] = useState('');
   const [productType, setProductType] = useState('');
@@ -22,6 +29,7 @@ const BusinessCaseAssistant = () => {
   const [timeframe, setTimeframe] = useState('');
   const [risks, setRisks] = useState('');
   const [outputMd, setOutputMd] = useState<string | null>(null);
+  const [autoHandoff, setAutoHandoff] = useState(false);
 
   useEffect(() => {
     document.title = 'Estrategista IA – Business Case | PharmaConnect';
@@ -49,6 +57,27 @@ const BusinessCaseAssistant = () => {
       risks,
     });
     setOutputMd(res?.output_md ?? null);
+
+    if (autoHandoff) {
+      try {
+        await analyzeTechRegulatory({
+          product_type: productType,
+          target_regions: targetMarket || 'Brasil',
+        });
+      } catch {}
+      try {
+        await analyzeProject({
+          title: opportunity || `Projeto ${productType || 'Farmacêutico'}`,
+          objective: differentiation || '',
+          scope: '',
+          stakeholders: '',
+          risks,
+        });
+      } catch {}
+      try {
+        await coordinate({ focus: 'exec_summary', priorities: ['cronograma', 'riscos'] });
+      } catch {}
+    }
   };
 
   return (
@@ -99,7 +128,13 @@ const BusinessCaseAssistant = () => {
                     <Label htmlFor="risks">Riscos</Label>
                     <Textarea id="risks" value={risks} onChange={(e) => setRisks(e.target.value)} />
                   </div>
-                  <Button type="submit" disabled={loading}>{loading ? 'Gerando...' : 'Gerar Análise'}</Button>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch id="autoHandoff" checked={autoHandoff} onCheckedChange={setAutoHandoff} />
+                      <Label htmlFor="autoHandoff">Auto‑handoff (Regulatório → Projeto → Coordenador)</Label>
+                    </div>
+                    <Button type="submit" disabled={loading}>{loading ? 'Gerando...' : 'Gerar Análise'}</Button>
+                  </div>
                 </form>
               </CardContent>
             </Card>
