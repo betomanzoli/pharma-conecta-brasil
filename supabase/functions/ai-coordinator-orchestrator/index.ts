@@ -29,6 +29,31 @@ serve(async (req) => {
       });
     }
 
+    // Rate limiting and audit
+    const FUNCTION_NAME = 'ai-coordinator-orchestrator';
+    const WINDOW_MINUTES = 5;
+    const MAX_CALLS = 10;
+    const since = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
+    const { count, error: countErr } = await supabase
+      .from('function_invocations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', auth.user.id)
+      .eq('function_name', FUNCTION_NAME)
+      .gte('invoked_at', since);
+    if (countErr) console.error('rate-limit count error', countErr);
+    if ((count ?? 0) >= MAX_CALLS) {
+      return new Response(
+        JSON.stringify({ error: 'rate_limited', detail: `Limite de ${MAX_CALLS} chamadas a cada ${WINDOW_MINUTES} minutos.` }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    await supabase.from('function_invocations').insert({
+      user_id: auth.user.id,
+      function_name: FUNCTION_NAME,
+      metadata: { ip: req.headers.get('x-forwarded-for') || '', ua: req.headers.get('user-agent') || '' }
+    });
+    await supabase.rpc('audit_log', { action_type: 'invoke', table_name: 'edge_function', record_id: null, details: { function_name: FUNCTION_NAME } });
+
     const body = await req.json();
     const { project_id = null, focus = "exec_summary", priorities = [] } = body || {};
 

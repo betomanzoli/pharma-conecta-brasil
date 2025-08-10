@@ -16,7 +16,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY')!;
 
     const authHeader = req.headers.get('Authorization');
@@ -24,8 +24,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const supabase = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      global: { headers: { Authorization: authHeader || '' } },
     });
 
     const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -33,6 +33,31 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const userId = userData.user.id;
+
+    // Rate limiting and audit
+    const FUNCTION_NAME = 'ai-technical-regulatory';
+    const WINDOW_MINUTES = 5;
+    const MAX_CALLS = 10;
+    const since = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
+    const { count, error: countErr } = await supabase
+      .from('function_invocations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('function_name', FUNCTION_NAME)
+      .gte('invoked_at', since);
+    if (countErr) console.error('rate-limit count error', countErr);
+    if ((count ?? 0) >= MAX_CALLS) {
+      return new Response(
+        JSON.stringify({ error: 'rate_limited', detail: `Limite de ${MAX_CALLS} chamadas a cada ${WINDOW_MINUTES} minutos.` }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    await supabase.from('function_invocations').insert({
+      user_id: userId,
+      function_name: FUNCTION_NAME,
+      metadata: { ip: req.headers.get('x-forwarded-for') || '', ua: req.headers.get('user-agent') || '' }
+    });
+    await supabase.rpc('audit_log', { action_type: 'invoke', table_name: 'edge_function', record_id: null, details: { function_name: FUNCTION_NAME } });
 
     // Expected input
     const body = await req.json();

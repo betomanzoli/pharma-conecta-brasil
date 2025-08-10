@@ -2262,6 +2262,30 @@ export type Database = {
           },
         ]
       }
+      function_invocations: {
+        Row: {
+          function_name: string
+          id: string
+          invoked_at: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          function_name: string
+          id?: string
+          invoked_at?: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          function_name?: string
+          id?: string
+          invoked_at?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       integration_data: {
         Row: {
           content: Json | null
