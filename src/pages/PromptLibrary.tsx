@@ -10,7 +10,20 @@ const PromptLibrary = () => {
     link.rel = 'canonical';
     link.href = window.location.origin + '/ai/prompts';
     document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = 'Prompts prontos por fase do projeto para IA farmacêutica.';
+    document.head.appendChild(meta);
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Biblioteca de Prompts',
+      itemListElement: categories.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.title }))
+    });
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(link); document.head.removeChild(meta); document.head.removeChild(script); };
   }, []);
 
   const categories = [
