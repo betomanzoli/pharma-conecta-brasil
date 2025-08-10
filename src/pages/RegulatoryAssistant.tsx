@@ -27,6 +27,18 @@ const RegulatoryAssistant = () => {
     link.rel = 'canonical';
     link.href = window.location.origin + '/ai/regulatorio';
     document.head.appendChild(link);
+
+    // Prefill from Business Case handoff if available
+    try {
+      const raw = localStorage.getItem('handoff.regulatorio');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.product_type) setProductType(parsed.product_type);
+        if (parsed?.target_regions) setTargetRegions(parsed.target_regions);
+        localStorage.removeItem('handoff.regulatorio');
+      }
+    } catch {}
+
     return () => { document.head.removeChild(link); };
   }, []);
 

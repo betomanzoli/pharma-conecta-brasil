@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
+import { Link } from 'react-router-dom';
 
 const BusinessCaseAssistant = () => {
   const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
@@ -105,9 +106,28 @@ const BusinessCaseAssistant = () => {
               </CardHeader>
               <CardContent>
                 {outputMd ? (
-                  <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {outputMd}
-                  </article>
+                  <>
+                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                      {outputMd}
+                    </article>
+                    <div className="mt-4">
+                      <Link
+                        to="/ai/regulatorio"
+                        onClick={() => {
+                          try {
+                            localStorage.setItem('handoff.regulatorio', JSON.stringify({
+                              product_type: productType || '',
+                              target_regions: targetMarket || 'Brasil',
+                            }));
+                          } catch {}
+                        }}
+                        className="inline-block"
+                        aria-label="Continuar análise técnico‑regulatória"
+                      >
+                        <Button variant="secondary">Handoff para Validador Técnico‑Regulatório</Button>
+                      </Link>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-muted-foreground">O resultado em Markdown aparecerá aqui após a geração.</p>
                 )}
