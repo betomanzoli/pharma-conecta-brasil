@@ -39,6 +39,7 @@ const MasterChatbot = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { logAIEvent } = useAIEventLogger();
 
@@ -66,6 +67,17 @@ const MasterChatbot = () => {
       });
 
       if (error) throw error;
+
+      // Criar (ou iniciar) uma thread persistente
+      const { data: threadRes, error: threadErr } = await supabase.functions.invoke('master-chatbot', {
+        body: {
+          action: 'init_thread',
+          user_id: user?.id,
+          title: 'Chat Master AI'
+        }
+      });
+      if (threadErr) throw threadErr;
+      setThreadId(threadRes?.thread_id || null);
 
       const welcomeMessage: Message = {
         id: Date.now().toString(),
@@ -124,6 +136,7 @@ Como posso ajudá-lo hoje?`,
           action: 'chat',
           message,
           user_id: user?.id,
+          thread_id: threadId,
           context: {}
         }
       });
@@ -140,6 +153,26 @@ Como posso ajudá-lo hoje?`,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Atualizar threadId se veio do backend
+      if (data.thread_id && !threadId) {
+        setThreadId(data.thread_id);
+      }
+
+      // Sugestão de novo chat quando histórico ficar pesado
+      if (data.suggest_new_thread) {
+        toast({
+          title: 'Sugestão: iniciar novo chat',
+          description: 'O histórico está longo. Podemos abrir um novo chat para manter a performance. Copie a sugestão exibida.',
+        });
+        const suggestion: Message = {
+          id: (Date.now() + 2).toString(),
+          content: `💡 Sugestão de novo chat:\n\n${data.suggested_prompt || ''}`,
+          sender: 'assistant',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, suggestion]);
+      }
 
       // log assistant response (non-blocking)
       logAIEvent({
