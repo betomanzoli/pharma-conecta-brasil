@@ -3,6 +3,10 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAICoordinator } from '@/hooks/useAICoordinator';
 
 interface AgentOutputRow {
   id: string;
@@ -14,6 +18,20 @@ interface AgentOutputRow {
 const SynergyDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<AgentOutputRow[]>([]);
+  const { coordinate, loading: coordLoading } = useAICoordinator();
+  const [focus, setFocus] = useState('exec_summary');
+  const [prioritiesText, setPrioritiesText] = useState('');
+
+  const fetchOutputs = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('ai_agent_outputs')
+      .select('id, agent_type, output_md, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (!error && data) setRows(data as any);
+    setLoading(false);
+  };
 
   useEffect(() => {
     document.title = 'Dashboard de Sinergia | PharmaConnect';
@@ -27,18 +45,7 @@ const SynergyDashboard = () => {
     meta.content = 'Sinergia dos agentes IA: KPIs e últimos outputs consolidados.';
     document.head.appendChild(meta);
 
-    const fetchData = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('ai_agent_outputs')
-        .select('id, agent_type, output_md, created_at')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (!error && data) setRows(data as any);
-      setLoading(false);
-    };
-
-    fetchData();
+    fetchOutputs();
 
     return () => { document.head.removeChild(link); document.head.removeChild(meta); };
   }, []);
@@ -54,7 +61,43 @@ const SynergyDashboard = () => {
       <MainLayout>
         <main className="container mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold mb-2">Dashboard de Sinergia</h1>
-          <p className="text-muted-foreground mb-6">Consolide KPIs e status dos módulos de IA e projetos.</p>
+          <p className="text-muted-foreground mb-4">Consolide KPIs e status dos módulos de IA e projetos.</p>
+
+          <section className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Síntese do Coordenador</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const prios = prioritiesText
+                      .split(',')
+                      .map(p => p.trim())
+                      .filter(Boolean);
+                    const res = await coordinate({ focus, priorities: prios });
+                    if (res) {
+                      await fetchOutputs();
+                    }
+                  }}
+                >
+                  <div>
+                    <Label htmlFor="focus">Foco</Label>
+                    <Input id="focus" value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="exec_summary" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="priorities">Prioridades (separe por vírgulas)</Label>
+                    <Input id="priorities" value={prioritiesText} onChange={(e) => setPrioritiesText(e.target.value)} placeholder="cronograma, riscos, stakeholders" />
+                  </div>
+                  <div>
+                    <Button type="submit" disabled={coordLoading}>{coordLoading ? 'Gerando...' : 'Gerar Resumo'}</Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </section>
 
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
