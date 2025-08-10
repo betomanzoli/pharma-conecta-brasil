@@ -56,6 +56,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_outputs: {
+        Row: {
+          agent_type: string
+          created_at: string
+          handoff_to: string[]
+          id: string
+          input: Json
+          kpis: Json
+          output_md: string
+          project_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string
+          handoff_to?: string[]
+          id?: string
+          input?: Json
+          kpis?: Json
+          output_md: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          handoff_to?: string[]
+          id?: string
+          input?: Json
+          kpis?: Json
+          output_md?: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_outputs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "ai_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_chat_events: {
         Row: {
           action: string
@@ -162,6 +212,36 @@ export type Database = {
           entity_type?: string
           id?: string
           model?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
           updated_at?: string
           user_id?: string
         }
