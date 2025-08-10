@@ -29,7 +29,11 @@ const BusinessCaseAssistant = () => {
     link.rel = 'canonical';
     link.href = window.location.origin + '/ai/estrategista';
     document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = 'Business case farmacêutico com IA: SWOT, mercado e ROI.';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

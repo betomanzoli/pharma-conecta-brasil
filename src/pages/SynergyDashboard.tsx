@@ -22,6 +22,11 @@ const SynergyDashboard = () => {
     link.href = window.location.origin + '/ai/sinergia';
     document.head.appendChild(link);
 
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = 'Sinergia dos agentes IA: KPIs e últimos outputs consolidados.';
+    document.head.appendChild(meta);
+
     const fetchData = async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -35,7 +40,7 @@ const SynergyDashboard = () => {
 
     fetchData();
 
-    return () => { document.head.removeChild(link); };
+    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
   }, []);
 
   const counts = useMemo(() => {

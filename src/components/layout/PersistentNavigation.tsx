@@ -57,11 +57,25 @@ const PersistentNavigation = () => {
         { path: '/automation', icon: Workflow, label: 'Automações', status: 'beta' },
         { path: '/reports', icon: BarChart3, label: 'Relatórios', status: 'active' },
         { path: '/analytics', icon: BarChart3, label: 'Analytics', status: 'beta' },
+        // IA Modules
+        { path: '/ai/estrategista', icon: Bot, label: 'IA Business Case', status: 'active' },
+        { path: '/ai/regulatorio', icon: Bot, label: 'IA Técnico‑Regulatório', status: 'active' },
+        { path: '/ai/gerente-projetos', icon: Bot, label: 'IA Gerente Projetos', status: 'active' },
+        { path: '/ai/documentacao', icon: Bot, label: 'IA Documentação', status: 'active' },
+        { path: '/ai/sinergia', icon: Bot, label: 'IA Sinergia', status: 'active' },
+        { path: '/ai/prompts', icon: BookOpen, label: 'IA Prompts', status: 'active' },
       ];
     } else {
       return [
         { path: '/network', icon: Users, label: 'Rede', status: 'development' },
         { path: '/projects', icon: Briefcase, label: 'Projetos', status: 'development' },
+        // IA Modules (ativos)
+        { path: '/ai/estrategista', icon: Bot, label: 'IA Business Case', status: 'active' },
+        { path: '/ai/regulatorio', icon: Bot, label: 'IA Técnico‑Regulatório', status: 'active' },
+        { path: '/ai/gerente-projetos', icon: Bot, label: 'IA Gerente Projetos', status: 'active' },
+        { path: '/ai/documentacao', icon: Bot, label: 'IA Documentação', status: 'active' },
+        { path: '/ai/sinergia', icon: Bot, label: 'IA Sinergia', status: 'active' },
+        { path: '/ai/prompts', icon: BookOpen, label: 'IA Prompts', status: 'active' },
       ];
     }
   };

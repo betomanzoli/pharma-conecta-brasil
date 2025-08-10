@@ -39,7 +39,12 @@ const RegulatoryAssistant = () => {
       }
     } catch {}
 
-    return () => { document.head.removeChild(link); };
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = 'Análise técnico‑regulatória com IA: pathways ANVISA/FDA/EMA e riscos.';
+    document.head.appendChild(meta);
+
+    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
