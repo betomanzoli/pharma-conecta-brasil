@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAIDocumentAssistant } from '@/hooks/useAIDocumentAssistant';
-
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 const DocumentationAssistant = () => {
   const { generateDocument, loading } = useAIDocumentAssistant();
   const [docType, setDocType] = useState('CTD');
@@ -15,7 +15,7 @@ const DocumentationAssistant = () => {
   const [context, setContext] = useState('');
   const [fieldsText, setFieldsText] = useState('');
   const [outputMd, setOutputMd] = useState<string | null>(null);
-
+  const { sendToMasterChat } = useMasterChatBridge();
   useEffect(() => {
     document.title = 'Assistente de Documentação | PharmaConnect';
     const link = document.createElement('link');
@@ -96,9 +96,31 @@ const DocumentationAssistant = () => {
               </CardHeader>
               <CardContent>
                 {outputMd ? (
-                  <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {outputMd}
-                  </article>
+                  <>
+                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                      {outputMd}
+                    </article>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const content = `Via agente: Assistente de Documentação\nTipo: ${docType || '-'} • Template: ${templateName || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          sendToMasterChat(content, { metadata: { module: 'documentation' } });
+                        }}
+                      >
+                        Enviar para chat
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const content = `Via agente: Assistente de Documentação (novo chat)\nTipo: ${docType || '-'} • Template: ${templateName || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          const title = `${docType} ${templateName}`.trim() || 'Documento';
+                          sendToMasterChat(content, { newThread: true, title, metadata: { module: 'documentation' } });
+                        }}
+                      >
+                        Novo chat com este resultado
+                      </Button>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-muted-foreground">O conteúdo em Markdown aparecerá aqui após a geração.</p>
                 )}

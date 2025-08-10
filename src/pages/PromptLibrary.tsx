@@ -2,6 +2,8 @@
 import React, { useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
+import { Button } from '@/components/ui/button';
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 
 const PromptLibrary = () => {
   useEffect(() => {
@@ -34,6 +36,8 @@ const PromptLibrary = () => {
     { title: 'Encerramento', prompts: ['Lições aprendidas', 'Relatório final'] },
   ];
 
+  const { sendToMasterChat } = useMasterChatBridge();
+
   return (
     <ProtectedRoute>
       <MainLayout>
@@ -46,7 +50,16 @@ const PromptLibrary = () => {
                 <h2 className="text-lg font-semibold mb-2">{cat.title}</h2>
                 <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                   {cat.prompts.map((p) => (
-                    <li key={p}>{p}</li>
+                    <li key={p} className="flex items-center justify-between gap-2">
+                      <span>{p}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendToMasterChat(p, { metadata: { module: 'prompt_library', category: cat.title } })}
+                      >
+                        Enviar para chat
+                      </Button>
+                    </li>
                   ))}
                 </ul>
               </div>

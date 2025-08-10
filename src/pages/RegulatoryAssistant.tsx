@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
-
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 const RegulatoryAssistant = () => {
   const { analyzeTechRegulatory, loading } = useAITechRegulatory();
+  const { sendToMasterChat } = useMasterChatBridge();
 
   const [productType, setProductType] = useState('');
   const [routeOrManufacturing, setRouteOrManufacturing] = useState('');
@@ -116,9 +117,30 @@ const RegulatoryAssistant = () => {
               </CardHeader>
               <CardContent>
                 {outputMd ? (
-                  <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {outputMd}
-                  </article>
+                  <>
+                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                      {outputMd}
+                    </article>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const content = `Via agente: Técnico‑Regulatório IA\nProduto: ${productType || '-'}\nRegiões: ${targetRegions || '-'}\nEstágio: ${clinicalStage || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          sendToMasterChat(content, { metadata: { module: 'tech_regulatory' } });
+                        }}
+                      >
+                        Enviar para chat
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const content = `Via agente: Técnico‑Regulatório IA (novo chat)\nProduto: ${productType || '-'}\nRegiões: ${targetRegions || '-'}\nEstágio: ${clinicalStage || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          sendToMasterChat(content, { newThread: true, title: productType || 'Parecer regulatório', metadata: { module: 'tech_regulatory' } });
+                        }}
+                      >
+                        Novo chat com este resultado
+                      </Button>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-muted-foreground">O resultado em Markdown aparecerá aqui após a geração.</p>
                 )}

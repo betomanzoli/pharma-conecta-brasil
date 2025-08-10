@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAICoordinator } from '@/hooks/useAICoordinator';
-
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 interface AgentOutputRow {
   id: string;
   agent_type: string;
@@ -21,6 +21,7 @@ const SynergyDashboard = () => {
   const { coordinate, loading: coordLoading } = useAICoordinator();
   const [focus, setFocus] = useState('exec_summary');
   const [prioritiesText, setPrioritiesText] = useState('');
+  const { sendToMasterChat } = useMasterChatBridge();
 
   const fetchOutputs = async () => {
     setLoading(true);
@@ -135,16 +136,28 @@ const SynergyDashboard = () => {
                     {rows.length === 0 && (
                       <p className="text-muted-foreground">Nenhum output gerado ainda.</p>
                     )}
-                    {rows.slice(0, 10).map(r => (
-                      <article key={r.id} className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {new Date(r.created_at).toLocaleString()} • {r.agent_type}
-                        </div>
-                        <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap max-w-none line-clamp-6">
-                          {r.output_md}
-                        </div>
-                      </article>
-                    ))}
+                      {rows.slice(0, 10).map(r => (
+                        <article key={r.id} className="rounded-md border p-3">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {new Date(r.created_at).toLocaleString()} • {r.agent_type}
+                          </div>
+                          <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap max-w-none line-clamp-6">
+                            {r.output_md}
+                          </div>
+                          <div className="mt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const content = `Via agente: Sinergia – ${r.agent_type}\n\n${(r.output_md || '').slice(0, 4000)}`;
+                                sendToMasterChat(content, { metadata: { module: 'synergy', output_id: r.id } });
+                              }}
+                            >
+                              Enviar para chat
+                            </Button>
+                          </div>
+                        </article>
+                      ))}
                   </div>
                 )}
               </CardContent>

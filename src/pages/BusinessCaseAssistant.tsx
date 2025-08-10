@@ -13,13 +13,13 @@ import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
 import { useAIAgent } from '@/hooks/useAIAgent';
 import { useAICoordinator } from '@/hooks/useAICoordinator';
 import { Link } from 'react-router-dom';
-
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 const BusinessCaseAssistant = () => {
   const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
   const { analyzeTechRegulatory } = useAITechRegulatory();
   const { analyzeProject } = useAIAgent();
   const { coordinate } = useAICoordinator();
-
+  const { sendToMasterChat } = useMasterChatBridge();
   const [opportunity, setOpportunity] = useState('');
   const [productType, setProductType] = useState('');
   const [targetMarket, setTargetMarket] = useState('');
@@ -149,7 +149,7 @@ const BusinessCaseAssistant = () => {
                     <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
                       {outputMd}
                     </article>
-                    <div className="mt-4">
+                    <div className="mt-4 space-y-3">
                       <Link
                         to="/ai/regulatorio"
                         onClick={() => {
@@ -165,6 +165,26 @@ const BusinessCaseAssistant = () => {
                       >
                         <Button variant="secondary">Handoff para Validador Técnico‑Regulatório</Button>
                       </Link>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const content = `Via agente: Estrategista IA – Business Case\nOportunidade: ${opportunity || '-'}\nProduto: ${productType || '-'}\nMercado: ${targetMarket || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                            sendToMasterChat(content, { metadata: { module: 'business_case' } });
+                          }}
+                        >
+                          Enviar para chat
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const content = `Via agente: Estrategista IA – Business Case (novo chat)\nOportunidade: ${opportunity || '-'}\nProduto: ${productType || '-'}\nMercado: ${targetMarket || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                            sendToMasterChat(content, { newThread: true, title: opportunity || 'Business Case', metadata: { module: 'business_case' } });
+                          }}
+                        >
+                          Novo chat com este resultado
+                        </Button>
+                      </div>
                     </div>
                   </>
                 ) : (

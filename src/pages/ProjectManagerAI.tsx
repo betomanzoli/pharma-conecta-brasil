@@ -9,11 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAIAgent } from '@/hooks/useAIAgent';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
-
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 const ProjectManagerAI = () => {
   const { analyzeProject, loading } = useAIAgent();
   const { logAIEvent } = useAIEventLogger();
-
+  const { sendToMasterChat } = useMasterChatBridge();
   const [title, setTitle] = useState('');
   const [objective, setObjective] = useState('');
   const [scope, setScope] = useState('');
@@ -91,9 +91,30 @@ const ProjectManagerAI = () => {
               </CardHeader>
               <CardContent>
                 {outputMd ? (
-                  <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {outputMd}
-                  </article>
+                  <>
+                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                      {outputMd}
+                    </article>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const content = `Via agente: Gerente de Projetos IA\nTítulo: ${title || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          sendToMasterChat(content, { metadata: { module: 'project_manager' } });
+                        }}
+                      >
+                        Enviar para chat
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const content = `Via agente: Gerente de Projetos IA (novo chat)\nTítulo: ${title || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          sendToMasterChat(content, { newThread: true, title: title || 'Project Charter', metadata: { module: 'project_manager' } });
+                        }}
+                      >
+                        Novo chat com este resultado
+                      </Button>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-muted-foreground">O resultado em Markdown aparecerá aqui após a geração.</p>
                 )}
