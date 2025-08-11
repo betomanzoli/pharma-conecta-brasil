@@ -24,6 +24,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useReportSystem } from '@/hooks/useReportSystem';
 
 interface ReportTemplate {
   id: string;
@@ -48,6 +49,24 @@ const ReportTemplates = () => {
     filters: {}
   });
   const [isGenerating, setIsGenerating] = useState(false);
+const { generateReport: generateReportAction, downloadJSON } = useReportSystem();
+
+const mapTemplateToReportType = (t: ReportTemplate) => {
+  switch (t.category) {
+    case 'performance':
+      return 'api_performance';
+    case 'compliance':
+      return 'compliance';
+    case 'financial':
+      return 'business_growth';
+    case 'network':
+      return 'user_analytics';
+    case 'market':
+      return 'business_growth';
+    default:
+      return 'comprehensive';
+  }
+};
 
   const templates: ReportTemplate[] = [
     {
@@ -147,32 +166,20 @@ const ReportTemplates = () => {
     if (!selectedTemplate) return;
 
     setIsGenerating(true);
-    
     try {
-      // Simular geração do relatório
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const reportData = {
-        template: selectedTemplate,
-        customization,
-        generatedAt: new Date().toISOString(),
-        data: generateMockData(selectedTemplate)
-      };
+      const reportType = mapTemplateToReportType(selectedTemplate);
+      const fmt = customization.format === 'csv' ? 'json' : customization.format;
+      const res = await generateReportAction({
+        reportType: reportType as any,
+        timeRange: customization.dateRange as any,
+        format: fmt as any,
+        filters: { metrics: customization.metrics, ...customization.filters },
+      });
 
-      // Simular download
-      const dataStr = JSON.stringify(reportData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const fileName = `${customization.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', fileName);
-      linkElement.click();
-
+      const filename = `${customization.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
+      downloadJSON(res?.report ?? res, filename);
       toast.success('Relatório gerado com sucesso!');
       setSelectedTemplate(null);
-      
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       toast.error('Erro ao gerar relatório. Tente novamente.');

@@ -15,6 +15,7 @@ import {
   Plus, X, Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useReportSystem } from '@/hooks/useReportSystem';
 
 interface ReportConfig {
   name: string;
@@ -24,7 +25,7 @@ interface ReportConfig {
     from: Date;
     to: Date;
   };
-  metrics: string[];
+  metrics: string[const { generateReport: generateReportAction, downloadJSON } = useReportSystem();
   filters: Record<string, any>;
   format: 'pdf' | 'excel' | 'csv';
 }
@@ -126,9 +127,28 @@ const ReportBuilder = () => {
     });
   };
 
-  const handleGenerateReport = () => {
-    console.log('Gerando relatório:', reportConfig);
-    // Aqui seria implementada a lógica de geração do relatório
+  const handleGenerateReport = async () => {
+    // Map UI type to backend report type
+    const typeMap: Record<string, any> = {
+      performance: 'api_performance',
+      financial: 'business_growth',
+      network: 'user_analytics',
+      activity: 'comprehensive',
+    };
+
+    // Approximate timeRange from date difference
+    const diffDays = Math.max(1, Math.round((reportConfig.dateRange.to.getTime() - reportConfig.dateRange.from.getTime()) / (1000*60*60*24)));
+    const timeRange = diffDays <= 7 ? '7d' : diffDays <= 30 ? '30d' : diffDays <= 90 ? '90d' : '1y';
+    const fmt = reportConfig.format === 'csv' ? 'json' : reportConfig.format;
+
+    const res = await generateReportAction({
+      reportType: typeMap[reportConfig.type] || 'comprehensive',
+      timeRange: timeRange as any,
+      format: fmt as any,
+      filters: { metrics: reportConfig.metrics, ...reportConfig.filters },
+    });
+
+    downloadJSON(res?.report ?? res, `${reportConfig.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`);
   };
 
   return (

@@ -18,10 +18,10 @@ import {
   Settings,
   Eye
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
-
+import { useToast } from '@/hooks/use-toast';
+import { useReportSystem } from '@/hooks/useReportSystem';
 interface ReportConfig {
   id: string;
   name: string;
@@ -42,7 +42,7 @@ const CustomReportBuilder = () => {
   const [currentReport, setCurrentReport] = useState<ReportConfig | null>(null);
   const { profile } = useAuth();
   const { toast } = useToast();
-
+  const { generateReport: generateReportAction, downloadJSON } = useReportSystem();
   const reportTemplates = [
     {
       id: 'matching-performance',
@@ -79,60 +79,35 @@ const CustomReportBuilder = () => {
   ];
 
   const generateReport = async (template: any) => {
-    if (!profile) return;
-
     setLoading(true);
     try {
-      // Buscar dados da empresa
-      const { data: company } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .single();
-
-      if (!company) {
-        toast({
-          title: "Erro",
-          description: "Empresa não encontrada",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Gerar dados do relatório baseado no template
-      const reportData = await generateReportData(template, company);
-
-      // Salvar configuração do relatório
-      const reportConfig = {
-        company_id: company.id,
-        name: template.name,
-        type: template.type,
-        config: {
-          template_id: template.id,
-          metrics: template.metrics,
-          generated_at: new Date().toISOString(),
-          data: reportData
-        },
-        created_at: new Date().toISOString()
+      const typeMap: Record<string, any> = {
+        matching: 'comprehensive',
+        regulatory: 'regulatory_summary',
+        partnerships: 'business_growth',
+        analytics: 'user_analytics',
       };
 
-      // Em produção, salvaria no banco e geraria PDF/Excel
-      console.log('Relatório gerado:', reportConfig);
+      const res = await generateReportAction({
+        reportType: typeMap[template.type] || 'comprehensive',
+        timeRange: '30d',
+        format: 'json',
+        filters: { metrics: template.metrics, templateId: template.id },
+      });
 
       toast({
-        title: "Relatório Gerado!",
+        title: 'Relatório Gerado!',
         description: `${template.name} foi gerado com sucesso`,
       });
 
-      // Simular download do relatório
-      downloadReport(reportConfig);
-
+      const filename = `${template.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
+      downloadJSON(res?.report ?? res, filename);
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível gerar o relatório",
-        variant: "destructive"
+        title: 'Erro',
+        description: 'Não foi possível gerar o relatório',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);

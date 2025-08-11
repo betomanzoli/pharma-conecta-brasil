@@ -27,6 +27,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useReportSystem } from '@/hooks/useReportSystem';
 
 interface ExportConfig {
   format: 'pdf' | 'excel' | 'csv' | 'powerpoint' | 'json';
@@ -62,6 +63,7 @@ const EnhancedReportExporter = () => {
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const { exportData, scheduleReport: scheduleReportAction, downloadJSON } = useReportSystem();
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([
     {
       id: '1',
@@ -120,39 +122,18 @@ const EnhancedReportExporter = () => {
   const exportReport = async () => {
     setIsExporting(true);
     setExportProgress(0);
-
     try {
-      // Simulate export process with progress
-      const steps = [
-        'Coletando dados...',
-        'Gerando gráficos...',
-        'Aplicando template...',
-        'Criando arquivo...',
-        'Finalizando...'
-      ];
-
-      for (let i = 0; i < steps.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setExportProgress(((i + 1) / steps.length) * 100);
-        toast.info(steps[i]);
-      }
-
-      // Create mock download
-      const fileName = `relatorio-${Date.now()}.${exportConfig.format}`;
-      const blob = new Blob(['Mock report content'], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-
+      const mappedFormat = ['pdf','excel'].includes(exportConfig.format) ? exportConfig.format : 'json';
+      const res = await exportData({ format: mappedFormat as any, filters: { template: exportConfig.template } });
+      downloadJSON(res, `relatorio-${Date.now()}`);
       toast.success('Relatório exportado com sucesso!');
     } catch (error) {
+      console.error(error);
       toast.error('Erro ao exportar relatório');
     } finally {
       setIsExporting(false);
-      setExportProgress(0);
+      setExportProgress(100);
+      setTimeout(() => setExportProgress(0), 400);
     }
   };
 

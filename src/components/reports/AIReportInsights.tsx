@@ -28,6 +28,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Pie } from 'recharts';
+import { useReportSystem } from '@/hooks/useReportSystem';
 
 interface Insight {
   id: string;
@@ -63,102 +64,76 @@ const AIReportInsights = () => {
     loadPredictiveMetrics();
   }, [selectedTimeframe, selectedCategory]);
 
+  const { getInsights } = useReportSystem();
+
   const loadInsights = async () => {
     setLoading(true);
-    
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const mockInsights: Insight[] = [
-      {
-        id: '1',
-        type: 'trend',
-        title: 'Crescimento Acelerado nas Integrações',
-        description: 'Detectamos um aumento de 34% no uso de integrações ANVISA nos últimos 15 dias, superando a média histórica.',
-        confidence: 89,
-        impact: 'high',
-        category: 'integrations',
-        actionable: true,
-        timestamp: new Date().toISOString(),
-        data: {
-          growth: 34,
-          period: '15 dias',
-          comparison: 'média histórica'
-        }
-      },
-      {
-        id: '2',
-        type: 'anomaly',
-        title: 'Pico Incomum de Falhas na API Stripe',
-        description: 'Identificamos 15x mais falhas que o normal na integração Stripe entre 14h-16h. Possível instabilidade.',
-        confidence: 95,
-        impact: 'critical',
-        category: 'payments',
-        actionable: true,
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        data: {
-          failureIncrease: '15x',
-          timeWindow: '14h-16h',
-          affected: 'Stripe API'
-        }
-      },
-      {
-        id: '3',
-        type: 'prediction',
-        title: 'Previsão de Sobrecarga do Sistema',
-        description: 'Com base no crescimento atual, o sistema pode atingir 85% da capacidade em 45 dias.',
-        confidence: 76,
-        impact: 'medium',
-        category: 'performance',
-        actionable: true,
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        data: {
-          predictedCapacity: 85,
-          timeToReach: '45 dias',
-          currentGrowthRate: '12% mensal'
-        }
-      },
-      {
-        id: '4',
-        type: 'recommendation',
-        title: 'Otimização de Custos Identificada',
-        description: 'Migrar 3 integrações menos usadas para planos básicos pode economizar R$ 2.400/mês.',
-        confidence: 82,
-        impact: 'medium',
-        category: 'costs',
-        actionable: true,
-        timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-        data: {
-          potentialSavings: 2400,
-          integrationsAffected: 3,
-          implementationTime: '2 semanas'
-        }
-      },
-      {
-        id: '5',
-        type: 'achievement',
-        title: 'Meta de Uptime Superada',
-        description: 'Parabéns! O sistema manteve 99.97% de uptime este mês, superando a meta de 99.9%.',
-        confidence: 100,
-        impact: 'high',
-        category: 'performance',
-        actionable: false,
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        data: {
-          actualUptime: 99.97,
-          targetUptime: 99.9,
-          period: 'este mês'
-        }
+    try {
+      const res = await getInsights({
+        reportType: 'comprehensive',
+        timeRange: selectedTimeframe as any,
+        filters: selectedCategory === 'all' ? {} : { category: selectedCategory },
+      });
+      const ai = res?.insights || res; // edge returns {analysis, recommendations, risks, opportunities}
+      const transformed: Insight[] = [];
+      if (ai?.recommendations) {
+        ai.recommendations.forEach((r: string, idx: number) => transformed.push({
+          id: `rec-${idx}`,
+          type: 'recommendation',
+          title: 'Recomendação',
+          description: r,
+          confidence: 85,
+          impact: 'medium',
+          category: selectedCategory,
+          actionable: true,
+          timestamp: new Date().toISOString(),
+        }));
       }
-    ];
-
-    // Filter by category if selected
-    const filteredInsights = selectedCategory === 'all' 
-      ? mockInsights 
-      : mockInsights.filter(insight => insight.category === selectedCategory);
-
-    setInsights(filteredInsights);
-    setLoading(false);
+      if (ai?.risks) {
+        ai.risks.forEach((r: string, idx: number) => transformed.push({
+          id: `risk-${idx}`,
+          type: 'anomaly',
+          title: 'Risco identificado',
+          description: r,
+          confidence: 80,
+          impact: 'high',
+          category: selectedCategory,
+          actionable: true,
+          timestamp: new Date().toISOString(),
+        }));
+      }
+      if (ai?.opportunities) {
+        ai.opportunities.forEach((o: string, idx: number) => transformed.push({
+          id: `opp-${idx}`,
+          type: 'trend',
+          title: 'Oportunidade',
+          description: o,
+          confidence: 78,
+          impact: 'medium',
+          category: selectedCategory,
+          actionable: true,
+          timestamp: new Date().toISOString(),
+        }));
+      }
+      if (ai?.analysis) {
+        transformed.unshift({
+          id: 'analysis',
+          type: 'prediction',
+          title: 'Análise Executiva (IA)',
+          description: typeof ai.analysis === 'string' ? ai.analysis : JSON.stringify(ai.analysis),
+          confidence: 90,
+          impact: 'high',
+          category: selectedCategory,
+          actionable: false,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      setInsights(transformed);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadPredictiveMetrics = async () => {
