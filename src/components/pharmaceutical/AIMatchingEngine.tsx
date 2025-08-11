@@ -17,7 +17,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 interface Match {
   company: any;
   compatibility_score: number;
@@ -33,9 +33,9 @@ const AIMatchingEngine = () => {
     location: '',
     expertise: ''
   });
-  const { profile } = useAuth();
-  const { toast } = useToast();
-
+const { profile } = useAuth();
+const { toast } = useToast();
+const { logAIEvent } = useAIEventLogger();
   const handleAIMatching = async () => {
     if (!profile) {
       toast({
@@ -46,8 +46,9 @@ const AIMatchingEngine = () => {
       return;
     }
 
-    setLoading(true);
+setLoading(true);
     try {
+      await logAIEvent({ source: 'ai_assistant', action: 'search', message: 'ai-matching-enhanced', metadata: { criteria: searchCriteria } });
       // Buscar empresa do usuário
       const { data: company } = await supabase
         .from('companies')
@@ -93,11 +94,12 @@ const AIMatchingEngine = () => {
           recommended_actions: ['Enviar mensagem', 'Agendar reunião', 'Solicitar proposta']
         }));
 
-        setMatches(formattedMatches);
+setMatches(formattedMatches);
         toast({
           title: "Matching com IA Real Completo!",
           description: `Encontrados ${formattedMatches.length} matches usando algoritmos de ML`,
         });
+        await logAIEvent({ source: 'ai_assistant', action: 'results', message: 'ai-matching-enhanced', metadata: { results: formattedMatches.length } });
       } else {
         throw new Error('Nenhum match encontrado');
       }
@@ -110,6 +112,34 @@ const AIMatchingEngine = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFeedback = async (match: Match, type: 'accepted' | 'rejected') => {
+    if (!profile) return;
+    let rejection_reason: string | null = null;
+    if (type === 'rejected') {
+      rejection_reason = window.prompt('Motivo do rejeite (opcional):') || null;
+    }
+    try {
+      await supabase.from('match_feedback').insert({
+        user_id: profile.id,
+        match_id: match.company?.name || 'unknown',
+        match_score: Math.round(match.compatibility_score * 100) / 100,
+        feedback_type: type,
+        rejection_reason,
+        provider_name: match.company?.name || null,
+        provider_type: (match.company?.description || '').includes('Consultor') ? 'consultant' : 'laboratory',
+      });
+      await logAIEvent({ source: 'ai_assistant', action: 'feedback', message: type, metadata: { match: match.company?.name, score: match.compatibility_score } });
+      // Optional: analyze feedback to adjust weights
+      try {
+        await supabase.functions.invoke('ml-feedback-loop', { body: { action: 'analyze_feedback' } });
+      } catch (_) { /* silent */ }
+      toast({ title: 'Feedback registrado', description: 'Obrigado! Isso ajuda a melhorar os matches.' });
+    } catch (err) {
+      console.error('Falha ao registrar feedback', err);
+      toast({ title: 'Erro', description: 'Não foi possível registrar o feedback.', variant: 'destructive' });
     }
   };
 
@@ -211,7 +241,7 @@ const AIMatchingEngine = () => {
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+<div className="flex space-x-2">
                   <Button size="sm" variant="outline">
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Mensagem
@@ -223,6 +253,12 @@ const AIMatchingEngine = () => {
                   <Button size="sm" variant="outline">
                     <FileText className="h-4 w-4 mr-1" />
                     Ver Perfil
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleFeedback(match, 'accepted')}>
+                    Aceitar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleFeedback(match, 'rejected')}>
+                    Rejeitar
                   </Button>
                 </div>
               </CardContent>

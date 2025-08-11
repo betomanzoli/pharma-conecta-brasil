@@ -3,7 +3,7 @@ import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MasterChatbot from '@/components/ai/MasterChatbot';
-
+import AICommunicationAssistant from '@/components/chat/AICommunicationAssistant';
 const ChatPage = () => {
   return (
     <ProtectedRoute>
@@ -19,6 +19,9 @@ const ChatPage = () => {
           </div>
           
           <MasterChatbot />
+          <div className="mt-6">
+            <AICommunicationAssistant />
+          </div>
         </div>
       </MainLayout>
     </ProtectedRoute>

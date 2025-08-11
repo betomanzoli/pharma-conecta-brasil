@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, MessageSquare, FileText, Users, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 interface AICommunicationAssistantProps {
   chatId?: string;
   projectId?: string;
@@ -19,12 +19,12 @@ const AICommunicationAssistant: React.FC<AICommunicationAssistantProps> = ({
   projectId,
   onSuggestionAccepted
 }) => {
-  const { toast } = useToast();
+const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [inputText, setInputText] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [summary, setSummary] = useState('');
-
+  const { logAIEvent } = useAIEventLogger();
   const generateSuggestions = async () => {
     if (!inputText.trim()) return;
     
@@ -41,7 +41,8 @@ const AICommunicationAssistant: React.FC<AICommunicationAssistantProps> = ({
 
       if (error) throw error;
 
-      setSuggestions(data.suggestions);
+setSuggestions(data.suggestions);
+      await logAIEvent({ source: 'ai_assistant', action: 'suggestions', message: 'generated', projectId: projectId, metadata: { count: (data.suggestions || []).length } });
       toast({
         title: "Sugestões Geradas",
         description: "A IA criou sugestões de comunicação para você."
