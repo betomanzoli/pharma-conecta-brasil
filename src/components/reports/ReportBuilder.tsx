@@ -25,12 +25,13 @@ interface ReportConfig {
     from: Date;
     to: Date;
   };
-  metrics: string[const { generateReport: generateReportAction, downloadJSON } = useReportSystem();
+  metrics: string[];
   filters: Record<string, any>;
   format: 'pdf' | 'excel' | 'csv';
 }
 
 const ReportBuilder = () => {
+  const { generateReport: generateReportAction, downloadJSON } = useReportSystem();
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     name: '',
     description: '',
