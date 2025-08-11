@@ -236,6 +236,17 @@ const ReportBuilder = () => {
                         mode="range"
                         defaultMonth={reportConfig.dateRange.from}
                         numberOfMonths={2}
+                        selected={reportConfig.dateRange as any}
+                        onSelect={(range: any) => {
+                          if (!range) return;
+                          setReportConfig(prev => ({
+                            ...prev,
+                            dateRange: {
+                              from: range.from ?? prev.dateRange.from,
+                              to: range.to ?? prev.dateRange.to,
+                            },
+                          }));
+                        }}
                       />
                     </PopoverContent>
                   </Popover>

@@ -168,8 +168,19 @@ const EnhancedReportExporter = () => {
       config: exportConfig
     };
 
-    setScheduledReports(prev => [...prev, newReport]);
-    toast.success('Relatório agendado com sucesso!');
+    try {
+      const mappedFormat = ['pdf','excel'].includes(exportConfig.format) ? exportConfig.format : 'pdf';
+      await scheduleReportAction({
+        reportType: 'comprehensive' as any,
+        format: mappedFormat as any,
+        filters: { template: exportConfig.template, frequency: newReport.frequency, recipients: newReport.recipients },
+      });
+      setScheduledReports(prev => [...prev, newReport]);
+      toast.success('Relatório agendado com sucesso!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Falha ao agendar relatório');
+    }
   };
 
   const toggleReportStatus = (reportId: string) => {
