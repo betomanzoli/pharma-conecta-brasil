@@ -1,314 +1,209 @@
 
-# PharmaConnect Brasil - Plataforma de Consultoria Farmacêutica com IA
+# Master AI Hub - Plataforma de IA para Indústria Farmacêutica
 
-## 🚀 Visão Geral
+O Master AI Hub é uma plataforma especializada que combina inteligência artificial avançada com expertise farmacêutica para acelerar inovação, otimizar processos e facilitar colaborações no setor farmacêutico brasileiro.
 
-PharmaConnect Brasil é uma plataforma completa de consultoria farmacêutica que integra múltiplos agentes de IA especializados para fornecer suporte abrangente em todas as fases do desenvolvimento e regulamentação de produtos farmacêuticos.
+## 🚀 Principais Funcionalidades
 
-## 🎯 Funcionalidades Principais
+### 🤖 Agentes de IA Especializados
+- **Project Analyst**: Análise e planejamento de projetos farmacêuticos
+- **Business Strategist**: Desenvolvimento de estratégias de negócio e análises de mercado
+- **Technical & Regulatory**: Análises técnico-regulatórias especializadas
+- **Document Assistant**: Geração automatizada de documentação GxP/ICH
+- **Coordinator**: Orquestração e síntese de análises multi-agente
 
-### 🤖 Hub de IA com 5 Agentes Especializados
+### 💬 Master AI Assistant
+- Chat inteligente com expertise farmacêutica
+- Integração com base de conhecimento especializada
+- Análise de contexto e recomendações personalizadas
+- Suporte a múltiplos idiomas
 
-#### 1. Estrategista de Negócios IA
-- **Função**: Business cases, análise SWOT e oportunidades de mercado
-- **Localização**: `/ai/estrategista`
-- **Capacidades**:
-  - Análise competitiva de mercado
-  - Geração de business cases completos
-  - Avaliação de oportunidades estratégicas
-  - Análise SWOT automática
+### 📚 Base de Conhecimento
+- Biblioteca de recursos farmacêuticos curados
+- Sistema de ingestão de documentos com IA
+- Busca semântica avançada
+- Ratings e comentários da comunidade
 
-#### 2. Técnico-Regulatório IA
-- **Função**: Compliance ANVISA, análise técnica e pathway regulatório
-- **Localização**: `/ai/tecnico-regulatorio`
-- **Capacidades**:
-  - Estratégias de submissão ANVISA/FDA/EMA
-  - Análise de pathways regulatórios
-  - Cronogramas de submissão
-  - Identificação de marcos críticos
+### 🔍 Inteligência de Mercado
+- Pesquisas em tempo real com Perplexity AI
+- Análises de tendências farmacêuticas
+- Monitoramento regulatório automatizado
+- Insights competitivos
 
-#### 3. Analista de Projetos IA
-- **Função**: Project Charter, análise de viabilidade e gestão de stakeholders
-- **Localização**: `/ai/analista-projetos`
-- **Capacidades**:
-  - Criação de Project Charters
-  - Análise de viabilidade
-  - Gestão de stakeholders
-  - Cronogramas e marcos
+### 🤝 Marketplace de Parcerias
+- Matching inteligente de parceiros
+- Perfis especializados por expertise
+- Sistema de verificação e compliance
+- Gestão de colaborações
 
-#### 4. Assistente de Documentação IA
-- **Função**: Templates inteligentes, SOPs e documentos regulatórios
-- **Localização**: `/ai/documentacao`
-- **Capacidades**:
-  - Geração automática de SOPs
-  - Templates de validação
-  - Módulos CTD
-  - Documentação regulatória
+### 🎯 Biblioteca de Prompts
+- Templates especializados para análises farmacêuticas
+- Prompts categorizados por área de expertise
+- Integração direta com o chat AI
+- Compartilhamento e avaliação da comunidade
 
-#### 5. Coordenador Central IA
-- **Função**: Orquestração de agentes e priorização de demandas
-- **Localização**: `/ai/coordenacao`
-- **Capacidades**:
-  - Coordenação entre agentes
-  - Priorização de tarefas
-  - Resumos executivos
-  - Workflow integrado
-
-### 📊 Dashboards e Ferramentas
-
-#### Dashboard de Sinergia
-- **Localização**: `/ai/sinergia`
-- **Função**: Orquestração e monitoramento dos agentes de IA
-- **Recursos**:
-  - Visualização de handoffs entre agentes
-  - Métricas de performance por agente
-  - Controle de execução de workflows
-  - Monitoramento em tempo real
-
-#### Biblioteca de Conhecimento (RAG)
-- **Localização**: `/knowledge`
-- **Função**: Base curada com RAG para busca inteligente
-- **Recursos**:
-  - Busca semântica com IA
-  - Ingestão de novos conteúdos
-  - Templates disponíveis para download
-  - Fontes de conhecimento organizadas
-
-#### Biblioteca de Prompts
-- **Localização**: `/ai/prompts`
-- **Função**: Prompts especializados por fase do projeto
-- **Recursos**:
-  - Prompts categorizados por área
-  - Integração com chat principal
-  - Sistema de favoritos
-  - Busca por contexto
-
-#### AI Matching Dashboard
-- **Localização**: `/ai/matching-dashboard`
-- **Função**: Métricas avançadas de matching e performance
-- **Recursos**:
-  - Análise de performance de IA
-  - Métricas de matching
-  - Relatórios de precisão
-
-#### Business Metrics
-- **Localização**: `/ai/business-metrics`
-- **Função**: KPIs de negócio e análise comercial
-- **Recursos**:
-  - KPIs comerciais
-  - Análise de ROI
-  - Métricas de crescimento
-
-### 🔄 Automações Inteligentes
-- **Localização**: `/automation`
-- **Função**: Processos automatizados e insights preditivos
-- **Recursos**:
-  - Auto-geração de business cases
-  - Monitoramento ANVISA automático
-  - Sincronização de documentos
-  - Relatórios periódicos automáticos
-  - Insights preditivos de eficiência
-
-### 📋 Gestão de Projetos
-- **Localização**: `/projects`
-- **Função**: Gerenciamento completo de projetos farmacêuticos
-- **Recursos**:
-  - Acompanhamento de progresso
-  - Gestão de equipes
-  - Controle de prazos
-  - Priorização de atividades
-
-### 📊 Relatórios e Analytics
-- **Localização**: `/reports`
-- **Função**: Análises detalhadas e relatórios customizados
-- **Recursos**:
-  - Relatórios de performance
-  - Métricas de projetos
-  - Análises temporais
-  - Exportação em PDF
-
-### 💬 Chat IA Integrado
-- **Localização**: `/chat`
-- **Função**: Assistente conversacional especializado
-- **Recursos**:
-  - Chat especializado em farmacêutica
-  - Integração com prompts da biblioteca
-  - Histórico de conversas
-  - Suporte em tempo real
-
-### ⚙️ Sistema de Configurações
-- **Localização**: `/settings`
-- **Função**: Personalização completa da plataforma
-- **Recursos**:
-  - Configurações de perfil
-  - Preferências de notificação
-  - Configurações de segurança
-  - Personalização de interface
-
-### 🔔 Sistema de Notificações
-- **Localização**: `/notifications`
-- **Função**: Alertas e atualizações em tempo real
-- **Recursos**:
-  - Notificações de handoffs
-  - Alertas de prazo
-  - Atualizações de status
-  - Notificações configuráveis
-
-## 📋 Templates Disponíveis
-
-### Business e Estratégia
-- Business Case Completo
-- Matriz SWOT Farmacêutica
-- Framework de Mercado
-- Business Case Técnico
-
-### Regulatório
-- Análise Regulatória (ANVISA/FDA/EMA)
-- Timeline Regulatório
-- CTD Módulo 2 (Sumários)
-- CTD Módulo 3 (Qualidade)
-
-### Qualidade e Compliance
-- SOP de Validação
-- Relatório de Validação
-- CAPA (Investigação, Desvio, Cliente)
-- Framework Manufatura & Qualidade
-
-### Gestão de Projetos
-- Project Management Completo
-- Matriz de Stakeholders
-- Análise de Riscos
-
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Edge Functions)
-- **IA**: Integração com OpenAI GPT-4, RAG com embeddings
-- **Autenticação**: Supabase Auth
-- **UI Components**: shadcn/ui, Radix UI
-- **Charts**: Recharts
-- **Icons**: Lucide React
+- **Backend**: Supabase (PostgreSQL, Edge Functions, Auth)
+- **IA**: Perplexity AI, OpenAI
+- **Infraestrutura**: Vite, React Router, Tanstack Query
 
-## 🚀 Instalação e Configuração
+## ⚙️ Configuração
 
 ### Pré-requisitos
 - Node.js 18+
-- npm ou yarn
 - Conta Supabase
+- Chaves de API:
+  - Perplexity AI (recomendado)
+  - OpenAI (opcional)
 
 ### Instalação
+
+1. **Clone o repositório**
 ```bash
-# Clone o repositório
-git clone [repository-url]
+git clone <repository-url>
+cd master-ai-hub
+```
 
-# Instale as dependências
+2. **Instale dependências**
+```bash
 npm install
+```
 
-# Configure as variáveis de ambiente
-cp .env.example .env.local
+3. **Configure as variáveis de ambiente no Supabase**
+   - Acesse o [Supabase Dashboard](https://supabase.com/dashboard)
+   - Vá para Project Settings > Edge Functions
+   - Configure os seguintes secrets:
+     - `PERPLEXITY_API_KEY`: Sua chave da Perplexity AI
+     - `OPENAI_API_KEY`: Sua chave da OpenAI (opcional)
 
-# Inicie o servidor de desenvolvimento
+4. **Execute o projeto**
+```bash
 npm run dev
 ```
 
-### Configuração do Supabase
-1. Crie um novo projeto no Supabase
-2. Configure as variáveis de ambiente:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+## 🔧 Configuração das APIs
 
-### Secrets Necessários
-Configure os seguintes secrets no Supabase:
-- `OPENAI_API_KEY` - Para funcionalidades de IA
-- `PERPLEXITY_API_KEY` - Para busca avançada (opcional)
+### Perplexity AI (Recomendado)
+1. Obtenha sua chave em [Perplexity API](https://www.perplexity.ai/settings/api)
+2. Configure no Supabase Dashboard como `PERPLEXITY_API_KEY`
+3. Usado para pesquisas em tempo real e análises especializadas
 
-## 📚 Guias de Uso
+### OpenAI (Opcional)
+1. Obtenha sua chave em [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Configure no Supabase Dashboard como `OPENAI_API_KEY`
+3. Usado como fallback para funcionalidades de chat
 
-### Como Usar os Agentes de IA
+## 📊 Funcionalidades por Módulo
 
-1. **Acesse o Master AI Hub** (`/master-ai`)
-2. **Selecione o agente apropriado** para sua necessidade
-3. **Forneça as informações** solicitadas
-4. **Aguarde o processamento** e revise os resultados
-5. **Use os handoffs** para enviar trabalho entre agentes
+### Agentes de IA
+- **Entrada**: Dados estruturados específicos por domínio
+- **Processamento**: Análise especializada com contexto farmacêutico
+- **Saída**: Relatórios em Markdown, KPIs e recomendações
 
-### Como Usar a Biblioteca de Conhecimento
+### Chat Inteligente
+- **Contexto**: Histórico de conversas persistente
+- **Conhecimento**: Integração com base de dados farmacêutica
+- **Personalização**: Adaptação ao perfil do usuário
 
-1. **Acesse a biblioteca** (`/knowledge`)
-2. **Use a busca RAG** para encontrar informações
-3. **Baixe templates** da seção de fontes
-4. **Ingira novo conteúdo** na aba correspondente
+### Marketplace
+- **Matching**: Algoritmo de compatibilidade baseado em IA
+- **Verificação**: Sistema de compliance automático
+- **Comunicação**: Chat integrado entre parceiros
 
-### Como Usar Prompts Especializados
+## 🔒 Segurança e Compliance
 
-1. **Acesse a biblioteca de prompts** (`/ai/prompts`)
-2. **Filtre por categoria** ou fase do projeto
-3. **Copie o prompt** ou envie direto para o chat
-4. **Personalize os campos** entre [COLCHETES]
+- **Autenticação**: Supabase Auth com RLS
+- **Audit Logs**: Rastreamento de todas as operações
+- **Rate Limiting**: Proteção contra uso excessivo
+- **Verificação**: Sistema de validação de perfis farmacêuticos
 
-### Workflow Recomendado
+## 🚀 Deploy
 
-1. **Estrategista de Negócios**: Análise inicial e business case
-2. **Técnico-Regulatório**: Definição de estratégia regulatória
-3. **Analista de Projetos**: Criação do project charter
-4. **Assistente de Documentação**: Geração de documentos
-5. **Coordenador Central**: Consolidação e próximos passos
+O projeto utiliza Supabase para backend e pode ser deployado em qualquer plataforma que suporte aplicações React:
 
-## 🔧 Funcionalidades Avançadas
+1. **Build do projeto**
+```bash
+npm run build
+```
 
-### Sistema de Handoffs
-- Transferência automática de trabalho entre agentes
-- Fila de processamento inteligente
-- Monitoramento em tempo real via Dashboard de Sinergia
+2. **Deploy no Supabase** (automático via GitHub)
+   - Conecte seu repositório no Supabase Dashboard
+   - Edge Functions são deployadas automaticamente
 
-### RAG (Retrieval-Augmented Generation)
-- Busca semântica em base de conhecimento
-- Embedding de documentos automático
-- Resultados ranqueados por relevância
+3. **Plataformas suportadas**
+   - Vercel
+   - Netlify
+   - AWS Amplify
+   - Cloudflare Pages
 
-### Automações Inteligentes
-- Monitoramento automático de mudanças regulatórias
-- Geração automática de relatórios
-- Notificações proativas de prazos
+## 📈 Monitoramento
 
-## 🎯 Casos de Uso
+### Logs de Edge Functions
+- Acesse logs em tempo real no Supabase Dashboard
+- Monitoramento de performance e erros
+- Métricas de uso por função
 
-### Desenvolvimento de Medicamento Genérico
-1. Business Case (Estrategista)
-2. Análise regulatória ANVISA (Técnico-Regulatório)
-3. Project Charter (Analista de Projetos)
-4. Documentação CTD (Assistente de Documentação)
+### Analytics
+- Dashboard de métricas integrado
+- Tracking de uso dos agentes de IA
+- Análise de engagement da comunidade
 
-### Validação de Processo
-1. Protocolo de validação (Assistente de Documentação)
-2. Cronograma do projeto (Analista de Projetos)
-3. Análise de riscos (Coordenador Central)
+## 🤝 Contribuição
 
-### Business Case para Novo Produto
-1. Análise de mercado (Estrategista)
-2. Viabilidade regulatória (Técnico-Regulatório)
-3. Recursos necessários (Analista de Projetos)
-4. Documentação de apoio (Assistente de Documentação)
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-## 📞 Suporte e Documentação
+## 📝 Estrutura do Projeto
 
-### Para Dúvidas e Suporte
-- Use o chat integrado (`/chat`) para assistência imediata
-- Acesse as notificações (`/notifications`) para atualizações
-- Consulte os relatórios (`/reports`) para métricas detalhadas
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── ui/             # Componentes base (shadcn/ui)
+│   ├── chat/           # Componentes de chat
+│   ├── knowledge/      # Componentes da base de conhecimento
+│   └── automation/     # Componentes de automação
+├── pages/              # Páginas da aplicação
+├── hooks/              # Custom hooks
+├── integrations/       # Integrações (Supabase)
+└── lib/               # Utilitários e configurações
 
-### Para Administradores
-- Configure automações em `/automation`
-- Monitore performance em `/ai/business-metrics`
-- Gerencie usuários via configurações (`/settings`)
+supabase/
+├── functions/          # Edge Functions
+├── migrations/         # Migrações do banco
+└── config.toml        # Configuração do Supabase
+```
 
-### Recursos Adicionais
-- **Biblioteca de Templates**: Modelos prontos para uso
-- **Sistema de Busca RAG**: Encontre informações rapidamente
-- **Dashboards Interativos**: Visualize métricas em tempo real
-- **Integração com APIs**: Conecte sistemas externos
+## 🎯 Roadmap
+
+### Próximas Funcionalidades
+- [ ] Análise preditiva de projetos farmacêuticos
+- [ ] Integração com APIs regulatórias (ANVISA, FDA)
+- [ ] Sistema de workflow automatizado
+- [ ] Dashboard de analytics avançado
+- [ ] App mobile (React Native)
+
+### Melhorias Planejadas
+- [ ] Performance otimizada para grandes volumes
+- [ ] Suporte a mais idiomas
+- [ ] Integração com ferramentas de projeto (Jira, Slack)
+- [ ] API pública para integrações
+
+## 📞 Suporte
+
+- **Documentação**: [Em desenvolvimento]
+- **Issues**: Use o GitHub Issues
+- **Email**: [Configurar email de suporte]
+- **Community**: [Discord/Slack da comunidade]
+
+## 📄 Licença
+
+Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
-**PharmaConnect Brasil** - Transformando a consultoria farmacêutica através da inteligência artificial. Todos os direitos reservados.
+**Master AI Hub** - Acelerando a inovação farmacêutica com inteligência artificial 🧬🤖
