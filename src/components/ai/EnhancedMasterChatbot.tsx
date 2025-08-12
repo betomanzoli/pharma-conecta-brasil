@@ -39,6 +39,7 @@ interface Thread {
   messages_count: number;
   last_message_preview: string;
   conversation_summary?: string;
+  user_id: string;
 }
 
 const EnhancedMasterChatbot = () => {
@@ -78,8 +79,12 @@ const EnhancedMasterChatbot = () => {
         .limit(10);
 
       if (threadsData && threadsData.length > 0) {
-        setThreads(threadsData);
-        const latestThread = threadsData[0];
+        const formattedThreads = threadsData.map(thread => ({
+          ...thread,
+          conversation_summary: thread.conversation_summary || ''
+        }));
+        setThreads(formattedThreads);
+        const latestThread = formattedThreads[0];
         setCurrentThread(latestThread);
         await loadMessages(latestThread.id);
         
@@ -122,8 +127,13 @@ const EnhancedMasterChatbot = () => {
 
       if (error) throw error;
 
-      setCurrentThread(newThread);
-      setThreads(prev => [newThread, ...prev]);
+      const formattedThread = {
+        ...newThread,
+        conversation_summary: newThread.conversation_summary || ''
+      };
+
+      setCurrentThread(formattedThread);
+      setThreads(prev => [formattedThread, ...prev]);
       setMessages([]);
       setConversationContext('');
       
@@ -165,7 +175,14 @@ Como posso ajudá-lo hoje?`,
         .order('created_at', { ascending: true });
 
       if (messagesData) {
-        setMessages(messagesData);
+        const formattedMessages: Message[] = messagesData.map(msg => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content,
+          created_at: msg.created_at,
+          metadata: msg.metadata
+        }));
+        setMessages(formattedMessages);
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
@@ -235,7 +252,15 @@ Faça um resumo de no máximo 300 palavras focando nos tópicos discutidos, deci
 
       if (userMsgError) throw userMsgError;
 
-      setMessages(prev => [...prev, userMsgData]);
+      const formattedUserMsg: Message = {
+        id: userMsgData.id,
+        role: 'user',
+        content: userMsgData.content,
+        created_at: userMsgData.created_at,
+        metadata: userMsgData.metadata
+      };
+
+      setMessages(prev => [...prev, formattedUserMsg]);
 
       // Preparar contexto da conversa
       let fullContext = '';
@@ -286,11 +311,19 @@ INSTRUÇÕES IMPORTANTES:
 
       if (aiMsgError) throw aiMsgError;
 
-      setMessages(prev => [...prev, aiMsgData]);
+      const formattedAiMsg: Message = {
+        id: aiMsgData.id,
+        role: 'assistant',
+        content: aiMsgData.content,
+        created_at: aiMsgData.created_at,
+        metadata: aiMsgData.metadata
+      };
+
+      setMessages(prev => [...prev, formattedAiMsg]);
 
       // Se atingiu o limite, gerar resumo e sugerir nova thread
       if (shouldSummarize) {
-        const summary = await generateConversationSummary([...messages, userMsgData, aiMsgData]);
+        const summary = await generateConversationSummary([...messages, formattedUserMsg, formattedAiMsg]);
         
         if (summary) {
           // Atualizar thread com resumo

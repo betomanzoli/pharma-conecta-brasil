@@ -8,7 +8,11 @@ interface AIIntegrationContext {
   userId: string;
   currentProject?: string;
   conversationHistory?: string;
-  userPreferences?: Record<string, any>;
+  userPreferences?: {
+    user_type?: string;
+    expertise_areas?: string[];
+    communication_style?: string;
+  };
   businessContext?: string;
 }
 
@@ -16,7 +20,7 @@ export const useAIIntegration = () => {
   const { toast } = useToast();
   const { logAIEvent } = useAIEventLogger();
 
-  const getIntegratedContext = useCallback(async (userId: string) => {
+  const getIntegratedContext = useCallback(async (userId: string): Promise<AIIntegrationContext> => {
     try {
       // Buscar contexto do usuário de múltiplas fontes
       const [profileData, recentEvents, activeProjects] = await Promise.all([
@@ -43,11 +47,11 @@ export const useAIIntegration = () => {
       const context: AIIntegrationContext = {
         userId,
         userPreferences: {
-          user_type: profileData.data?.user_type,
+          user_type: profileData.data?.user_type || 'professional',
           expertise_areas: [],
           communication_style: 'professional'
         },
-        businessContext: `Usuário é ${profileData.data?.user_type} especializado em farmacêutica.`,
+        businessContext: `Usuário é ${profileData.data?.user_type || 'profissional'} especializado em farmacêutica.`,
       };
 
       // Adicionar contexto de projetos ativos
@@ -74,12 +78,12 @@ export const useAIIntegration = () => {
 
   const executeIntegratedAI = useCallback(async (
     action: 'chat' | 'matching' | 'project_analysis' | 'regulatory_check',
-    input: any,
+    input: Record<string, any>,
     context?: AIIntegrationContext
   ) => {
     try {
       let functionName = '';
-      let enhancedInput = { ...input };
+      const enhancedInput = { ...input };
 
       // Adicionar contexto integrado ao input
       if (context) {
@@ -146,7 +150,7 @@ export const useAIIntegration = () => {
     }
   }, [logAIEvent, toast]);
 
-  const syncUserLearning = useCallback(async (userId: string, learningData: any) => {
+  const syncUserLearning = useCallback(async (userId: string, learningData: Record<string, any>) => {
     try {
       // Atualizar perfil de aprendizado do usuário
       await supabase.functions.invoke('federal-learning-system', {
