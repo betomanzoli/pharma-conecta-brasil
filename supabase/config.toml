@@ -1,26 +1,24 @@
 
 project_id = "irjjksfhyiwsbsipeyrj"
 
-[functions.regulatory-sync]
-verify_jwt = false
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
-[functions.federal-learning-system]
-verify_jwt = true
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://lovable.dev"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ups = false
 
-[functions.kb-rag]
-verify_jwt = true
-
-[functions.kb-ingest]
-verify_jwt = true
-
-[functions.comprehensive-integration-sync]
-verify_jwt = false
-
-[functions.brazilian-regulatory-api]
-verify_jwt = false
-
-[functions.ai-coordinator-orchestrator]
-verify_jwt = true
+[edge_functions]
+enabled = true
 
 [functions.ai-project-analyst]
 verify_jwt = true
@@ -34,8 +32,25 @@ verify_jwt = true
 [functions.ai-document-assistant]
 verify_jwt = true
 
-[functions.master-chatbot]
+[functions.ai-coordinator-orchestrator]
 verify_jwt = true
 
-[functions.master-automation]
+[functions.federal-learning-system]
 verify_jwt = true
+
+[functions.kb-ingest]
+verify_jwt = true
+
+[functions.kb-rag]
+verify_jwt = true
+
+[functions.perplexity-search]
+verify_jwt = false
+
+[functions.comprehensive-integration-sync]
+verify_jwt = false
+
+[realtime]
+enabled = true
+port = 54323
+max_header_length = 4096
