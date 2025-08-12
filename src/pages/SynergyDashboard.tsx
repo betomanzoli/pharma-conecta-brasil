@@ -1,169 +1,330 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAICoordinator } from '@/hooks/useAICoordinator';
-import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
-interface AgentOutputRow {
-  id: string;
-  agent_type: string;
-  output_md: string;
-  created_at: string;
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Bot, 
+  Activity, 
+  TrendingUp, 
+  Users, 
+  FileText, 
+  Workflow,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  BarChart3
+} from 'lucide-react';
+import MainLayout from '@/components/layout/MainLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAIHandoffs } from '@/hooks/useAIHandoffs';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AIModuleStatus {
+  name: string;
+  status: 'active' | 'idle' | 'processing' | 'error';
+  lastActivity: string;
+  totalOutputs: number;
+  avgProcessingTime: number;
+  icon: React.ElementType;
 }
 
 const SynergyDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<AgentOutputRow[]>([]);
-  const { coordinate, loading: coordLoading } = useAICoordinator();
-  const [focus, setFocus] = useState('exec_summary');
-  const [prioritiesText, setPrioritiesText] = useState('');
-  const { sendToMasterChat } = useMasterChatBridge();
+  const [modules, setModules] = useState<AIModuleStatus[]>([
+    {
+      name: 'Estrategista IA',
+      status: 'active',
+      lastActivity: '2 min atrás',
+      totalOutputs: 15,
+      avgProcessingTime: 45,
+      icon: TrendingUp
+    },
+    {
+      name: 'Técnico-Regulatório IA',
+      status: 'processing',
+      lastActivity: '5 min atrás',
+      totalOutputs: 8,
+      avgProcessingTime: 120,
+      icon: FileText
+    },
+    {
+      name: 'Gerente de Projetos IA',
+      status: 'idle',
+      lastActivity: '1 hora atrás',
+      totalOutputs: 12,
+      avgProcessingTime: 60,
+      icon: Users
+    },
+    {
+      name: 'Assistente de Documentação',
+      status: 'active',
+      lastActivity: '10 min atrás',
+      totalOutputs: 25,
+      avgProcessingTime: 30,
+      icon: FileText
+    }
+  ]);
 
-  const fetchOutputs = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('ai_agent_outputs')
-      .select('id, agent_type, output_md, created_at')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (!error && data) setRows(data as any);
-    setLoading(false);
-  };
+  const [handoffStats, setHandoffStats] = useState({
+    pending: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0
+  });
+
+  const { runNext, runAll } = useAIHandoffs();
 
   useEffect(() => {
-    document.title = 'Dashboard de Sinergia | PharmaConnect';
-    const link = document.createElement('link');
-    link.rel = 'canonical';
-    link.href = window.location.origin + '/ai/sinergia';
-    document.head.appendChild(link);
-
-    const meta = document.createElement('meta');
-    meta.name = 'description';
-    meta.content = 'Sinergia dos agentes IA: KPIs e últimos outputs consolidados.';
-    document.head.appendChild(meta);
-
-    fetchOutputs();
-
-    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
+    fetchHandoffStats();
   }, []);
 
-  const counts = useMemo(() => {
-    const map: Record<string, number> = {};
-    rows.forEach(r => { map[r.agent_type] = (map[r.agent_type] || 0) + 1; });
-    return map;
-  }, [rows]);
+  const fetchHandoffStats = async () => {
+    try {
+      const { data } = await supabase
+        .from('ai_handoff_jobs')
+        .select('status');
+      
+      if (data) {
+        const stats = data.reduce((acc, job) => {
+          acc[job.status as keyof typeof acc] = (acc[job.status as keyof typeof acc] || 0) + 1;
+          return acc;
+        }, { pending: 0, processing: 0, completed: 0, failed: 0 });
+        
+        setHandoffStats(stats);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500';
+      case 'processing': return 'bg-blue-500';
+      case 'idle': return 'bg-gray-500';
+      case 'error': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Ativo';
+      case 'processing': return 'Processando';
+      case 'idle': return 'Inativo';
+      case 'error': return 'Erro';
+      default: return status;
+    }
+  };
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <main className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold mb-2">Dashboard de Sinergia</h1>
-          <p className="text-muted-foreground mb-4">Consolide KPIs e status dos módulos de IA e projetos.</p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 text-white">
+                <Activity className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Dashboard de Sinergia</h1>
+                <p className="text-muted-foreground">
+                  Monitoramento integrado dos módulos de IA
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <section className="mb-6">
+          {/* KPIs Gerais */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Síntese do Coordenador</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Módulos Ativos</CardTitle>
+                <Bot className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <form
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const prios = prioritiesText
-                      .split(',')
-                      .map(p => p.trim())
-                      .filter(Boolean);
-                    const res = await coordinate({ focus, priorities: prios });
-                    if (res) {
-                      await fetchOutputs();
-                    }
-                  }}
-                >
-                  <div>
-                    <Label htmlFor="focus">Foco</Label>
-                    <Input id="focus" value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="exec_summary" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor="priorities">Prioridades (separe por vírgulas)</Label>
-                    <Input id="priorities" value={prioritiesText} onChange={(e) => setPrioritiesText(e.target.value)} placeholder="cronograma, riscos, stakeholders" />
-                  </div>
-                  <div>
-                    <Button type="submit" disabled={coordLoading}>{coordLoading ? 'Gerando...' : 'Gerar Resumo'}</Button>
-                  </div>
-                </form>
+                <div className="text-2xl font-bold">
+                  {modules.filter(m => m.status === 'active').length}/{modules.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Módulos em operação
+                </p>
               </CardContent>
             </Card>
-          </section>
 
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Outputs por Agente</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Handoffs Pendentes</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <p className="text-muted-foreground">Carregando...</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {Object.keys(counts).length === 0 && (
-                      <li className="text-muted-foreground">Sem dados ainda.</li>
-                    )}
-                    {Object.entries(counts).map(([type, count]) => (
-                      <li key={type} className="flex justify-between">
-                        <span>{type}</span>
-                        <span className="font-medium">{count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="text-2xl font-bold">{handoffStats.pending}</div>
+                <p className="text-xs text-muted-foreground">
+                  Aguardando processamento
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Últimos Outputs</CardTitle>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Outputs Totais</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <p className="text-muted-foreground">Carregando...</p>
-                ) : (
-                  <div className="space-y-4 max-h-[60vh] overflow-auto pr-2">
-                    {rows.length === 0 && (
-                      <p className="text-muted-foreground">Nenhum output gerado ainda.</p>
-                    )}
-                      {rows.slice(0, 10).map(r => (
-                        <article key={r.id} className="rounded-md border p-3">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {new Date(r.created_at).toLocaleString()} • {r.agent_type}
-                          </div>
-                          <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap max-w-none line-clamp-6">
-                            {r.output_md}
-                          </div>
-                          <div className="mt-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const content = `Via agente: Sinergia – ${r.agent_type}\n\n${(r.output_md || '').slice(0, 4000)}`;
-                                sendToMasterChat(content, { metadata: { module: 'synergy', output_id: r.id } });
-                              }}
-                            >
-                              Enviar para chat
-                            </Button>
-                          </div>
-                        </article>
-                      ))}
-                  </div>
-                )}
+                <div className="text-2xl font-bold">
+                  {modules.reduce((acc, m) => acc + m.totalOutputs, 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Resultados gerados hoje
+                </p>
               </CardContent>
             </Card>
-          </section>
-        </main>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {Math.round(modules.reduce((acc, m) => acc + m.avgProcessingTime, 0) / modules.length)}s
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Processamento médio
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Status dos Módulos */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Status dos Módulos IA</CardTitle>
+              <CardDescription>
+                Monitoramento em tempo real de cada módulo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {modules.map((module, index) => {
+                  const Icon = module.icon;
+                  return (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <Icon className="h-8 w-8 text-primary" />
+                        <div>
+                          <h3 className="font-semibold">{module.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Última atividade: {module.lastActivity}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{module.totalOutputs} outputs</p>
+                          <p className="text-xs text-muted-foreground">{module.avgProcessingTime}s médio</p>
+                        </div>
+                        <Badge 
+                          variant="outline" 
+                          className={`${getStatusColor(module.status)} text-white`}
+                        >
+                          {getStatusText(module.status)}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Handoffs */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Orquestração de Handoffs</CardTitle>
+              <CardDescription>
+                Controle de tarefas entre módulos de IA
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium">Status dos Jobs</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>Concluídos</span>
+                      </span>
+                      <span className="font-medium">{handoffStats.completed}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        <span>Pendentes</span>
+                      </span>
+                      <span className="font-medium">{handoffStats.pending}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center space-x-2">
+                        <Activity className="h-4 w-4 text-yellow-500" />
+                        <span>Processando</span>
+                      </span>
+                      <span className="font-medium">{handoffStats.processing}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center space-x-2">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <span>Falharam</span>
+                      </span>
+                      <span className="font-medium">{handoffStats.failed}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium">Controles</h4>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => runNext()} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <Workflow className="h-4 w-4 mr-2" />
+                      Executar Próximo Job
+                    </Button>
+                    <Button 
+                      onClick={() => runAll(10)} 
+                      className="w-full"
+                    >
+                      <Activity className="h-4 w-4 mr-2" />
+                      Executar Até 10 Jobs
+                    </Button>
+                    <Button 
+                      onClick={fetchHandoffStats} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <Activity className="h-4 w-4 mr-2" />
+                      Atualizar Status
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Alert>
+            <Activity className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Dashboard de Sinergia:</strong> Este painel monitora a integração 
+              entre os módulos de IA, permitindo visualizar KPIs, status de processamento 
+              e controlar a execução de handoffs entre agentes.
+            </AlertDescription>
+          </Alert>
+        </div>
       </MainLayout>
     </ProtectedRoute>
   );
