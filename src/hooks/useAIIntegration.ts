@@ -78,7 +78,7 @@ export const useAIIntegration = () => {
 
   const executeIntegratedAI = useCallback(async (
     action: 'chat' | 'matching' | 'project_analysis' | 'regulatory_check',
-    input: Record<string, any>,
+    input: any,
     context?: AIIntegrationContext
   ) => {
     try {
@@ -150,7 +150,7 @@ export const useAIIntegration = () => {
     }
   }, [logAIEvent, toast]);
 
-  const syncUserLearning = useCallback(async (userId: string, learningData: Record<string, any>) => {
+  const syncUserLearning = useCallback(async (userId: string, learningData: any) => {
     try {
       // Atualizar perfil de aprendizado do usuário
       await supabase.functions.invoke('federal-learning-system', {

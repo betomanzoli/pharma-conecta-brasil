@@ -79,10 +79,17 @@ const EnhancedMasterChatbot = () => {
         .limit(10);
 
       if (threadsData && threadsData.length > 0) {
-        const formattedThreads = threadsData.map(thread => ({
-          ...thread,
-          conversation_summary: thread.conversation_summary || ''
+        const formattedThreads: Thread[] = threadsData.map(thread => ({
+          id: thread.id,
+          title: thread.title,
+          created_at: thread.created_at,
+          updated_at: thread.updated_at,
+          messages_count: thread.messages_count,
+          last_message_preview: thread.last_message_preview,
+          conversation_summary: thread.conversation_summary || '',
+          user_id: thread.user_id
         }));
+        
         setThreads(formattedThreads);
         const latestThread = formattedThreads[0];
         setCurrentThread(latestThread);
@@ -127,9 +134,15 @@ const EnhancedMasterChatbot = () => {
 
       if (error) throw error;
 
-      const formattedThread = {
-        ...newThread,
-        conversation_summary: newThread.conversation_summary || ''
+      const formattedThread: Thread = {
+        id: newThread.id,
+        title: newThread.title,
+        created_at: newThread.created_at,
+        updated_at: newThread.updated_at,
+        messages_count: newThread.messages_count,
+        last_message_preview: newThread.last_message_preview,
+        conversation_summary: newThread.conversation_summary || '',
+        user_id: newThread.user_id
       };
 
       setCurrentThread(formattedThread);
@@ -177,7 +190,7 @@ Como posso ajudá-lo hoje?`,
       if (messagesData) {
         const formattedMessages: Message[] = messagesData.map(msg => ({
           id: msg.id,
-          role: msg.role as 'user' | 'assistant' | 'system',
+          role: (msg.role as 'user' | 'assistant' | 'system'),
           content: msg.content,
           created_at: msg.created_at,
           metadata: msg.metadata

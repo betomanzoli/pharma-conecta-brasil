@@ -195,6 +195,7 @@ export type Database = {
       }
       ai_chat_threads: {
         Row: {
+          conversation_summary: string | null
           created_at: string
           id: string
           last_message_preview: string | null
@@ -204,6 +205,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null
@@ -213,6 +215,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null
