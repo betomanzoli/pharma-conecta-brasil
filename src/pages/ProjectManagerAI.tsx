@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAIAgent } from '@/hooks/useAIAgent';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
+
 const ProjectManagerAI = () => {
   const { analyzeProject, loading } = useAIAgent();
   const { logAIEvent } = useAIEventLogger();

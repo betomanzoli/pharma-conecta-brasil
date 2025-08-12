@@ -1,70 +1,106 @@
+
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAIEventLogger } from '@/hooks/useAIEventLogger';
+import { useNavigate } from 'react-router-dom';
 
-interface SendOptions {
+interface SendToChatOptions {
   newThread?: boolean;
   title?: string;
   metadata?: Record<string, any>;
 }
 
 export const useMasterChatBridge = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { logAIEvent } = useAIEventLogger();
+  const navigate = useNavigate();
 
-  const ensureThreadId = useCallback(async (): Promise<string | null> => {
-    try {
-      const cached = localStorage.getItem('master_chat.thread_id');
-      if (cached) return cached;
-      const { data: auth } = await supabase.auth.getUser();
-      const uid = auth?.user?.id;
-      if (!uid) return null;
-      const { data, error } = await supabase.functions.invoke('master-chatbot', {
-        body: { action: 'init_thread', user_id: uid, title: 'Chat Master AI' },
-      });
-      if (error) return null;
-      const tid = data?.thread_id as string | null;
-      if (tid) localStorage.setItem('master_chat.thread_id', tid);
-      return tid;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const sendToMasterChat = useCallback(async (message: string, opts: SendOptions = {}) => {
+  const sendToMasterChat = useCallback(async (
+    content: string, 
+    options: SendToChatOptions = {}
+  ) => {
     try {
       const { data: auth } = await supabase.auth.getUser();
-      const uid = auth?.user?.id;
-      if (!uid) throw new Error('Usuário não autenticado');
-
-      let threadId: string | null = null;
-      if (opts.newThread) {
-        const { data, error } = await supabase.functions.invoke('master-chatbot', {
-          body: { action: 'init_thread', user_id: uid, title: opts.title || 'Novo chat' },
-        });
-        if (error) throw error;
-        threadId = data?.thread_id || null;
-        if (threadId) localStorage.setItem('master_chat.thread_id', threadId);
-      } else {
-        threadId = await ensureThreadId();
+      if (!auth?.user) {
+        toast({ title: 'Erro', description: 'Usuário não autenticado', variant: 'destructive' });
+        return;
       }
 
-      await logAIEvent({ source: 'agent_module', action: 'send_to_chat', message: message.slice(0, 200), metadata: { newThread: !!opts.newThread, ...opts.metadata } });
+      const { newThread = false, title, metadata = {} } = options;
 
-      const { error: chatErr } = await supabase.functions.invoke('master-chatbot', {
-        body: { action: 'chat', user_id: uid, thread_id: threadId, message },
+      if (newThread) {
+        // Criar nova thread
+        const { data, error } = await supabase.functions.invoke('master-chatbot', {
+          body: { 
+            action: 'init_thread', 
+            user_id: auth.user.id, 
+            title: title || 'Resultado de IA',
+            message: content
+          }
+        });
+
+        if (error) throw error;
+
+        // Enviar mensagem inicial
+        await supabase.functions.invoke('master-chatbot', {
+          body: { 
+            action: 'chat', 
+            user_id: auth.user.id, 
+            thread_id: data.thread_id,
+            message: content
+          }
+        });
+
+        toast({ 
+          title: 'Sucesso', 
+          description: 'Novo chat criado com o resultado' 
+        });
+
+        // Navegar para o chat
+        navigate('/chat');
+      } else {
+        // Buscar thread ativa ou criar nova
+        const { data: threads } = await supabase.functions.invoke('master-chatbot', {
+          body: { action: 'list_threads', user_id: auth.user.id }
+        });
+
+        let threadId = threads?.threads?.[0]?.id;
+
+        if (!threadId) {
+          const { data } = await supabase.functions.invoke('master-chatbot', {
+            body: { 
+              action: 'init_thread', 
+              user_id: auth.user.id, 
+              title: 'Chat Principal'
+            }
+          });
+          threadId = data.thread_id;
+        }
+
+        // Enviar mensagem
+        await supabase.functions.invoke('master-chatbot', {
+          body: { 
+            action: 'chat', 
+            user_id: auth.user.id, 
+            thread_id: threadId,
+            message: content
+          }
+        });
+
+        toast({ 
+          title: 'Sucesso', 
+          description: 'Resultado enviado para o chat' 
+        });
+
+        navigate('/chat');
+      }
+    } catch (error: any) {
+      toast({ 
+        title: 'Erro', 
+        description: error?.message || 'Falha ao enviar para chat',
+        variant: 'destructive' 
       });
-      if (chatErr) throw chatErr;
-
-      toast({ title: 'Enviado ao chat', description: 'Conteúdo enviado ao Master AI.' });
-      navigate('/chat');
-    } catch (e: any) {
-      toast({ title: 'Falha ao enviar', description: e?.message || 'Tente novamente', variant: 'destructive' });
     }
-  }, [ensureThreadId, logAIEvent, navigate, toast]);
+  }, [toast, navigate]);
 
   return { sendToMasterChat };
 };
