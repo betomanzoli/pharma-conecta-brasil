@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -25,6 +27,14 @@ import BusinessMetricsDashboard from "./pages/BusinessMetricsDashboard";
 import MasterAIHub from "./pages/MasterAIHub";
 import PromptsLibrary from "./pages/PromptsLibrary";
 import SynergyDashboard from "./pages/SynergyDashboard";
+import Network from "./pages/Network";
+import Marketplace from "./pages/Marketplace";
+import MentorshipHub from "./pages/MentorshipHub";
+import Verification from "./pages/Verification";
+import Forums from "./pages/Forums";
+import EnhancedChat from "./pages/EnhancedChat";
+import EnhancedDashboard from "./pages/EnhancedDashboard";
+import IntegrationsPage from "./pages/IntegrationsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +68,7 @@ const App = () => (
             <Route path="/ai/matching-dashboard" element={<AIMatchingDashboard />} />
             <Route path="/ai/business-metrics" element={<BusinessMetricsDashboard />} />
             
-            {/* Rotas em falta adicionadas */}
+            {/* Static pages */}
             <Route path="/about" element={<Index />} />
             <Route path="/contact" element={<Index />} />
             <Route path="/careers" element={<Index />} />
@@ -67,14 +77,17 @@ const App = () => (
             <Route path="/ethics" element={<Index />} />
             <Route path="/auth" element={<Login />} />
             <Route path="/status" element={<Index />} />
-            <Route path="/verification" element={<Profile />} />
             <Route path="/demo" element={<Index />} />
             
-            {/* Rotas protegidas que estavam em falta */}
-            <Route path="/network" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/marketplace" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/mentorship" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/apis" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            {/* Protected routes */}
+            <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+            <Route path="/mentorship" element={<ProtectedRoute><MentorshipHub /></ProtectedRoute>} />
+            <Route path="/apis" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />
+            <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+            <Route path="/forums" element={<ProtectedRoute><Forums /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><EnhancedChat /></ProtectedRoute>} />
+            <Route path="/enhanced-dashboard" element={<ProtectedRoute><EnhancedDashboard /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
