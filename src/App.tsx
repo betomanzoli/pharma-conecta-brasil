@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +44,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/knowledge" element={<KnowledgeLibrary />} />
             <Route path="/ai/hub" element={<MasterAIHub />} />
+            <Route path="/master-ai" element={<MasterAIHub />} />
             <Route path="/ai/analista-projetos" element={<ProjectAnalyst />} />
             <Route path="/ai/estrategista" element={<BusinessStrategist />} />
             <Route path="/ai/tecnico-regulatorio" element={<TechnicalRegulatory />} />
@@ -57,6 +57,25 @@ const App = () => (
             <Route path="/automation" element={<AutomationPage />} />
             <Route path="/ai/matching-dashboard" element={<AIMatchingDashboard />} />
             <Route path="/ai/business-metrics" element={<BusinessMetricsDashboard />} />
+            
+            {/* Rotas em falta adicionadas */}
+            <Route path="/about" element={<Index />} />
+            <Route path="/contact" element={<Index />} />
+            <Route path="/careers" element={<Index />} />
+            <Route path="/privacy" element={<Index />} />
+            <Route path="/terms" element={<Index />} />
+            <Route path="/ethics" element={<Index />} />
+            <Route path="/auth" element={<Login />} />
+            <Route path="/status" element={<Index />} />
+            <Route path="/verification" element={<Profile />} />
+            <Route path="/demo" element={<Index />} />
+            
+            {/* Rotas protegidas que estavam em falta */}
+            <Route path="/network" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/mentorship" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/apis" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

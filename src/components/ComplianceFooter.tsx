@@ -1,5 +1,6 @@
 
 import { Shield, Lock, CheckCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ComplianceFooter = () => {
   return (
@@ -59,19 +60,19 @@ const ComplianceFooter = () => {
             <h4 className="text-white font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/privacy" className="text-gray-400 hover:text-[#1565C0] transition-colors">
+                <Link to="/privacy" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Política de Privacidade LGPD
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms" className="text-gray-400 hover:text-[#1565C0] transition-colors">
+                <Link to="/terms" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Termos de Uso
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/ethics" className="text-gray-400 hover:text-[#1565C0] transition-colors">
+                <Link to="/ethics" className="text-gray-400 hover:text-[#1565C0] transition-colors">
                   Código de Ética
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

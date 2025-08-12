@@ -3,6 +3,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TestTube, Info, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { isDemoMode } from '@/utils/demoMode';
 
 interface DemoModeIndicatorProps {
@@ -26,13 +27,13 @@ const DemoModeIndicator: React.FC<DemoModeIndicatorProps> = ({
         <div className="flex items-center justify-center space-x-2">
           <TestTube className="h-4 w-4" />
           <span>MODO DEMONSTRAÇÃO - Dados simulados para apresentação</span>
-          <a 
-            href="/status" 
+          <Link 
+            to="/status" 
             className="underline hover:no-underline flex items-center space-x-1"
           >
             <span>Ver Status Real</span>
             <ExternalLink className="h-3 w-3" />
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -47,13 +48,13 @@ const DemoModeIndicator: React.FC<DemoModeIndicatorProps> = ({
             <div>
               <strong>Modo Demonstração:</strong> Os dados exibidos são simulados para fins de teste e apresentação.
             </div>
-            <a 
-              href="/status" 
+            <Link 
+              to="/status" 
               className="text-orange-700 hover:text-orange-900 underline flex items-center space-x-1"
             >
               <span>Status Real</span>
               <ExternalLink className="h-3 w-3" />
-            </a>
+            </Link>
           </div>
         </AlertDescription>
       </Alert>

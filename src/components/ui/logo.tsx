@@ -10,13 +10,13 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ 
   className = '', 
   size = 'md',
-  variant = 'full' 
+  variant = 'icon' 
 }) => {
   const sizeClasses = {
-    sm: 'h-6',
-    md: 'h-8',
-    lg: 'h-10',
-    xl: 'h-12'
+    sm: 'h-8',
+    md: 'h-10',
+    lg: 'h-12',
+    xl: 'h-14'
   };
 
   const textSizeClasses = {
@@ -29,7 +29,7 @@ const Logo: React.FC<LogoProps> = ({
   if (variant === 'icon') {
     return (
       <img
-        src="/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png"
+        src="/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png"
         alt="PharmaConnect Brasil"
         className={`${sizeClasses[size]} w-auto ${className}`}
       />
@@ -47,7 +47,7 @@ const Logo: React.FC<LogoProps> = ({
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
       <img
-        src="/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png"
+        src="/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png"
         alt="PharmaConnect Brasil"
         className={`${sizeClasses[size]} w-auto`}
       />

@@ -1,3 +1,4 @@
+
 {
   "name": "PharmaConnect Brasil",
   "short_name": "PharmaConnect",
@@ -17,13 +18,13 @@
       "type": "image/x-icon"
     },
     {
-      "src": "/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png",
+      "src": "/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/lovable-uploads/cd4da4dc-de6b-4213-aa5f-dd60e3f5c047.png",
+      "src": "/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -31,14 +32,14 @@
   ],
   "screenshots": [
     {
-      "src": "/lovable-uploads/bd71d89e-d414-41cc-830c-6ef7f52861bd.png",
+      "src": "/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Dashboard principal do PharmaConnect"
     },
     {
-      "src": "/lovable-uploads/cd4da4dc-de6b-4213-aa5f-dd60e3f5c047.png",
+      "src": "/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png",
       "sizes": "720x1280",
       "type": "image/png",
       "form_factor": "narrow",
