@@ -60,7 +60,8 @@ const DocumentationAssistantAI = () => {
 
   const handleDownload = () => {
     if (result) {
-      const blob = new Blob([result], { type: 'text/markdown' });
+      const branded = `![PharmaConnect Brasil](/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png)\n\n` + result;
+      const blob = new Blob([branded], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

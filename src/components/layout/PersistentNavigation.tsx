@@ -31,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import BrandLogo from '@/components/branding/BrandLogo';
+
 const PersistentNavigation = () => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
@@ -98,8 +100,8 @@ const PersistentNavigation = () => {
       <nav className="hidden md:flex bg-white shadow-sm border-b border-gray-200 px-4 py-2">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="text-xl font-bold text-primary">
-              PharmaConnect
+            <Link to="/dashboard" className="flex items-center">
+              <BrandLogo />
             </Link>
             <ModeToggle variant="badge" />
           </div>
@@ -214,8 +216,8 @@ const PersistentNavigation = () => {
       <nav className="md:hidden bg-white shadow-sm border-b border-gray-200">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Link to="/dashboard" className="text-lg font-bold text-primary">
-              PharmaConnect
+            <Link to="/dashboard" className="flex items-center">
+              <BrandLogo compact />
             </Link>
             <ModeToggle variant="badge" />
           </div>

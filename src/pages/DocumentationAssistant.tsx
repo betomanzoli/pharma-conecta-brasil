@@ -60,6 +60,21 @@ const DocumentationAssistant = () => {
       { value: 'Template_Validation_Report', label: 'Relatório de Validação', description: 'Relatório de validação de processos' },
       { value: 'Template_Clinical_Report', label: 'Relatório Clínico', description: 'Relatório de estudos clínicos' }
     ]
+   };
+
+  const templateFilesMap: Record<string, string> = {
+    Template_CTD_Full: 'Template_CTD_Full.md',
+    Template_CTD_Module2: 'Template_CTD_Module2.md',
+    Template_CTD_Module3: 'Template_CTD_Module3.md',
+    Template_CAPA_Deviation: 'Template_CAPA_Deviation.md',
+    Template_CAPA_Investigation: 'Template_CAPA_Investigation.md',
+    Template_CAPA_Customer: 'Template_CAPA_Customer.md',
+    Template_SOP_GMP: 'Template_SOP_GMP.md',
+    Template_SOP_Quality: 'Template_SOP_Quality.md',
+    Template_SOP_Validation: 'Template_SOP_Validation.md',
+    Template_Stability_Report: 'Template_Stability_Report.md',
+    Template_Validation_Report: 'Template_Validation_Report.md',
+    Template_Clinical_Report: 'Template_Clinical_Report.md',
   };
 
   const parsedFields = useMemo(() => {
@@ -124,6 +139,7 @@ const DocumentationAssistant = () => {
         </head>
         <body>
           <div class="header">
+            <img src="/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png" alt="PharmaConnect Brasil" style="height:36px; vertical-align:middle;" />
             <h1>${docType} - ${templateName}</h1>
             <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
           </div>
@@ -212,6 +228,16 @@ const DocumentationAssistant = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      {templateFilesMap[templateName] && (
+                        <a
+                          href={`/templates/${templateFilesMap[templateName]}`}
+                          download
+                          className="text-sm text-primary hover:underline mt-2 inline-block"
+                          aria-label="Baixar template base"
+                        >
+                          Baixar template base
+                        </a>
+                      )}
                     </div>
                   </div>
                   <div>
