@@ -1,123 +1,113 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Bot, 
-  Activity, 
-  TrendingUp, 
+  Workflow, 
   Users, 
-  FileText, 
-  Workflow,
+  TrendingUp,
+  Activity,
   CheckCircle,
   Clock,
   AlertTriangle,
-  BarChart3
+  Zap
 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAIHandoffs } from '@/hooks/useAIHandoffs';
 import { supabase } from '@/integrations/supabase/client';
-
-interface AIModuleStatus {
-  name: string;
-  status: 'active' | 'idle' | 'processing' | 'error';
-  lastActivity: string;
-  totalOutputs: number;
-  avgProcessingTime: number;
-  icon: React.ElementType;
-}
+import { useToast } from '@/hooks/use-toast';
 
 const SynergyDashboard = () => {
-  const [modules, setModules] = useState<AIModuleStatus[]>([
-    {
-      name: 'Estrategista IA',
-      status: 'active',
-      lastActivity: '2 min atrás',
-      totalOutputs: 15,
-      avgProcessingTime: 45,
-      icon: TrendingUp
-    },
-    {
-      name: 'Técnico-Regulatório IA',
-      status: 'processing',
-      lastActivity: '5 min atrás',
-      totalOutputs: 8,
-      avgProcessingTime: 120,
-      icon: FileText
-    },
-    {
-      name: 'Gerente de Projetos IA',
-      status: 'idle',
-      lastActivity: '1 hora atrás',
-      totalOutputs: 12,
-      avgProcessingTime: 60,
-      icon: Users
-    },
-    {
-      name: 'Assistente de Documentação',
-      status: 'active',
-      lastActivity: '10 min atrás',
-      totalOutputs: 25,
-      avgProcessingTime: 30,
-      icon: FileText
-    }
-  ]);
-
   const [handoffStats, setHandoffStats] = useState({
     pending: 0,
     processing: 0,
     completed: 0,
     failed: 0
   });
-
+  const [recentOutputs, setRecentOutputs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { runNext, runAll } = useAIHandoffs();
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchHandoffStats();
+    loadDashboardData();
+    const interval = setInterval(loadDashboardData, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchHandoffStats = async () => {
+  const loadDashboardData = async () => {
     try {
-      const { data } = await supabase
+      // Load handoff jobs stats
+      const { data: handoffs } = await supabase
         .from('ai_handoff_jobs')
-        .select('status');
-      
-      if (data) {
-        const stats = data.reduce((acc, job) => {
-          acc[job.status as keyof typeof acc] = (acc[job.status as keyof typeof acc] || 0) + 1;
-          return acc;
-        }, { pending: 0, processing: 0, completed: 0, failed: 0 });
-        
-        setHandoffStats(stats);
-      }
+        .select('status')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+
+      const stats = {
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0
+      };
+
+      handoffs?.forEach(job => {
+        stats[job.status as keyof typeof stats]++;
+      });
+
+      setHandoffStats(stats);
+
+      // Load recent agent outputs
+      const { data: outputs } = await supabase
+        .from('ai_agent_outputs')
+        .select('*')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setRecentOutputs(outputs || []);
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'processing': return 'bg-blue-500';
-      case 'idle': return 'bg-gray-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-500';
+  const executeHandoff = async (type: 'next' | 'all') => {
+    try {
+      if (type === 'next') {
+        await runNext();
+      } else {
+        await runAll(10);
+      }
+      await loadDashboardData(); // Refresh data
+    } catch (error) {
+      toast({
+        title: 'Erro na execução',
+        description: 'Falha ao executar handoffs',
+        variant: 'destructive'
+      });
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'Ativo';
-      case 'processing': return 'Processando';
-      case 'idle': return 'Inativo';
-      case 'error': return 'Erro';
-      default: return status;
-    }
-  };
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <MainLayout>
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </MainLayout>
+      </ProtectedRoute>
+    );
+  }
+
+  const totalJobs = Object.values(handoffStats).reduce((sum, count) => sum + count, 0);
+  const completionRate = totalJobs > 0 ? (handoffStats.completed / totalJobs) * 100 : 0;
 
   return (
     <ProtectedRoute>
@@ -126,202 +116,167 @@ const SynergyDashboard = () => {
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 text-white">
-                <Activity className="h-8 w-8" />
+                <Workflow className="h-8 w-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Dashboard de Sinergia</h1>
                 <p className="text-muted-foreground">
-                  Monitoramento integrado dos módulos de IA
+                  Orquestração e monitoramento dos agentes de IA
                 </p>
               </div>
             </div>
           </div>
 
-          {/* KPIs Gerais */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Módulos Ativos</CardTitle>
-                <Bot className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {modules.filter(m => m.status === 'active').length}/{modules.length}
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pendentes</p>
+                    <p className="text-2xl font-bold text-yellow-600">{handoffStats.pending}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-yellow-600" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Módulos em operação
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Handoffs Pendentes</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{handoffStats.pending}</div>
-                <p className="text-xs text-muted-foreground">
-                  Aguardando processamento
-                </p>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Processando</p>
+                    <p className="text-2xl font-bold text-blue-600">{handoffStats.processing}</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-blue-600" />
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Outputs Totais</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {modules.reduce((acc, m) => acc + m.totalOutputs, 0)}
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Concluídos</p>
+                    <p className="text-2xl font-bold text-green-600">{handoffStats.completed}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Resultados gerados hoje
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.round(modules.reduce((acc, m) => acc + m.avgProcessingTime, 0) / modules.length)}s
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taxa Sucesso</p>
+                    <p className="text-2xl font-bold text-purple-600">{Math.round(completionRate)}%</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-purple-600" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Processamento médio
-                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Status dos Módulos */}
-          <Card className="mb-6">
+          {/* Control Panel */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Status dos Módulos IA</CardTitle>
-              <CardDescription>
-                Monitoramento em tempo real de cada módulo
-              </CardDescription>
+              <CardTitle className="flex items-center space-x-2">
+                <Zap className="h-5 w-5" />
+                <span>Controles de Orquestração</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {modules.map((module, index) => {
-                  const Icon = module.icon;
-                  return (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <Icon className="h-8 w-8 text-primary" />
-                        <div>
-                          <h3 className="font-semibold">{module.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Última atividade: {module.lastActivity}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{module.totalOutputs} outputs</p>
-                          <p className="text-xs text-muted-foreground">{module.avgProcessingTime}s médio</p>
+              <div className="flex gap-4 mb-4">
+                <Button 
+                  onClick={() => executeHandoff('next')}
+                  disabled={handoffStats.pending === 0}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Executar Próximo
+                </Button>
+                <Button 
+                  onClick={() => executeHandoff('all')}
+                  disabled={handoffStats.pending === 0}
+                  variant="outline"
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  Executar Todos (máx 10)
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progresso Geral</span>
+                  <span>{Math.round(completionRate)}%</span>
+                </div>
+                <Progress value={completionRate} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Agent Outputs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bot className="h-5 w-5" />
+                <span>Outputs Recentes dos Agentes</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentOutputs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum output de agente encontrado</p>
+                  <p className="text-sm">Execute algum agente para ver os resultados aqui</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOutputs.map((output: any) => (
+                    <div key={output.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline">{output.agent_type}</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(output.created_at).toLocaleDateString('pt-BR')}
+                          </span>
                         </div>
                         <Badge 
-                          variant="outline" 
-                          className={`${getStatusColor(module.status)} text-white`}
+                          className={
+                            output.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            output.status === 'failed' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }
                         >
-                          {getStatusText(module.status)}
+                          {output.status}
                         </Badge>
                       </div>
+                      <p className="text-sm line-clamp-2">
+                        {output.output_md?.substring(0, 200)}...
+                      </p>
+                      {output.handoff_to && output.handoff_to.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-xs text-muted-foreground">Handoffs para: </span>
+                          {output.handoff_to.map((agent: string) => (
+                            <Badge key={agent} variant="secondary" className="text-xs mr-1">
+                              {agent}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Handoffs */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Orquestração de Handoffs</CardTitle>
-              <CardDescription>
-                Controle de tarefas entre módulos de IA
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Status dos Jobs</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Concluídos</span>
-                      </span>
-                      <span className="font-medium">{handoffStats.completed}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-blue-500" />
-                        <span>Pendentes</span>
-                      </span>
-                      <span className="font-medium">{handoffStats.pending}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="flex items-center space-x-2">
-                        <Activity className="h-4 w-4 text-yellow-500" />
-                        <span>Processando</span>
-                      </span>
-                      <span className="font-medium">{handoffStats.processing}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="flex items-center space-x-2">
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                        <span>Falharam</span>
-                      </span>
-                      <span className="font-medium">{handoffStats.failed}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-medium">Controles</h4>
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={() => runNext()} 
-                      variant="outline" 
-                      className="w-full"
-                    >
-                      <Workflow className="h-4 w-4 mr-2" />
-                      Executar Próximo Job
-                    </Button>
-                    <Button 
-                      onClick={() => runAll(10)} 
-                      className="w-full"
-                    >
-                      <Activity className="h-4 w-4 mr-2" />
-                      Executar Até 10 Jobs
-                    </Button>
-                    <Button 
-                      onClick={fetchHandoffStats} 
-                      variant="outline" 
-                      className="w-full"
-                    >
-                      <Activity className="h-4 w-4 mr-2" />
-                      Atualizar Status
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Alert>
-            <Activity className="h-4 w-4" />
+          <Alert className="mt-6">
+            <Workflow className="h-4 w-4" />
             <AlertDescription>
-              <strong>Dashboard de Sinergia:</strong> Este painel monitora a integração 
-              entre os módulos de IA, permitindo visualizar KPIs, status de processamento 
-              e controlar a execução de handoffs entre agentes.
+              <strong>Dashboard de Sinergia:</strong> Este painel mostra o status da orquestração 
+              entre os agentes de IA. Use os controles para executar handoffs pendentes e 
+              monitorar o progresso dos workflows integrados.
             </AlertDescription>
           </Alert>
         </div>

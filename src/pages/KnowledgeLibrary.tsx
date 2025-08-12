@@ -1,449 +1,234 @@
 
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import MainLayout from '@/components/layout/MainLayout';
-import UniversalDemoBanner from '@/components/layout/UniversalDemoBanner';
-import { isDemoMode } from '@/utils/demoMode';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, FileText, Video, Download, AlertCircle, Plus, Search, Upload } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { useUnifiedActions } from '@/hooks/useUnifiedActions';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Search, Database, FileText, Star, Download, BookOpen } from 'lucide-react';
+import MainLayout from '@/components/layout/MainLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import KnowledgeIngestButton from '@/components/knowledge/KnowledgeIngestButton';
 
 const KnowledgeLibrary = () => {
-  const { profile } = useAuth();
-  const isDemo = isDemoMode();
-  const { download } = useUnifiedActions();
-
-  // RAG v1 helpers and local state
-  const { ingest, search } = useKnowledgeBase();
-  const [ingestTitle, setIngestTitle] = useState("");
-  const [ingestContent, setIngestContent] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [knowledgeSources, setKnowledgeSources] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    document.title = 'Biblioteca de Conhecimento | PharmaConnect';
-    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'description';
-      document.head.appendChild(meta);
-    }
-    meta.content = 'Base de conhecimento farmacêutica com RAG e ingestão de documentos.';
+    loadKnowledgeSources();
   }, []);
 
+  const loadKnowledgeSources = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('knowledge_sources')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-  const renderDemoContent = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Documentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">156</div>
-            <p className="text-sm text-muted-foreground">Disponíveis</p>
-          </CardContent>
-        </Card>
+      if (error) throw error;
+      setKnowledgeSources(data || []);
+    } catch (error) {
+      console.error('Error loading knowledge sources:', error);
+    }
+  };
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Video className="h-4 w-4 mr-2" />
-              Vídeos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">42</div>
-            <p className="text-sm text-muted-foreground">Tutoriais</p>
-          </CardContent>
-        </Card>
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      toast({
+        title: 'Digite um termo de busca',
+        description: 'Insira uma palavra-chave para pesquisar',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Templates
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">28</div>
-            <p className="text-sm text-muted-foreground">Modelos</p>
-          </CardContent>
-        </Card>
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('rag_search', {
+        p_query: searchTerm,
+        p_top_k: 10
+      });
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Download className="h-4 w-4 mr-2" />
-              Downloads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">1.2k</div>
-            <p className="text-sm text-muted-foreground">Este mês</p>
-          </CardContent>
-        </Card>
-      </div>
+      if (error) throw error;
+      setSearchResults(data || []);
+      
+      if (data && data.length === 0) {
+        toast({
+          title: 'Nenhum resultado encontrado',
+          description: 'Tente usar termos diferentes ou mais específicos'
+        });
+      }
+    } catch (error) {
+      console.error('Error in RAG search:', error);
+      toast({
+        title: 'Erro na busca',
+        description: 'Não foi possível realizar a pesquisa',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Documentos Populares (Demo)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { title: 'Guia Completo ANVISA 2024', type: 'PDF', downloads: 456 },
-                { title: 'Checklist de Validação', type: 'DOCX', downloads: 234 },
-                { title: 'Templates de Protocolo', type: 'ZIP', downloads: 189 }
-              ].map((doc, i) => (
-                <div key={i} className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium">{doc.title}</p>
-                    <p className="text-sm text-muted-foreground">{doc.type} • {doc.downloads} downloads</p>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => download(doc.title, '/placeholder.svg')}>
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Categorias de Conhecimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { category: 'Regulatório ANVISA', count: 45, color: 'bg-blue-100 text-blue-800' },
-                { category: 'Controle de Qualidade', count: 32, color: 'bg-green-100 text-green-800' },
-                { category: 'Desenvolvimento', count: 28, color: 'bg-purple-100 text-purple-800' },
-                { category: 'Produção', count: 21, color: 'bg-orange-100 text-orange-800' }
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <span className="font-medium">{item.category}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.color}`}>
-                    {item.count} itens
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recursos Recentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { title: 'Novas Diretrizes FDA', date: '2 dias atrás', type: 'Documento' },
-              { title: 'Webinar Validação 2024', date: '1 semana atrás', type: 'Vídeo' },
-              { title: 'Template Protocolo GMP', date: '2 semanas atrás', type: 'Template' },
-            ].map((resource, i) => (
-              <div key={i} className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">{resource.title}</h4>
-                <p className="text-sm text-muted-foreground mb-2">{resource.type}</p>
-                <p className="text-xs text-muted-foreground">{resource.date}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderRealContent = () => (
-    <div className="space-y-6">
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Biblioteca de Conhecimento:</strong> Esta seção está sendo preparada para receber 
-          conteúdo especializado do setor farmacêutico brasileiro. Contribua com seu conhecimento!
-        </AlertDescription>
-      </Alert>
-
-      {/* Ações rápidas: Ingestão e Busca (RAG v1) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-4 w-4" /> Adicionar Conhecimento (RAG v1)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Input
-                placeholder="Título do conteúdo"
-                value={ingestTitle}
-                onChange={(e) => setIngestTitle(e.target.value)}
-              />
-              <Textarea
-                placeholder="Cole aqui o texto do documento (markdown ou texto simples)"
-                rows={6}
-                value={ingestContent}
-                onChange={(e) => setIngestContent(e.target.value)}
-              />
-              <div className="flex justify-end">
-                <Button
-                  disabled={busy || !ingestTitle || !ingestContent}
-                  onClick={async () => {
-                    try {
-                      setBusy(true);
-                      await ingest({ title: ingestTitle, content: ingestContent, source_type: "manual" });
-                      setIngestTitle("");
-                      setIngestContent("");
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Ingerir
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-4 w-4" /> Buscar na Base (RAG v1)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Ex: diretrizes GMP para validação de processo"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Button
-                  variant="outline"
-                  disabled={busy || !searchQuery}
-                  onClick={async () => {
-                    try {
-                      setBusy(true);
-                      const res = await search(searchQuery, 5);
-                      setSearchResults(res as any[]);
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Buscar
-                </Button>
-              </div>
-              {searchResults.length > 0 && (
-                <div className="mt-3 space-y-3">
-                  {searchResults.map((r, i) => (
-                    <div key={r.chunk_id || i} className="p-3 border rounded-lg">
-                      <div className="text-sm font-medium">{r.title || "Sem título"}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-3">
-                        {r.content?.slice(0, 220)}{r.content?.length > 220 ? "…" : ""}
-                      </div>
-                      {r.source_url && (
-                        <a
-                          className="text-primary text-xs underline"
-                          href={r.source_url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Ver fonte
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Seus Documentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">0</div>
-            <p className="text-sm text-muted-foreground">Nenhum ainda</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Video className="h-4 w-4 mr-2" />
-              Conteúdo Multimídia
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">0</div>
-            <p className="text-sm text-muted-foreground">Em preparação</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Templates Públicos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">0</div>
-            <p className="text-sm text-muted-foreground">Sendo desenvolvidos</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Download className="h-4 w-4 mr-2" />
-              Downloads Realizados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">0</div>
-            <p className="text-sm text-muted-foreground">Nenhum ainda</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Como Começar</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-4 bg-muted rounded-lg">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <Plus className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">Contribua com Conhecimento</p>
-                <p className="text-sm text-muted-foreground">
-                  Compartilhe documentos, templates e recursos com a comunidade
-                </p>
-              </div>
-              <Button variant="outline" disabled>
-                Em Breve
-              </Button>
-            </div>
-
-            <div className="flex items-center space-x-3 p-4 bg-muted rounded-lg">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">Organize seu Material</p>
-                <p className="text-sm text-muted-foreground">
-                  Categorize e organize documentos por área de expertise
-                </p>
-              </div>
-              <Button variant="outline" disabled>
-                Em Desenvolvimento
-              </Button>
-            </div>
-
-            <div className="flex items-center space-x-3 p-4 bg-muted rounded-lg">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <Video className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">Conteúdo Educacional</p>
-                <p className="text-sm text-muted-foreground">
-                  Acesse webinars, tutoriais e materiais de capacitação
-                </p>
-              </div>
-              <Button variant="outline" disabled>
-                Planejado
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Biblioteca Planejada</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold mb-3">Categorias Previstas:</h4>
-              <ul className="space-y-2 text-sm">
-                <li>📋 Regulamentação ANVISA</li>
-                <li>🧪 Controle de Qualidade</li>
-                <li>🔬 Desenvolvimento de Produtos</li>
-                <li>🏭 Boas Práticas de Fabricação</li>
-                <li>📊 Análise e Validação</li>
-                <li>💼 Gestão e Compliance</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-3">Tipos de Conteúdo:</h4>
-              <ul className="space-y-2 text-sm">
-                <li>📄 Documentos técnicos</li>
-                <li>📝 Templates e modelos</li>
-                <li>🎥 Webinars e tutoriais</li>
-                <li>📚 Guias e manuais</li>
-                <li>📋 Checklists e formulários</li>
-                <li>🔗 Links úteis e referências</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
     <ProtectedRoute>
       <MainLayout>
         <div className="container mx-auto px-4 py-6">
-          <UniversalDemoBanner variant="minimal" className="mb-6" />
-          
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <Database className="h-8 w-8" />
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Biblioteca de Conhecimento
-                </h1>
+                <h1 className="text-3xl font-bold">Biblioteca de Conhecimento</h1>
                 <p className="text-muted-foreground">
-                  {isDemo 
-                    ? 'Central de recursos especializados do setor farmacêutico (dados demonstrativos)'
-                    : 'Central de conhecimento colaborativo do setor farmacêutico brasileiro'
-                  }
+                  Base curada com RAG para busca inteligente de conteúdo farmacêutico
                 </p>
               </div>
             </div>
           </div>
 
-          {isDemo ? renderDemoContent() : renderRealContent()}
+          <Tabs defaultValue="search" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="search">Busca RAG</TabsTrigger>
+              <TabsTrigger value="sources">Fontes</TabsTrigger>
+              <TabsTrigger value="ingest">Ingerir Conteúdo</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="search">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Search className="h-5 w-5" />
+                    <span>Busca Inteligente (RAG)</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Pesquise no conhecimento curado com IA semântica
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Ex: business case farmacêutico, análise SWOT, CTD módulo 2..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSearch} disabled={loading}>
+                      {loading ? 'Buscando...' : 'Buscar'}
+                    </Button>
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Resultados da Busca</h3>
+                      {searchResults.map((result: any) => (
+                        <Card key={result.chunk_id} className="border-l-4 border-l-blue-500">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <CardTitle className="text-base">{result.title}</CardTitle>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <Badge variant="outline">{result.source_url?.split('/').pop()}</Badge>
+                                  <div className="flex items-center space-x-1">
+                                    <Star className="h-3 w-3 text-yellow-500" />
+                                    <span className="text-xs">{(result.rank * 100).toFixed(1)}% relevância</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+                              {result.content}
+                            </p>
+                            <Button variant="outline" size="sm">
+                              <FileText className="h-3 w-3 mr-2" />
+                              Ver Completo
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="sources">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BookOpen className="h-5 w-5" />
+                    <span>Fontes de Conhecimento</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Templates e documentos disponíveis na base de conhecimento
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {knowledgeSources.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Database className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>Nenhuma fonte encontrada</p>
+                      <p className="text-sm">Use a aba "Ingerir Conteúdo" para adicionar templates</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {knowledgeSources.map((source: any) => (
+                        <Card key={source.id} className="hover:shadow-md transition-shadow">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-sm">{source.title}</CardTitle>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {source.source_type}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(source.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <Button variant="outline" size="sm" className="w-full">
+                              <Download className="h-3 w-3 mr-2" />
+                              Acessar
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="ingest">
+              <KnowledgeIngestButton />
+            </TabsContent>
+          </Tabs>
+
+          <Alert className="mt-6">
+            <Database className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Biblioteca de Conhecimento RAG:</strong> Esta base utiliza Retrieval-Augmented 
+              Generation para busca semântica inteligente em conteúdo farmacêutico especializado. 
+              Ideal para consulta rápida de templates, frameworks e best practices.
+            </AlertDescription>
+          </Alert>
         </div>
       </MainLayout>
     </ProtectedRoute>

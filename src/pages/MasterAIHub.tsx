@@ -14,72 +14,93 @@ import {
   Sparkles,
   AlertTriangle,
   ArrowRight,
-  Network
+  Network,
+  FileText,
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
-import MasterChatbot from '@/components/ai/MasterChatbot';
 import { useAIHandoffs } from '@/hooks/useAIHandoffs';
 
 const MasterAIHub = () => {
-const aiFeatures = [
-  {
-    title: 'Chat Inteligente',
-    description: 'Converse com IA especializada em farmacêutica',
-    icon: MessageSquare,
-    href: '/chat',
-    status: 'active'
-  },
-  {
-    title: 'Estrategista IA',
-    description: 'Gere business cases e análises SWOT guiadas',
-    icon: Sparkles,
-    href: '/ai/estrategista',
-    status: 'beta'
-  },
-  {
-    title: 'Técnico‑Regulatório IA',
-    description: 'Parecer técnico e caminho regulatório (ANVISA/FDA/EMA)',
-    icon: BarChart3,
-    href: '/ai/regulatorio',
-    status: 'beta'
-  },
-  {
-    title: 'Gerente de Projetos IA',
-    description: 'Charter, cronograma e stakeholders com IA',
-    icon: Users,
-    href: '/ai/gerente-projetos',
-    status: 'development'
-  },
-  {
-    title: 'Assistente de Documentação',
-    description: 'Preencha CAPA, SOPs e CTD com validação',
-    icon: Workflow,
-    href: '/ai/documentacao',
-    status: 'development'
-  },
-  {
-    title: 'Dashboard de Sinergia',
-    description: 'KPIs e status integrados dos módulos de IA',
-    icon: Bot,
-    href: '/ai/sinergia',
-    status: 'beta'
-  },
-  {
-    title: 'Biblioteca de Prompts',
-    description: 'Prompts por fase do projeto para IA',
-    icon: Sparkles,
-    href: '/ai/prompts',
-    status: 'active'
-  },
-  {
-    title: 'Federal Learning',
-    description: 'Aprendizado colaborativo seguro inspirado no projeto Melloddy',
-    icon: Network,
-    href: '/ai/federal',
-    status: 'beta'
-  }
-];
+  const aiFeatures = [
+    {
+      title: 'Estrategista de Negócios IA',
+      description: 'Business cases, análise SWOT e oportunidades de mercado',
+      icon: TrendingUp,
+      href: '/ai/estrategista',
+      status: 'active',
+      agent: 'Agente 1'
+    },
+    {
+      title: 'Técnico‑Regulatório IA',
+      description: 'Compliance ANVISA, análise técnica e pathway regulatório',
+      icon: Settings,
+      href: '/ai/tecnico-regulatorio', 
+      status: 'active',
+      agent: 'Agente 2'
+    },
+    {
+      title: 'Analista de Projetos IA',
+      description: 'Project Charter, análise de viabilidade e gestão de stakeholders',
+      icon: Users,
+      href: '/ai/analista-projetos',
+      status: 'active',
+      agent: 'Agente 3'
+    },
+    {
+      title: 'Assistente de Documentação',
+      description: 'Templates inteligentes, SOPs e documentos regulatórios',
+      icon: FileText,
+      href: '/ai/documentacao',
+      status: 'active',
+      agent: 'Agente 4'
+    },
+    {
+      title: 'Coordenador Central',
+      description: 'Orquestração de agentes e priorização de demandas',
+      icon: Bot,
+      href: '/ai/coordenacao',
+      status: 'active',
+      agent: 'Agente 5'
+    },
+    {
+      title: 'Dashboard de Sinergia',
+      description: 'Orquestração e monitoramento dos agentes de IA',
+      icon: Workflow,
+      href: '/ai/sinergia',
+      status: 'active'
+    },
+    {
+      title: 'Biblioteca de Prompts',
+      description: 'Prompts especializados por fase do projeto farmacêutico',
+      icon: Sparkles,
+      href: '/ai/prompts',
+      status: 'active'
+    },
+    {
+      title: 'AI Matching Dashboard',
+      description: 'Métricas avançadas de matching e performance de IA',
+      icon: BarChart3,
+      href: '/ai/matching-dashboard',
+      status: 'active'
+    },
+    {
+      title: 'Business Metrics',
+      description: 'KPIs de negócio e análise de performance comercial',
+      icon: TrendingUp,
+      href: '/ai/business-metrics',
+      status: 'active'
+    },
+    {
+      title: 'Federal Learning',
+      description: 'Aprendizado federado e sincronização de modelos',
+      icon: Network,
+      href: '/ai/federal',
+      status: 'beta'
+    }
+  ];
 
   const { runNext, runAll } = useAIHandoffs();
 
@@ -97,7 +118,7 @@ const aiFeatures = [
                   Master AI Hub
                 </h1>
                 <p className="text-muted-foreground">
-                  Central de inteligência artificial para o setor farmacêutico
+                  Central de inteligência artificial para consultoria farmacêutica
                 </p>
               </div>
             </div>
@@ -105,93 +126,142 @@ const aiFeatures = [
             <DemoModeIndicator variant="alert" />
           </div>
 
-          {/* Recursos AI disponíveis */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {aiFeatures.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={feature.title} className="relative overflow-hidden">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Icon className="h-6 w-6 text-blue-500" />
-                        <CardTitle className="text-lg">{feature.title}</CardTitle>
+          {/* Agentes Especializados */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Agentes de IA Especializados</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiFeatures.filter(f => f.agent).map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Card key={feature.title} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <Icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{feature.title}</CardTitle>
+                            {feature.agent && (
+                              <span className="text-xs text-muted-foreground">{feature.agent}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          feature.status === 'active' ? 'bg-green-100 text-green-800' :
+                          feature.status === 'beta' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {feature.status === 'active' ? 'Ativo' :
+                           feature.status === 'beta' ? 'Beta' : 'Em Desenvolvimento'}
+                        </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        feature.status === 'active' ? 'bg-green-100 text-green-800' :
-                        feature.status === 'beta' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {feature.status === 'active' ? 'Ativo' :
-                         feature.status === 'beta' ? 'Beta' : 'Em Desenvolvimento'}
-                      </div>
-                    </div>
-                    <CardDescription>{feature.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link to={feature.href}>
-                      <Button 
-                        className="w-full" 
-                        variant={feature.status === 'development' ? 'outline' : 'default'}
-                        disabled={feature.status === 'development'}
-                      >
-                        {feature.status === 'development' ? 'Em Breve' : 'Acessar'}
-                        {feature.status !== 'development' && (
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        )}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                      <CardDescription className="text-sm">{feature.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Link to={feature.href}>
+                        <Button 
+                          className="w-full" 
+                          variant={feature.status === 'development' ? 'outline' : 'default'}
+                          disabled={feature.status === 'development'}
+                        >
+                          {feature.status === 'development' ? 'Em Breve' : 'Acessar Agente'}
+                          {feature.status !== 'development' && (
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          )}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Chat integrado */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-purple-500" />
-                <CardTitle>Chat AI Integrado</CardTitle>
-              </div>
-              <CardDescription>
-                Experimente o assistente AI diretamente aqui
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MasterChatbot />
-            </CardContent>
-          </Card>
+          {/* Dashboards e Ferramentas */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Dashboards e Ferramentas</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiFeatures.filter(f => !f.agent).map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Card key={feature.title} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-secondary/10">
+                            <Icon className="h-5 w-5 text-secondary-foreground" />
+                          </div>
+                          <CardTitle className="text-base">{feature.title}</CardTitle>
+                        </div>
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          feature.status === 'active' ? 'bg-green-100 text-green-800' :
+                          feature.status === 'beta' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {feature.status === 'active' ? 'Ativo' :
+                           feature.status === 'beta' ? 'Beta' : 'Em Desenvolvimento'}
+                        </div>
+                      </div>
+                      <CardDescription className="text-sm">{feature.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Link to={feature.href}>
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          disabled={feature.status === 'development'}
+                        >
+                          {feature.status === 'development' ? 'Em Breve' : 'Acessar'}
+                          {feature.status !== 'development' && (
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          )}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Orquestração de Handoffs */}
-          <Card className="mt-6">
+          <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <Workflow className="h-5 w-5 text-blue-500" />
                 <CardTitle>Orquestração de Handoffs</CardTitle>
               </div>
               <CardDescription>
-                Execute jobs enfileirados entre agentes de IA
+                Execute jobs enfileirados entre agentes de IA para workflows integrados
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-3 flex-wrap">
                 <Button variant="secondary" onClick={() => runNext()}>
-                  Executar 1 handoff
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Executar Próximo Handoff
                 </Button>
                 <Button onClick={() => runAll(10)}>
-                  Executar até 10
+                  <Workflow className="h-4 w-4 mr-2" />
+                  Executar até 10 Handoffs
                 </Button>
+                <Link to="/ai/sinergia">
+                  <Button variant="outline">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Dashboard de Sinergia
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
 
-          <Alert className="mt-8">
+          <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Hub de IA em Desenvolvimento:</strong> Este é o centro de recursos 
-              de inteligência artificial da plataforma. Alguns recursos estão em desenvolvimento 
-              e serão disponibilizados gradualmente.
+              <strong>Hub de IA Farmacêutica:</strong> Plataforma integrada com 5 agentes especializados 
+              trabalhando em sinergia para consultoria farmacêutica de classe mundial. Cada agente 
+              possui expertise específica e pode colaborar através de handoffs inteligentes.
             </AlertDescription>
           </Alert>
         </div>

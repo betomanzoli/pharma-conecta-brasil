@@ -23,6 +23,9 @@ import FederalLearning from "./pages/FederalLearning";
 import AutomationPage from "./pages/AutomationPage";
 import AIMatchingDashboard from "./pages/AIMatchingDashboard";
 import BusinessMetricsDashboard from "./pages/BusinessMetricsDashboard";
+import MasterAIHub from "./pages/MasterAIHub";
+import PromptsLibrary from "./pages/PromptsLibrary";
+import SynergyDashboard from "./pages/SynergyDashboard";
 
 const queryClient = new QueryClient();
 
@@ -41,11 +44,14 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/knowledge" element={<KnowledgeLibrary />} />
+            <Route path="/ai/hub" element={<MasterAIHub />} />
             <Route path="/ai/analista-projetos" element={<ProjectAnalyst />} />
             <Route path="/ai/estrategista" element={<BusinessStrategist />} />
             <Route path="/ai/tecnico-regulatorio" element={<TechnicalRegulatory />} />
             <Route path="/ai/documentacao" element={<DocumentationAssistant />} />
             <Route path="/ai/coordenacao" element={<Coordination />} />
+            <Route path="/ai/prompts" element={<PromptsLibrary />} />
+            <Route path="/ai/sinergia" element={<SynergyDashboard />} />
             <Route path="/regulatory/alerts" element={<ANVISAAlerts />} />
             <Route path="/ai/federal" element={<FederalLearning />} />
             <Route path="/automation" element={<AutomationPage />} />

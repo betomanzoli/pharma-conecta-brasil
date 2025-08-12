@@ -1,344 +1,218 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { FileText, Download, CheckCircle, AlertCircle } from 'lucide-react';
-import { useAIDocumentAssistant } from '@/hooks/useAIDocumentAssistant';
-import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FileText, Download, Search, Star } from 'lucide-react';
+import MainLayout from '@/components/layout/MainLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 
 const DocumentationAssistant = () => {
-  const { generateDocument, loading } = useAIDocumentAssistant();
-  const [docType, setDocType] = useState('CTD');
-  const [templateName, setTemplateName] = useState('Template_CTD_Full');
-  const [context, setContext] = useState('');
-  const [fieldsText, setFieldsText] = useState('');
-  const [outputMd, setOutputMd] = useState<string | null>(null);
-  const [complianceScore, setComplianceScore] = useState<number | null>(null);
-  const { sendToMasterChat } = useMasterChatBridge();
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    document.title = 'Assistente de Documentação | PharmaConnect';
-    const link = document.createElement('link');
-    link.rel = 'canonical';
-    link.href = window.location.origin + '/ai/documentacao';
-    document.head.appendChild(link);
-    const meta = document.createElement('meta');
-    meta.name = 'description';
-    meta.content = 'Assistente de documentação farmacêutica: CAPA, SOPs e CTD com validação.';
-    document.head.appendChild(meta);
-    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
-  }, []);
-
-  const documentTemplates = {
-    'CTD': [
-      { value: 'Template_CTD_Full', label: 'CTD Completo', description: 'Common Technical Document completo para registro' },
-      { value: 'Template_CTD_Module2', label: 'CTD Módulo 2', description: 'Sumários de qualidade, não-clínico e clínico' },
-      { value: 'Template_CTD_Module3', label: 'CTD Módulo 3', description: 'Informações de qualidade farmacêutica' }
-    ],
-    'CAPA': [
-      { value: 'Template_CAPA_Deviation', label: 'CAPA - Desvio', description: 'Ação corretiva e preventiva para desvios' },
-      { value: 'Template_CAPA_Investigation', label: 'CAPA - Investigação', description: 'CAPA para investigações de qualidade' },
-      { value: 'Template_CAPA_Customer', label: 'CAPA - Cliente', description: 'CAPA para reclamações de clientes' }
-    ],
-    'SOP': [
-      { value: 'Template_SOP_GMP', label: 'SOP - GMP', description: 'Procedimento operacional padrão GMP' },
-      { value: 'Template_SOP_Quality', label: 'SOP - Qualidade', description: 'SOP para controle de qualidade' },
-      { value: 'Template_SOP_Validation', label: 'SOP - Validação', description: 'SOP para processos de validação' }
-    ],
-    'Relatório': [
-      { value: 'Template_Stability_Report', label: 'Relatório de Estabilidade', description: 'Relatório de estudos de estabilidade' },
-      { value: 'Template_Validation_Report', label: 'Relatório de Validação', description: 'Relatório de validação de processos' },
-      { value: 'Template_Clinical_Report', label: 'Relatório Clínico', description: 'Relatório de estudos clínicos' }
-    ]
-   };
-
-  const templateFilesMap: Record<string, string> = {
-    Template_CTD_Full: 'Template_CTD_Full.md',
-    Template_CTD_Module2: 'Template_CTD_Module2.md',
-    Template_CTD_Module3: 'Template_CTD_Module3.md',
-    Template_CAPA_Deviation: 'Template_CAPA_Deviation.md',
-    Template_CAPA_Investigation: 'Template_CAPA_Investigation.md',
-    Template_CAPA_Customer: 'Template_CAPA_Customer.md',
-    Template_SOP_GMP: 'Template_SOP_GMP.md',
-    Template_SOP_Quality: 'Template_SOP_Quality.md',
-    Template_SOP_Validation: 'Template_SOP_Validation.md',
-    Template_Stability_Report: 'Template_Stability_Report.md',
-    Template_Validation_Report: 'Template_Validation_Report.md',
-    Template_Clinical_Report: 'Template_Clinical_Report.md',
-  };
-
-  const parsedFields = useMemo(() => {
-    const obj: Record<string, any> = {};
-    fieldsText.split('\n').forEach((line) => {
-      const idx = line.indexOf(':');
-      if (idx > 0) {
-        const k = line.slice(0, idx).trim();
-        const v = line.slice(idx + 1).trim();
-        if (k) obj[k] = v;
-      }
-    });
-    return obj;
-  }, [fieldsText]);
-
-  const calculateComplianceScore = (docType: string, fields: Record<string, any>, content: string) => {
-    const requiredFields = {
-      'CTD': ['Responsável', 'Produto', 'Indicação'],
-      'CAPA': ['Responsável', 'Tipo de Desvio', 'Ação Corretiva'],
-      'SOP': ['Responsável', 'Processo', 'Departamento'],
-      'Relatório': ['Responsável', 'Tipo de Estudo', 'Data de Início']
-    };
-
-    const required = requiredFields[docType as keyof typeof requiredFields] || [];
-    const providedFields = Object.keys(fields);
-    const fieldScore = (providedFields.filter(f => required.includes(f)).length / required.length) * 50;
-    const contentScore = content.length > 100 ? 50 : (content.length / 100) * 50;
-    
-    return Math.round(fieldScore + contentScore);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await generateDocument({
-      doc_type: docType,
-      template_name: templateName,
-      context,
-      fields: parsedFields,
-    });
-    
-    if (res?.output_md) {
-      setOutputMd(res.output_md);
-      const score = calculateComplianceScore(docType, parsedFields, res.output_md);
-      setComplianceScore(score);
+  const templateCategories = [
+    {
+      name: 'Business Case & Estratégia',
+      templates: [
+        { name: 'BusinessCase_Full.md', description: 'Business case farmacêutico completo', rating: 4.9 },
+        { name: 'SWOT_Full.md', description: 'Matriz SWOT especializada', rating: 4.8 },
+        { name: 'Market_Framework_Full.md', description: 'Framework de análise de mercado', rating: 4.7 }
+      ]
+    },
+    {
+      name: 'Técnico & Regulatório',
+      templates: [
+        { name: 'TechnicalBusinessCase_Full.md', description: 'Business case técnico', rating: 4.8 },
+        { name: 'RegulatoryAnalysis_Matrix_Full.md', description: 'Matriz de análise regulatória', rating: 4.9 },
+        { name: 'ManufacturingQuality_Framework_Full.md', description: 'Framework manufatura & qualidade', rating: 4.6 }
+      ]
+    },
+    {
+      name: 'Gestão de Projetos',
+      templates: [
+        { name: 'ProjectManagement_Full.md', description: 'Project management completo', rating: 4.7 },
+        { name: 'StakeholderMatrix_Full.md', description: 'Matriz de stakeholders', rating: 4.5 },
+        { name: 'RegulatoryTimeline_Full.md', description: 'Timeline regulatório', rating: 4.8 }
+      ]
+    },
+    {
+      name: 'Documentação CTD',
+      templates: [
+        { name: 'Template_CTD_Full.md', description: 'CTD Common Technical Document', rating: 4.9 },
+        { name: 'Template_CTD_Module2.md', description: 'CTD Módulo 2 - Resumos', rating: 4.7 },
+        { name: 'Template_CTD_Module3.md', description: 'CTD Módulo 3 - Qualidade', rating: 4.8 }
+      ]
+    },
+    {
+      name: 'CAPA & Investigação',
+      templates: [
+        { name: 'Template_CAPA_Deviation.md', description: 'CAPA para desvios de processo', rating: 4.6 },
+        { name: 'Template_CAPA_Investigation.md', description: 'CAPA para investigações', rating: 4.7 },
+        { name: 'Template_CAPA_Customer.md', description: 'CAPA para reclamações de clientes', rating: 4.5 }
+      ]
+    },
+    {
+      name: 'SOPs & Qualidade',
+      templates: [
+        { name: 'Template_SOP_GMP.md', description: 'SOP conformidade GMP', rating: 4.8 },
+        { name: 'Template_SOP_Quality.md', description: 'SOP controle de qualidade', rating: 4.7 },
+        { name: 'Template_SOP_Validation.md', description: 'SOP validação de processos', rating: 4.6 }
+      ]
+    },
+    {
+      name: 'Relatórios Técnicos',
+      templates: [
+        { name: 'Template_Stability_Report.md', description: 'Relatório de estabilidade', rating: 4.8 },
+        { name: 'Template_Validation_Report.md', description: 'Relatório de validação', rating: 4.7 },
+        { name: 'Template_Clinical_Report.md', description: 'Relatório clínico', rating: 4.9 }
+      ]
     }
-  };
+  ];
 
-  const handleExportPDF = () => {
-    if (!outputMd) return;
-    
-    // Create a simple HTML version for PDF export
-    const htmlContent = `
-      <html>
-        <head>
-          <title>${docType} - ${templateName}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-            h1, h2, h3 { color: #333; }
-            .header { border-bottom: 2px solid #0066cc; padding-bottom: 10px; margin-bottom: 20px; }
-            .compliance { background: #f0f9ff; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <img src="/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png" alt="PharmaConnect Brasil" style="height:36px; vertical-align:middle;" />
-            <h1>${docType} - ${templateName}</h1>
-            <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
-          </div>
-          ${complianceScore !== null ? `
-            <div class="compliance">
-              <strong>Score de Conformidade: ${complianceScore}%</strong>
-            </div>
-          ` : ''}
-          <div>${outputMd.replace(/\n/g, '<br>')}</div>
-        </body>
-      </html>
-    `;
-    
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${docType}_${templateName}_${Date.now()}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Documento exportado",
-      description: "O documento foi exportado em formato HTML",
-    });
-  };
-
-  const getComplianceColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getComplianceIcon = (score: number) => {
-    if (score >= 80) return <CheckCircle className="h-4 w-4 text-green-600" />;
-    return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+  const downloadTemplate = async (templateName: string) => {
+    try {
+      const response = await fetch(`/templates/${templateName}`);
+      if (!response.ok) throw new Error('Template não encontrado');
+      
+      const content = await response.text();
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = templateName;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Download concluído',
+        description: `Template ${templateName} baixado com sucesso`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro no download',
+        description: 'Não foi possível baixar o template',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <main className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold mb-2">Assistente de Documentação</h1>
-          <p className="text-muted-foreground mb-6">Preencha CAPA, SOPs e CTD com validação de conformidade.</p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 text-white">
+                <FileText className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Assistente de Documentação</h1>
+                <p className="text-muted-foreground">
+                  Templates profissionais para documentação farmacêutica
+                </p>
+              </div>
+            </div>
+            <Badge variant="secondary">Agente 4 - Documentation</Badge>
+          </div>
 
-          <section className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Entrada</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="docType">Tipo de Documento</Label>
-                      <Select value={docType} onValueChange={(value) => {
-                        setDocType(value);
-                        setTemplateName(documentTemplates[value as keyof typeof documentTemplates]?.[0]?.value || '');
-                      }}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.keys(documentTemplates).map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="template">Template</Label>
-                      <Select value={templateName} onValueChange={setTemplateName}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {documentTemplates[docType as keyof typeof documentTemplates]?.map((template) => (
-                            <SelectItem key={template.value} value={template.value}>
-                              <div className="flex flex-col">
-                                <span>{template.label}</span>
-                                <span className="text-xs text-muted-foreground">{template.description}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {templateFilesMap[templateName] && (
-                        <a
-                          href={`/templates/${templateFilesMap[templateName]}`}
-                          download
-                          className="text-sm text-primary hover:underline mt-2 inline-block"
-                          aria-label="Baixar template base"
-                        >
-                          Baixar template base
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="context">Contexto</Label>
-                    <Textarea 
-                      id="context" 
-                      value={context} 
-                      onChange={(e) => setContext(e.target.value)} 
-                      placeholder="Descrição do projeto/produto, premissas, requisitos"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="fields">Campos Obrigatórios (chave: valor por linha)</Label>
-                    <Textarea 
-                      id="fields" 
-                      value={fieldsText} 
-                      onChange={(e) => setFieldsText(e.target.value)} 
-                      placeholder="Responsável: Dr. Silva&#10;Produto: Genérico oral&#10;Linha: Sólidos"
-                      rows={4}
-                    />
-                  </div>
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? 'Gerando...' : 'Gerar Documento'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+          <Alert className="mb-6">
+            <FileText className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Biblioteca de Templates:</strong> Acesse templates profissionais em formato 
+              Markdown, prontos para customização e uso em projetos farmacêuticos.
+            </AlertDescription>
+          </Alert>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  Resultado
-                  {complianceScore !== null && (
-                    <div className="flex items-center space-x-2">
-                      {getComplianceIcon(complianceScore)}
-                      <Badge variant="outline" className={getComplianceColor(complianceScore)}>
-                        {complianceScore}% Conformidade
-                      </Badge>
-                    </div>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {complianceScore !== null && (
-                  <div className="mb-4 p-3 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Score de Conformidade</span>
-                      <span className={`text-sm font-bold ${getComplianceColor(complianceScore)}`}>
-                        {complianceScore}%
-                      </span>
-                    </div>
-                    <Progress value={complianceScore} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>Insuficiente</span>
-                      <span>Adequado</span>
-                      <span>Excelente</span>
-                    </div>
+          <div className="space-y-8">
+            {templateCategories.map((category) => (
+              <Card key={category.name}>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5" />
+                    <span>{category.name}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {category.templates.map((template) => (
+                      <Card key={template.name} className="border-2 hover:border-primary/50 transition-colors">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-sm font-medium">
+                              {template.name.replace('.md', '')}
+                            </CardTitle>
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                              <span className="text-xs font-medium">{template.rating}</span>
+                            </div>
+                          </div>
+                          <CardDescription className="text-xs">
+                            {template.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <Button
+                            onClick={() => downloadTemplate(template.name)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                          >
+                            <Download className="h-3 w-3 mr-2" />
+                            Download
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-                {outputMd ? (
-                  <>
-                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap mb-4 max-h-96 overflow-y-auto p-4 bg-muted rounded-lg">
-                      {outputMd}
-                    </article>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={handleExportPDF}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Exportar HTML
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const content = `Via agente: Assistente de Documentação\nTipo: ${docType || '-'} • Template: ${templateName || '-'}\nScore de Conformidade: ${complianceScore}%\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          sendToMasterChat(content, { metadata: { module: 'documentation' } });
-                        }}
-                      >
-                        Enviar para chat
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          const content = `Via agente: Assistente de Documentação (novo chat)\nTipo: ${docType || '-'} • Template: ${templateName || '-'}\nScore de Conformidade: ${complianceScore}%\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          const title = `${docType} ${templateName}`.trim() || 'Documento';
-                          sendToMasterChat(content, { newThread: true, title, metadata: { module: 'documentation' } });
-                        }}
-                      >
-                        Novo chat com este resultado
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">O conteúdo em Markdown aparecerá aqui após a geração.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </section>
-        </main>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Search className="h-5 w-5" />
+                <span>Como Usar os Templates</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-2">1. Download e Customização</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Baixe o template desejado e abra em qualquer editor de Markdown ou texto. 
+                    Substitua os campos entre [COLCHETES] pelas informações específicas do seu projeto.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">2. Branding Automático</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Todos os templates incluem automaticamente o logo PharmaConnect Brasil 
+                    para manter a consistência visual em seus documentos.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">3. Compliance Garantido</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Templates seguem padrões ANVISA, FDA, EMA e ICH Guidelines, 
+                    garantindo conformidade regulatória em seus documentos.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">4. Versionamento</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Mantenha controle de versão dos documentos e utilize os templates 
+                    como base para documentação consistente entre projetos.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </MainLayout>
     </ProtectedRoute>
   );
