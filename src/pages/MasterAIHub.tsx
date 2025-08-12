@@ -18,6 +18,7 @@ import {
 import { Link } from 'react-router-dom';
 import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
 import MasterChatbot from '@/components/ai/MasterChatbot';
+import { useAIHandoffs } from '@/hooks/useAIHandoffs';
 
 const MasterAIHub = () => {
 const aiFeatures = [
@@ -71,6 +72,8 @@ const aiFeatures = [
     status: 'active'
   }
 ];
+
+  const { runNext, runAll } = useAIHandoffs();
 
   return (
     <ProtectedRoute>
@@ -149,6 +152,29 @@ const aiFeatures = [
             </CardHeader>
             <CardContent>
               <MasterChatbot />
+            </CardContent>
+          </Card>
+
+          {/* Orquestração de Handoffs */}
+          <Card className="mt-6">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Workflow className="h-5 w-5 text-blue-500" />
+                <CardTitle>Orquestração de Handoffs</CardTitle>
+              </div>
+              <CardDescription>
+                Execute jobs enfileirados entre agentes de IA
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3 flex-wrap">
+                <Button variant="secondary" onClick={() => runNext()}>
+                  Executar 1 handoff
+                </Button>
+                <Button onClick={() => runAll(10)}>
+                  Executar até 10
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
