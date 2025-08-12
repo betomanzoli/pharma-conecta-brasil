@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 
 const BusinessCaseAssistant = () => {
-  const { analyzeBusinessCase, loading } = useAIAgent();
+  const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
   const { logAIEvent } = useAIEventLogger();
   const { redirectToChat } = useMasterChatBridge();
   const [title, setTitle] = useState('');
@@ -42,7 +41,12 @@ const BusinessCaseAssistant = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await logAIEvent({ source: 'master_ai_hub', action: 'init', message: `business_case:${title}` });
-    const res = await analyzeBusinessCase({ title, description, budget, timeline });
+    const res = await analyzeBusinessCase({ 
+      opportunity: title, 
+      product_type: description, 
+      investment_range: budget, 
+      timeframe: timeline 
+    });
     setOutputMd(res?.output_md ?? null);
   };
 

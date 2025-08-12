@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 
 const RegulatoryAssistant = () => {
-  const { analyzeRegulatory, loading } = useAIAgent();
+  const { analyzeTechRegulatory, loading } = useAITechRegulatory();
   const { logAIEvent } = useAIEventLogger();
   const { redirectToChat } = useMasterChatBridge();
   const [productName, setProductName] = useState('');
@@ -42,7 +41,11 @@ const RegulatoryAssistant = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await logAIEvent({ source: 'master_ai_hub', action: 'init', message: `regulatory:${productName}` });
-    const res = await analyzeRegulatory({ product_name: productName, product_type: productType, indication, questions });
+    const res = await analyzeTechRegulatory({ 
+      product_type: productType,
+      dosage_form: indication,
+      known_risks: questions
+    });
     setOutputMd(res?.output_md ?? null);
   };
 

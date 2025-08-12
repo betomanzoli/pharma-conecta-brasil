@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 
 const BusinessStrategistAI = () => {
-  const { analyzeStrategy, loading } = useAIAgent();
+  const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
   const { logAIEvent } = useAIEventLogger();
   const { redirectToChat } = useMasterChatBridge();
   const [company, setCompany] = useState('');
@@ -42,7 +41,12 @@ const BusinessStrategistAI = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await logAIEvent({ source: 'master_ai_hub', action: 'init', message: `strategy:${company}` });
-    const res = await analyzeStrategy({ company, market, goals, challenges });
+    const res = await analyzeBusinessCase({ 
+      opportunity: company, 
+      target_market: market, 
+      differentiation: goals,
+      risks: challenges 
+    });
     setOutputMd(res?.output_md ?? null);
   };
 

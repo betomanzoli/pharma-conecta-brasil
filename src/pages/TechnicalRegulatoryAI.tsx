@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 
 const TechnicalRegulatoryAI = () => {
-  const { analyzeTechnicalRegulatory, loading } = useAIAgent();
+  const { analyzeTechRegulatory, loading } = useAITechRegulatory();
   const { logAIEvent } = useAIEventLogger();
   const { redirectToChat } = useMasterChatBridge();
   const [productName, setProductName] = useState('');
@@ -42,11 +41,11 @@ const TechnicalRegulatoryAI = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await logAIEvent({ source: 'master_ai_hub', action: 'init', message: `technical_regulatory:${productName}` });
-    const res = await analyzeTechnicalRegulatory({ 
-      product_name: productName, 
-      technical_data: technicalData, 
-      regulatory_context: regulatoryContext, 
-      specific_questions: specificQuestions 
+    const res = await analyzeTechRegulatory({ 
+      product_type: productName, 
+      route_or_manufacturing: technicalData, 
+      target_regions: regulatoryContext, 
+      known_risks: specificQuestions 
     });
     setOutputMd(res?.output_md ?? null);
   };

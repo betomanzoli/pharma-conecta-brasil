@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -8,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAIDocumentAssistant } from '@/hooks/useAIDocumentAssistant';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 import { useToast } from '@/hooks/use-toast';
 
 const DocumentationAssistantAI = () => {
-  const { generateDocument, loading } = useAIAgent();
+  const { generateDocument, loading } = useAIDocumentAssistant();
   const { logAIEvent } = useAIEventLogger();
   const { redirectToChat } = useMasterChatBridge();
   const { toast } = useToast();
@@ -61,10 +60,12 @@ const DocumentationAssistantAI = () => {
     });
     
     const res = await generateDocument({ 
-      document_type: documentType, 
-      product_name: productName, 
-      description, 
-      requirements 
+      doc_type: documentType, 
+      fields: { 
+        product_name: productName, 
+        description, 
+        requirements 
+      }
     });
     
     if (res?.output_md) {
