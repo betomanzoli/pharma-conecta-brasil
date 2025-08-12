@@ -1,20 +1,43 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import UniversalDemoBanner from '@/components/layout/UniversalDemoBanner';
 import { isDemoMode } from '@/utils/demoMode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, FileText, Video, Download, AlertCircle, Plus } from 'lucide-react';
+import { BookOpen, FileText, Video, Download, AlertCircle, Plus, Search, Upload } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useUnifiedActions } from '@/hooks/useUnifiedActions';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
 
 const KnowledgeLibrary = () => {
   const { profile } = useAuth();
   const isDemo = isDemoMode();
   const { download } = useUnifiedActions();
+
+  // RAG v1 helpers and local state
+  const { ingest, search } = useKnowledgeBase();
+  const [ingestTitle, setIngestTitle] = useState("");
+  const [ingestContent, setIngestContent] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Biblioteca de Conhecimento | PharmaConnect';
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'Base de conhecimento farmacêutica com RAG e ingestão de documentos.';
+  }, []);
+
 
   const renderDemoContent = () => (
     <div className="space-y-6">
@@ -155,6 +178,105 @@ const KnowledgeLibrary = () => {
           conteúdo especializado do setor farmacêutico brasileiro. Contribua com seu conhecimento!
         </AlertDescription>
       </Alert>
+
+      {/* Ações rápidas: Ingestão e Busca (RAG v1) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-4 w-4" /> Adicionar Conhecimento (RAG v1)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Input
+                placeholder="Título do conteúdo"
+                value={ingestTitle}
+                onChange={(e) => setIngestTitle(e.target.value)}
+              />
+              <Textarea
+                placeholder="Cole aqui o texto do documento (markdown ou texto simples)"
+                rows={6}
+                value={ingestContent}
+                onChange={(e) => setIngestContent(e.target.value)}
+              />
+              <div className="flex justify-end">
+                <Button
+                  disabled={busy || !ingestTitle || !ingestContent}
+                  onClick={async () => {
+                    try {
+                      setBusy(true);
+                      await ingest({ title: ingestTitle, content: ingestContent, source_type: "manual" });
+                      setIngestTitle("");
+                      setIngestContent("");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Ingerir
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-4 w-4" /> Buscar na Base (RAG v1)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: diretrizes GMP para validação de processo"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  disabled={busy || !searchQuery}
+                  onClick={async () => {
+                    try {
+                      setBusy(true);
+                      const res = await search(searchQuery, 5);
+                      setSearchResults(res as any[]);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Buscar
+                </Button>
+              </div>
+              {searchResults.length > 0 && (
+                <div className="mt-3 space-y-3">
+                  {searchResults.map((r, i) => (
+                    <div key={r.chunk_id || i} className="p-3 border rounded-lg">
+                      <div className="text-sm font-medium">{r.title || "Sem título"}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-3">
+                        {r.content?.slice(0, 220)}{r.content?.length > 220 ? "…" : ""}
+                      </div>
+                      {r.source_url && (
+                        <a
+                          className="text-primary text-xs underline"
+                          href={r.source_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Ver fonte
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
