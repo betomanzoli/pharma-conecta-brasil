@@ -295,6 +295,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_handoff_jobs: {
+        Row: {
+          agent_output_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          input: Json
+          project_id: string | null
+          source_agent: string
+          status: string
+          target_agent: string
+          tries: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_output_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          project_id?: string | null
+          source_agent: string
+          status?: string
+          target_agent: string
+          tries?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_output_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input?: Json
+          project_id?: string | null
+          source_agent?: string
+          status?: string
+          target_agent?: string
+          tries?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_projects: {
         Row: {
           created_at: string
@@ -2471,6 +2516,50 @@ export type Database = {
           },
         ]
       }
+      knowledge_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          dimension: number | null
+          embedding: Json | null
+          id: string
+          metadata: Json
+          source_id: string
+          user_id: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          dimension?: number | null
+          embedding?: Json | null
+          id?: string
+          metadata?: Json
+          source_id: string
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          dimension?: number | null
+          embedding?: Json | null
+          id?: string
+          metadata?: Json
+          source_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_chunks_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_downloads: {
         Row: {
           downloaded_at: string
@@ -2619,6 +2708,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      knowledge_sources: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json
+          source_type: string
+          source_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          source_type: string
+          source_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       laboratories: {
         Row: {
@@ -4171,6 +4296,16 @@ export type Database = {
         }
         Returns: string
       }
+      enqueue_ai_handoffs: {
+        Args: {
+          p_source_agent: string
+          p_target_agents: string[]
+          p_input?: Json
+          p_project_id?: string
+          p_agent_output_id?: string
+        }
+        Returns: number
+      }
       get_analytics_data: {
         Args: { start_date?: string; end_date?: string; user_filter?: string }
         Returns: Json
@@ -4217,6 +4352,17 @@ export type Database = {
       mark_notification_read: {
         Args: { notification_id: string }
         Returns: boolean
+      }
+      rag_search: {
+        Args: { p_query: string; p_top_k?: number }
+        Returns: {
+          chunk_id: string
+          source_id: string
+          title: string
+          source_url: string
+          content: string
+          rank: number
+        }[]
       }
       safe_get_user_profile: {
         Args: { user_id: string }
