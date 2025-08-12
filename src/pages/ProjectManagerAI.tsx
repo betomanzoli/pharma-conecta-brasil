@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -14,7 +13,7 @@ import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 const ProjectManagerAI = () => {
   const { analyzeProject, loading } = useAIAgent();
   const { logAIEvent } = useAIEventLogger();
-  const { sendToMasterChat } = useMasterChatBridge();
+  const { redirectToChat } = useMasterChatBridge();
   const [title, setTitle] = useState('');
   const [objective, setObjective] = useState('');
   const [scope, setScope] = useState('');
@@ -101,7 +100,7 @@ const ProjectManagerAI = () => {
                         variant="outline"
                         onClick={() => {
                           const content = `Via agente: Gerente de Projetos IA\nTítulo: ${title || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          sendToMasterChat(content, { metadata: { module: 'project_manager' } });
+                          redirectToChat(content, { metadata: { module: 'project_manager' } });
                         }}
                       >
                         Enviar para chat
@@ -109,7 +108,7 @@ const ProjectManagerAI = () => {
                       <Button
                         onClick={() => {
                           const content = `Via agente: Gerente de Projetos IA (novo chat)\nTítulo: ${title || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          sendToMasterChat(content, { newThread: true, title: title || 'Project Charter', metadata: { module: 'project_manager' } });
+                          redirectToChat(content, { newThread: true, title: title || 'Project Charter', metadata: { module: 'project_manager' } });
                         }}
                       >
                         Novo chat com este resultado

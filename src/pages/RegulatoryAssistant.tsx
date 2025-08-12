@@ -7,58 +7,42 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
+import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
-const RegulatoryAssistant = () => {
-  const { analyzeTechRegulatory, loading } = useAITechRegulatory();
-  const { sendToMasterChat } = useMasterChatBridge();
 
+const RegulatoryAssistant = () => {
+  const { analyzeRegulatory, loading } = useAIAgent();
+  const { logAIEvent } = useAIEventLogger();
+  const { redirectToChat } = useMasterChatBridge();
+  const [productName, setProductName] = useState('');
   const [productType, setProductType] = useState('');
-  const [routeOrManufacturing, setRouteOrManufacturing] = useState('');
-  const [dosageForm, setDosageForm] = useState('');
-  const [targetRegions, setTargetRegions] = useState('Brasil');
-  const [clinicalStage, setClinicalStage] = useState('');
-  const [referenceProduct, setReferenceProduct] = useState('');
-  const [knownRisks, setKnownRisks] = useState('');
+  const [indication, setIndication] = useState('');
+  const [questions, setQuestions] = useState('');
   const [outputMd, setOutputMd] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Técnico‑Regulatório IA | PharmaConnect';
+    document.title = 'Assistente Regulatório | PharmaConnect';
     const link = document.createElement('link');
     link.rel = 'canonical';
-    link.href = window.location.origin + '/ai/regulatorio';
+    link.href = window.location.origin + '/ai/assistente-regulatorio';
     document.head.appendChild(link);
-
-    // Prefill from Business Case handoff if available
-    try {
-      const raw = localStorage.getItem('handoff.regulatorio');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.product_type) setProductType(parsed.product_type);
-        if (parsed?.target_regions) setTargetRegions(parsed.target_regions);
-        localStorage.removeItem('handoff.regulatorio');
-      }
-    } catch {}
 
     const meta = document.createElement('meta');
     meta.name = 'description';
-    meta.content = 'Análise técnico‑regulatória com IA: pathways ANVISA/FDA/EMA e riscos.';
+    meta.content = 'Assistente regulatório com IA para o setor farmacêutico brasileiro.';
     document.head.appendChild(meta);
 
-    return () => { document.head.removeChild(link); document.head.removeChild(meta); };
+    return () => { 
+      document.head.removeChild(link); 
+      document.head.removeChild(meta);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await analyzeTechRegulatory({
-      product_type: productType,
-      route_or_manufacturing: routeOrManufacturing,
-      dosage_form: dosageForm,
-      target_regions: targetRegions,
-      clinical_stage: clinicalStage,
-      reference_product: referenceProduct,
-      known_risks: knownRisks,
-    });
+    await logAIEvent({ source: 'master_ai_hub', action: 'init', message: `regulatory:${productName}` });
+    const res = await analyzeRegulatory({ product_name: productName, product_type: productType, indication, questions });
     setOutputMd(res?.output_md ?? null);
   };
 
@@ -66,54 +50,40 @@ const RegulatoryAssistant = () => {
     <ProtectedRoute>
       <MainLayout>
         <main className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold mb-2">Técnico‑Regulatório IA</h1>
-          <p className="text-muted-foreground mb-6">Avalie viabilidade técnica e caminhos regulatórios (ANVISA, FDA, EMA).</p>
+          <h1 className="text-3xl font-bold mb-2">Assistente Regulatório</h1>
+          <p className="text-muted-foreground mb-6">Orientações regulatórias personalizadas para produtos farmacêuticos no Brasil.</p>
 
           <section className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Dados do Produto</CardTitle>
+                <CardTitle>Consulta Regulatória</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="productType">Tipo de produto</Label>
-                    <Input id="productType" value={productType} onChange={(e) => setProductType(e.target.value)} required placeholder="Ex: genérico oral, biológico, nutracêutico" />
+                    <Label htmlFor="productName">Nome do Produto</Label>
+                    <Input id="productName" value={productName} onChange={(e) => setProductName(e.target.value)} required />
                   </div>
                   <div>
-                    <Label htmlFor="routeOrManufacturing">Rota/manufatura</Label>
-                    <Input id="routeOrManufacturing" value={routeOrManufacturing} onChange={(e) => setRouteOrManufacturing(e.target.value)} placeholder="Ex: síntese química, fermentação, extração" />
+                    <Label htmlFor="productType">Tipo de Produto</Label>
+                    <Input id="productType" value={productType} onChange={(e) => setProductType(e.target.value)} />
                   </div>
                   <div>
-                    <Label htmlFor="dosageForm">Forma farmacêutica</Label>
-                    <Input id="dosageForm" value={dosageForm} onChange={(e) => setDosageForm(e.target.value)} placeholder="Ex: comprimido, cápsula, injetável" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="targetRegions">Regiões alvo</Label>
-                      <Input id="targetRegions" value={targetRegions} onChange={(e) => setTargetRegions(e.target.value)} placeholder="Ex: Brasil, EUA, UE" />
-                    </div>
-                    <div>
-                      <Label htmlFor="clinicalStage">Estágio clínico</Label>
-                      <Input id="clinicalStage" value={clinicalStage} onChange={(e) => setClinicalStage(e.target.value)} placeholder="Ex: pré-clínico, Fase I/II/III" />
-                    </div>
+                    <Label htmlFor="indication">Indicação</Label>
+                    <Textarea id="indication" value={indication} onChange={(e) => setIndication(e.target.value)} />
                   </div>
                   <div>
-                    <Label htmlFor="referenceProduct">Produto de referência</Label>
-                    <Input id="referenceProduct" value={referenceProduct} onChange={(e) => setReferenceProduct(e.target.value)} placeholder="Se aplicável" />
+                    <Label htmlFor="questions">Questões Específicas</Label>
+                    <Textarea id="questions" value={questions} onChange={(e) => setQuestions(e.target.value)} />
                   </div>
-                  <div>
-                    <Label htmlFor="knownRisks">Riscos conhecidos</Label>
-                    <Textarea id="knownRisks" value={knownRisks} onChange={(e) => setKnownRisks(e.target.value)} />
-                  </div>
-                  <Button type="submit" disabled={loading}>{loading ? 'Gerando...' : 'Gerar Avaliação'}</Button>
+                  <Button type="submit" disabled={loading}>{loading ? 'Analisando...' : 'Obter Orientação'}</Button>
                 </form>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Parecer IA</CardTitle>
+                <CardTitle>Orientação Regulatória</CardTitle>
               </CardHeader>
               <CardContent>
                 {outputMd ? (
@@ -125,24 +95,16 @@ const RegulatoryAssistant = () => {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          const content = `Via agente: Técnico‑Regulatório IA\nProduto: ${productType || '-'}\nRegiões: ${targetRegions || '-'}\nEstágio: ${clinicalStage || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          sendToMasterChat(content, { metadata: { module: 'tech_regulatory' } });
+                          const content = `Via agente: Assistente Regulatório\nProduto: ${productName || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          redirectToChat(content, { metadata: { module: 'regulatory_assistant' } });
                         }}
                       >
                         Enviar para chat
                       </Button>
-                      <Button
-                        onClick={() => {
-                          const content = `Via agente: Técnico‑Regulatório IA (novo chat)\nProduto: ${productType || '-'}\nRegiões: ${targetRegions || '-'}\nEstágio: ${clinicalStage || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
-                          sendToMasterChat(content, { newThread: true, title: productType || 'Parecer regulatório', metadata: { module: 'tech_regulatory' } });
-                        }}
-                      >
-                        Novo chat com este resultado
-                      </Button>
                     </div>
                   </>
                 ) : (
-                  <p className="text-muted-foreground">O resultado em Markdown aparecerá aqui após a geração.</p>
+                  <p className="text-muted-foreground">A orientação regulatória aparecerá aqui após a análise.</p>
                 )}
               </CardContent>
             </Card>

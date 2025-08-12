@@ -1,247 +1,163 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, FileText, MessageSquare, Download } from 'lucide-react';
-import MainLayout from '@/components/layout/MainLayout';
+import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAIDocumentAssistant } from '@/hooks/useAIDocumentAssistant';
+import MainLayout from '@/components/layout/MainLayout';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAIAgent } from '@/hooks/useAIAgent';
+import { useAIEventLogger } from '@/hooks/useAIEventLogger';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 import { useToast } from '@/hooks/use-toast';
 
 const DocumentationAssistantAI = () => {
-  const [docType, setDocType] = useState('');
-  const [templateName, setTemplateName] = useState('');
-  const [context, setContext] = useState('');
-  const [fields, setFields] = useState({
-    product_name: '',
-    indication: '',
-    dosage: '',
-    route: '',
-    contraindications: ''
-  });
-  const [result, setResult] = useState('');
-
-  const { generateDocument, loading } = useAIDocumentAssistant();
-  const { sendToMasterChat } = useMasterChatBridge();
+  const { generateDocument, loading } = useAIAgent();
+  const { logAIEvent } = useAIEventLogger();
+  const { redirectToChat } = useMasterChatBridge();
   const { toast } = useToast();
+  const [documentType, setDocumentType] = useState('');
+  const [productName, setProductName] = useState('');
+  const [description, setDescription] = useState('');
+  const [requirements, setRequirements] = useState('');
+  const [outputMd, setOutputMd] = useState<string | null>(null);
 
-  const handleGenerate = async () => {
-    if (!docType) {
-      toast({ title: 'Erro', description: 'Selecione um tipo de documento', variant: 'destructive' });
+  useEffect(() => {
+    document.title = 'Assistente de Documentação IA | PharmaConnect';
+    const link = document.createElement('link');
+    link.rel = 'canonical';
+    link.href = window.location.origin + '/ai/assistente-documentacao';
+    document.head.appendChild(link);
+
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    meta.content = 'Assistente de IA para geração de documentação regulatória farmacêutica.';
+    document.head.appendChild(meta);
+
+    return () => { 
+      document.head.removeChild(link); 
+      document.head.removeChild(meta);
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!documentType || !productName) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, preencha pelo menos o tipo de documento e nome do produto.',
+        variant: 'destructive'
+      });
       return;
     }
 
-    const output = await generateDocument({
-      doc_type: docType,
-      template_name: templateName,
-      fields,
-      context
+    await logAIEvent({ 
+      source: 'master_ai_hub', 
+      action: 'init', 
+      message: `documentation:${documentType}:${productName}` 
     });
-
-    if (output?.output_md) {
-      setResult(output.output_md);
-    }
-  };
-
-  const handleSendToChat = () => {
-    if (result) {
-      sendToMasterChat(result, { 
-        newThread: true, 
-        title: `Documento: ${docType}` 
+    
+    const res = await generateDocument({ 
+      document_type: documentType, 
+      product_name: productName, 
+      description, 
+      requirements 
+    });
+    
+    if (res?.output_md) {
+      setOutputMd(res.output_md);
+      toast({
+        title: 'Sucesso',
+        description: 'Documento gerado com sucesso!'
       });
-    }
-  };
-
-  const handleDownload = () => {
-    if (result) {
-      const branded = `![PharmaConnect Brasil](/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png)\n\n` + result;
-      const blob = new Blob([branded], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${docType.replace(/\s+/g, '_')}.md`;
-      a.click();
-      URL.revokeObjectURL(url);
+    } else {
+      toast({
+        title: 'Aviso',
+        description: 'Documento gerado, mas pode estar vazio. Verifique o resultado.',
+        variant: 'destructive'
+      });
     }
   };
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <div className="container mx-auto px-4 py-6">
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-green-500 to-blue-600 text-white">
-                <FileText className="h-8 w-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold">Assistente de Documentação</h1>
-                <p className="text-muted-foreground">
-                  Gere documentos regulatórios com IA especializada
-                </p>
-              </div>
-            </div>
-          </div>
+        <main className="container mx-auto px-4 py-6">
+          <h1 className="text-3xl font-bold mb-2">Assistente de Documentação IA</h1>
+          <p className="text-muted-foreground mb-6">Gere documentação regulatória automatizada para produtos farmacêuticos.</p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Formulário */}
+          <section className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Configuração do Documento</CardTitle>
-                <CardDescription>
-                  Defina o tipo e parâmetros para geração automática
-                </CardDescription>
+                <CardTitle>Geração de Documento</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="docType">Tipo de Documento</Label>
-                  <Select value={docType} onValueChange={setDocType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="capa">CAPA (Common Application)</SelectItem>
-                      <SelectItem value="sop">SOP (Standard Operating Procedure)</SelectItem>
-                      <SelectItem value="ctd">CTD (Common Technical Document)</SelectItem>
-                      <SelectItem value="dossier">Dossiê Regulatório</SelectItem>
-                      <SelectItem value="validation">Protocolo de Validação</SelectItem>
-                      <SelectItem value="stability">Estudo de Estabilidade</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="templateName">Template (Opcional)</Label>
-                  <Input
-                    id="templateName"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="Nome do template específico"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="productName">Nome do Produto</Label>
-                  <Input
-                    id="productName"
-                    value={fields.product_name}
-                    onChange={(e) => setFields({...fields, product_name: e.target.value})}
-                    placeholder="Nome do produto farmacêutico"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="indication">Indicação</Label>
-                  <Input
-                    id="indication"
-                    value={fields.indication}
-                    onChange={(e) => setFields({...fields, indication: e.target.value})}
-                    placeholder="Indicação terapêutica"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dosage">Dosagem</Label>
-                    <Input
-                      id="dosage"
-                      value={fields.dosage}
-                      onChange={(e) => setFields({...fields, dosage: e.target.value})}
-                      placeholder="Ex: 500mg"
-                    />
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="documentType">Tipo de Documento</Label>
+                    <Select value={documentType} onValueChange={setDocumentType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de documento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dossie_anvisa">Dossiê ANVISA</SelectItem>
+                        <SelectItem value="bula">Bula</SelectItem>
+                        <SelectItem value="rotulo">Rótulo</SelectItem>
+                        <SelectItem value="manual_qualidade">Manual de Qualidade</SelectItem>
+                        <SelectItem value="pop">Procedimento Operacional Padrão</SelectItem>
+                        <SelectItem value="validacao">Protocolo de Validação</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="route">Via de Administração</Label>
-                    <Input
-                      id="route"
-                      value={fields.route}
-                      onChange={(e) => setFields({...fields, route: e.target.value})}
-                      placeholder="Ex: Oral"
-                    />
+                  <div>
+                    <Label htmlFor="productName">Nome do Produto</Label>
+                    <Input id="productName" value={productName} onChange={(e) => setProductName(e.target.value)} required />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="context">Contexto Adicional</Label>
-                  <Textarea
-                    id="context"
-                    value={context}
-                    onChange={(e) => setContext(e.target.value)}
-                    placeholder="Informações adicionais relevantes para o documento..."
-                    rows={4}
-                  />
-                </div>
-
-                <Button 
-                  onClick={handleGenerate} 
-                  disabled={loading}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Gerando Documento...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Gerar Documento
-                    </>
-                  )}
-                </Button>
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="requirements">Requisitos Específicos</Label>
+                    <Textarea id="requirements" value={requirements} onChange={(e) => setRequirements(e.target.value)} />
+                  </div>
+                  <Button type="submit" disabled={loading}>{loading ? 'Gerando...' : 'Gerar Documento'}</Button>
+                </form>
               </CardContent>
             </Card>
 
-            {/* Resultado */}
             <Card>
               <CardHeader>
-                <CardTitle>Documento Gerado</CardTitle>
-                <CardDescription>
-                  Resultado em formato Markdown
-                </CardDescription>
+                <CardTitle>Resultado</CardTitle>
               </CardHeader>
               <CardContent>
-                {result ? (
-                  <div className="space-y-4">
-                    <div className="bg-muted p-4 rounded-lg max-h-96 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap text-sm">{result}</pre>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button onClick={handleSendToChat} variant="outline" className="flex-1">
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Enviar para Chat
+                {outputMd ? (
+                  <>
+                    <article className="prose prose-sm md:prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                      {outputMd}
+                    </article>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const content = `Via agente: Assistente de Documentação IA\nTipo: ${documentType || '-'}\nProduto: ${productName || '-'}\n\n${outputMd || '(sem resultado — enviando contexto)'}\n`;
+                          redirectToChat(content, { metadata: { module: 'documentation_assistant' } });
+                        }}
+                      >
+                        Enviar para chat
                       </Button>
-                      <Button onClick={handleDownload} variant="outline" className="flex-1">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Configure os parâmetros e clique em "Gerar Documento"</p>
-                  </div>
+                  <p className="text-muted-foreground">O resultado em Markdown aparecerá aqui após a geração.</p>
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          <Alert className="mt-6">
-            <FileText className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Assistente de Documentação:</strong> Esta IA é especializada em gerar 
-              documentos regulatórios seguindo padrões ANVISA, FDA e EMA. Os documentos 
-              gerados devem sempre ser revisados por especialistas antes do uso oficial.
-            </AlertDescription>
-          </Alert>
-        </div>
+          </section>
+        </main>
       </MainLayout>
     </ProtectedRoute>
   );
