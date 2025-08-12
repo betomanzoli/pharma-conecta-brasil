@@ -18,6 +18,7 @@ import ProjectAnalyst from "./pages/ProjectAnalyst";
 import BusinessStrategist from "./pages/BusinessStrategist";
 import TechnicalRegulatory from "./pages/TechnicalRegulatory";
 import DocumentationAssistant from "./pages/DocumentationAssistant";
+import ChatDocumentAssistant from "./pages/ChatDocumentAssistant";
 import Coordination from "./pages/Coordination";
 import ANVISAAlerts from "./pages/ANVISAAlerts";
 import FederalLearning from "./pages/FederalLearning";
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/ai/estrategista" element={<BusinessStrategist />} />
             <Route path="/ai/tecnico-regulatorio" element={<TechnicalRegulatory />} />
             <Route path="/ai/documentacao" element={<DocumentationAssistant />} />
+            <Route path="/ai/documentacao-chat" element={<ChatDocumentAssistant />} />
             <Route path="/ai/coordenacao" element={<Coordination />} />
             <Route path="/ai/prompts" element={<PromptsLibrary />} />
             <Route path="/ai/sinergia" element={<SynergyDashboard />} />

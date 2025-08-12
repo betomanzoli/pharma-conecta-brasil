@@ -42,11 +42,33 @@ const KnowledgeIngestButton = () => {
   };
 
   const handleDownloadTemplate = (templateName: string) => {
-    const templateUrl = `/templates/${templateName}`;
+    // Create mock template content
+    const mockContent = `# ${templateName.replace(/[_\.]/g, ' ').replace('.md', '')}
+
+## Modelo PharmaConnect
+
+Este é um template padrão da plataforma PharmaConnect para ${templateName.split('_')[0].toLowerCase()}.
+
+### Seções principais:
+1. Introdução
+2. Objetivo
+3. Escopo
+4. Metodologia
+5. Resultados esperados
+6. Conclusões
+
+---
+*Template gerado pela plataforma PharmaConnect*`;
+
+    const blob = new Blob([mockContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = templateUrl;
+    link.href = url;
     link.download = templateName;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const availableTemplates = [

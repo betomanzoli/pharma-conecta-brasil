@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Download, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Download, Clock, CheckCircle, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAIDocumentAssistant } from '@/hooks/useAIDocumentAssistant';
+import { useToast } from '@/hooks/use-toast';
 
 const DocumentationAssistant = () => {
   const [docType, setDocType] = useState('');
@@ -17,17 +19,33 @@ const DocumentationAssistant = () => {
   const [context, setContext] = useState('');
   const [generatedDoc, setGeneratedDoc] = useState('');
   const { generateDocument, loading } = useAIDocumentAssistant();
+  const { toast } = useToast();
 
   const handleGenerate = async () => {
-    const result = await generateDocument({
-      doc_type: docType,
-      template_name: templateName,
-      context: context,
-      fields: {}
-    });
-    
-    if (result?.output_md) {
-      setGeneratedDoc(result.output_md);
+    try {
+      const result = await generateDocument({
+        doc_type: docType,
+        template_name: templateName,
+        context: context,
+        fields: {}
+      });
+      
+      if (result?.output_md) {
+        setGeneratedDoc(result.output_md);
+      } else {
+        toast({
+          title: "Erro na geração",
+          description: "Conteúdo vazio retornado. Verifique os dados ou tente novamente.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao gerar documento:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Falha na comunicação com o servidor.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -48,16 +66,24 @@ const DocumentationAssistant = () => {
       <MainLayout>
         <div className="container mx-auto px-4 py-6">
           <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-                <FileText className="h-8 w-8" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+                  <FileText className="h-8 w-8" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold">Assistente de Documentação IA</h1>
+                  <p className="text-muted-foreground">
+                    Geração automática de documentos farmacêuticos
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold">Assistente de Documentação IA</h1>
-                <p className="text-muted-foreground">
-                  Geração automática de documentos farmacêuticos
-                </p>
-              </div>
+              <Link to="/ai/documentacao-chat">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Usar Chat Guiado</span>
+                </Button>
+              </Link>
             </div>
           </div>
 

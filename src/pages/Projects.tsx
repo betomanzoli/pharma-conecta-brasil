@@ -73,7 +73,7 @@ const Projects = () => {
                   </p>
                 </div>
               </div>
-              <Button>
+              <Button onClick={() => alert('Funcionalidade em desenvolvimento!')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Projeto
               </Button>
@@ -122,7 +122,11 @@ const Projects = () => {
                     </div>
                   </div>
                   
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => alert(`Detalhes do projeto: ${project.name}`)}
+                  >
                     Ver Detalhes
                   </Button>
                 </CardContent>

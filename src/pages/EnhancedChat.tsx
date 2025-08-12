@@ -34,6 +34,13 @@ const EnhancedChat = () => {
       }
     }
 
+    // Check for legacy localStorage format
+    const legacyPrompt = localStorage.getItem('pendingChatPrompt');
+    if (legacyPrompt) {
+      setInput(legacyPrompt);
+      localStorage.removeItem('pendingChatPrompt');
+    }
+
     // Add welcome message
     setMessages([{
       id: '1',

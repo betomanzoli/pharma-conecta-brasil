@@ -20,6 +20,59 @@ const KnowledgeLibrary = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const handleDownloadSource = async (source: any) => {
+    try {
+      // Fetch chunks for this source
+      const { data: chunks, error } = await supabase
+        .from('knowledge_chunks')
+        .select('content')
+        .eq('source_id', source.id)
+        .order('metadata->seq');
+
+      if (error) throw error;
+
+      // Combine chunks into full content
+      const fullContent = chunks?.map(chunk => chunk.content).join('\n\n') || 'Conteúdo não encontrado';
+      
+      // Create and download file
+      const content = `# ${source.title}
+
+**Tipo:** ${source.source_type}
+**Criado em:** ${new Date(source.created_at).toLocaleDateString('pt-BR')}
+${source.source_url ? `**URL:** ${source.source_url}` : ''}
+
+---
+
+${fullContent}
+
+---
+*Baixado da PharmaConnect Knowledge Base*`;
+
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${source.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download iniciado",
+        description: `Baixando: ${source.title}`,
+      });
+
+    } catch (error) {
+      console.error('Error downloading source:', error);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar o arquivo.",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     loadKnowledgeSources();
   }, []);
@@ -203,9 +256,14 @@ const KnowledgeLibrary = () => {
                             </div>
                           </CardHeader>
                           <CardContent className="pt-0">
-                            <Button variant="outline" size="sm" className="w-full">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => handleDownloadSource(source)}
+                            >
                               <Download className="h-3 w-3 mr-2" />
-                              Acessar
+                              Download
                             </Button>
                           </CardContent>
                         </Card>

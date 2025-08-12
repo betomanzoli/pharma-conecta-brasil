@@ -9,76 +9,45 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, Shield, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
+import { useToast } from '@/hooks/use-toast';
 
 const TechnicalRegulatory = () => {
   const [productType, setProductType] = useState('');
   const [regulatoryBody, setRegulatoryBody] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [analysis, setAnalysis] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { analyzeTechRegulatory, loading } = useAITechRegulatory();
+  const { toast } = useToast();
 
   const handleAnalyze = async () => {
-    setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setAnalysis(`
-# Análise Técnico-Regulatória - ${productType}
-
-## Estratégia Regulatória Recomendada
-### Órgão: ${regulatoryBody}
-
-## Classificação do Produto
-- Categoria: Medicamento ${productType}
-- Via regulatória: Registro por comparabilidade
-- Tempo estimado: 12-18 meses
-
-## Documentação Necessária
-### CTD Módulo 1 (Regional)
-- Formulário de petição
-- Bula e rotulagem
-- Informações administrativas
-
-### CTD Módulo 2 (Resumos)
-- Resumo de qualidade
-- Resumo não-clínico
-- Resumo clínico
-
-### CTD Módulo 3 (Qualidade)
-- Substância ativa
-- Produto farmacêutico
-- Materiais de embalagem
-
-## Cronograma de Submissão
-1. **Mês 1-3**: Preparação da documentação
-2. **Mês 4**: Submissão inicial
-3. **Mês 5-6**: Screening ANVISA
-4. **Mês 7-12**: Análise técnica
-5. **Mês 13-15**: Questionamentos e respostas
-6. **Mês 16-18**: Decisão final
-
-## Marcos Críticos
-- ✅ Definição da estratégia regulatória
-- ⚠️ Preparação do dossiê CTD
-- ⚠️ Validação analítica
-- ⚠️ Estudos de estabilidade
-- ⚠️ Inspeção GMP (se aplicável)
-
-## Riscos Identificados
-- Questionamentos sobre comparabilidade
-- Exigência de estudos adicionais
-- Problemas na cadeia de suprimentos
-- Mudanças na legislação
-
-## Próximos Passos
-1. Validar estratégia com especialistas
-2. Iniciar preparação do dossiê
-3. Agendar reunião pré-submissão
-4. Preparar plano de respostas
-      `);
+      const result = await analyzeTechRegulatory({
+        product_type: productType,
+        route_or_manufacturing: 'Via oral',
+        dosage_form: 'Comprimidos',
+        target_regions: regulatoryBody,
+        clinical_stage: 'Registro',
+        reference_product: '',
+        known_risks: productDescription
+      });
+      
+      if (result?.output_md) {
+        setAnalysis(result.output_md);
+      } else {
+        toast({
+          title: "Erro na análise",
+          description: "Conteúdo vazio retornado. Verifique os dados ou tente novamente.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
-      console.error('Error analyzing:', error);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao analisar:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Falha na comunicação com o servidor.",
+        variant: "destructive"
+      });
     }
   };
 

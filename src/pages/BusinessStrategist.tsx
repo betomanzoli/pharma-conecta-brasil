@@ -8,57 +8,45 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TrendingUp, Target, DollarSign, Users } from 'lucide-react';
+import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
+import { useToast } from '@/hooks/use-toast';
 
 const BusinessStrategist = () => {
   const [productName, setProductName] = useState('');
   const [marketDescription, setMarketDescription] = useState('');
   const [analysis, setAnalysis] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
+  const { toast } = useToast();
 
   const handleAnalyze = async () => {
-    setLoading(true);
     try {
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setAnalysis(`
-# Análise Estratégica de Negócios - ${productName}
-
-## Oportunidades de Mercado
-- Crescimento estimado de 15-20% nos próximos 3 anos
-- Demanda crescente por soluções inovadoras
-- Baixa penetração em mercados emergentes
-
-## Análise SWOT
-### Forças
-- Inovação tecnológica
-- Expertise regulatória
-- Rede de distribuição estabelecida
-
-### Fraquezas
-- Alto custo inicial
-- Dependência regulatória
-- Concorrência acirrada
-
-### Oportunidades
-- Expansão internacional
-- Parcerias estratégicas
-- Novos segmentos de mercado
-
-### Ameaças
-- Mudanças regulatórias
-- Entrada de novos players
-- Pressão sobre preços
-
-## Recomendações Estratégicas
-1. Desenvolver parcerias com distribuidores locais
-2. Investir em P&D para diferenciação
-3. Criar programa de acesso ao mercado
-4. Estabelecer pricing strategy competitiva
-      `);
+      const result = await analyzeBusinessCase({
+        opportunity: productName,
+        product_type: 'Produto farmacêutico',
+        target_market: marketDescription,
+        competitors: '',
+        differentiation: '',
+        investment_range: '',
+        timeframe: '',
+        risks: ''
+      });
+      
+      if (result?.output_md) {
+        setAnalysis(result.output_md);
+      } else {
+        toast({
+          title: "Erro na análise",
+          description: "Conteúdo vazio retornado. Verifique os dados ou tente novamente.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
-      console.error('Error analyzing:', error);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao analisar:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Falha na comunicação com o servidor.",
+        variant: "destructive"
+      });
     }
   };
 
