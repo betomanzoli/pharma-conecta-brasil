@@ -265,6 +265,21 @@ verify_jwt = true
 [functions.who-guidelines]
 verify_jwt = false
 
+[functions.master-chatbot]
+verify_jwt = true
+
+[functions.ai-business-strategist]
+verify_jwt = true
+
+[functions.ai-technical-regulatory]
+verify_jwt = true
+
+[functions.ai-document-assistant]
+verify_jwt = true
+
+[functions.ai-coordinator-orchestrator]
+verify_jwt = true
+
 [db]
 port = 54322
 major_version = 15

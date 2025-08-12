@@ -1,161 +1,253 @@
-
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const log = (msg: string, data?: any) => console.log(`[ai-technical-regulatory] ${msg}`, data ?? '');
+const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
+  });
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY')!;
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) {
+      return new Response(JSON.stringify({ error: "not_authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey, {
-      global: { headers: { Authorization: authHeader || '' } },
-    });
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-    const userId = userData.user.id;
-
-    // Rate limiting and audit
-    const FUNCTION_NAME = 'ai-technical-regulatory';
-    const WINDOW_MINUTES = 5;
-    const MAX_CALLS = 10;
-    const since = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
-    const { count, error: countErr } = await supabase
-      .from('function_invocations')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('function_name', FUNCTION_NAME)
-      .gte('invoked_at', since);
-    if (countErr) console.error('rate-limit count error', countErr);
-    if ((count ?? 0) >= MAX_CALLS) {
-      return new Response(
-        JSON.stringify({ error: 'rate_limited', detail: `Limite de ${MAX_CALLS} chamadas a cada ${WINDOW_MINUTES} minutos.` }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    await supabase.from('function_invocations').insert({
-      user_id: userId,
-      function_name: FUNCTION_NAME,
-      metadata: { ip: req.headers.get('x-forwarded-for') || '', ua: req.headers.get('user-agent') || '' }
-    });
-    await supabase.rpc('audit_log', { action_type: 'invoke', table_name: 'edge_function', record_id: null, details: { function_name: FUNCTION_NAME } });
-
-    // Expected input
     const body = await req.json();
-    const {
-      product_type = '',
-      route_or_manufacturing = '',
-      dosage_form = '',
-      target_regions = 'Brasil',
-      clinical_stage = '',
-      reference_product = '',
-      known_risks = '',
-      project_id = null,
-    } = body || {};
+    const { 
+      product_type, 
+      route_administration, 
+      dosage_form, 
+      target_regions, 
+      active_ingredient,
+      indication,
+      project_id 
+    } = body;
 
-    const prompt = `Atue como um Especialista Técnico-Regulatório no Brasil. Faça uma avaliação preliminar em Markdown contendo:
-- Complexidade técnica (baixa/média/alta) e principais drivers
-- Pathway regulatório provável (ANVISA, FDA, EMA) com justificativa e referências (normas ICH e resoluções relevantes)
-- Requisitos CMC e de qualidade (GMP, validações, estabilidade) por estágio
-- Timeline regulatória estimada com marcos críticos (bullets)
-- Riscos regulatórios e técnicos com mitigação
-- Checklists iniciais (pré-dossiê) e recomendações objetivas
-Contexto:
-Tipo de produto: ${product_type}
-Rota/manufatura: ${route_or_manufacturing}
-Forma farmacêutica: ${dosage_form}
-Regiões alvo: ${target_regions}
-Estágio clínico: ${clinical_stage}
-Produto de referência: ${reference_product}
-Riscos conhecidos: ${known_risks}
-Responda somente em pt-BR e em Markdown.`;
-
-    log('Calling Perplexity API');
-    const resp = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: [
-          { role: 'system', content: 'Você é um especialista técnico-regulatório (ANVISA/ICH). Seja objetivo e referencie normas quando pertinente.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: 2000,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['anvisa.gov.br', 'fda.gov', 'ema.europa.eu', 'ich.org'],
-        search_recency_filter: 'year',
-        frequency_penalty: 1,
-        presence_penalty: 0
-      }),
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      log('Perplexity error', { status: resp.status, text });
-      return new Response(JSON.stringify({ error: 'Perplexity API error', detail: text }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    const data = await resp.json();
-    const output_md: string = data?.choices?.[0]?.message?.content ?? 'Sem conteúdo gerado.';
-
-    const defaultKpis = [
-      { name: 'Complexidade técnica', unit: 'nível', target: 'média' },
-      { name: 'Time-to-submission', unit: 'meses', target: 9 },
-      { name: 'Taxa de aprovação 1ª submissão', unit: '%', target: 70 },
-    ];
-
-    const insertPayload = {
-      user_id: userId,
-      project_id,
-      agent_type: 'technical-regulatory',
-      input: { product_type, route_or_manufacturing, dosage_form, target_regions, clinical_stage, reference_product, known_risks },
-      output_md,
-      kpis: defaultKpis,
-      handoff_to: ['project-analyst', 'documentation-assistant'],
-      status: 'completed',
+    const productInfo = {
+      type: product_type,
+      route: route_administration,
+      dosage: dosage_form,
+      regions: target_regions || ['Brazil'],
+      ingredient: active_ingredient,
+      indication: indication
     };
 
-    const { data: inserted, error: insertError } = await supabase
-      .from('ai_agent_outputs')
-      .insert(insertPayload)
-      .select()
-      .maybeSingle();
+    const prompt = `Como especialista em assuntos regulatórios farmacêuticos, faça uma análise técnica e regulatória completa para:
 
-    if (insertError) {
-      log('Insert error', insertError);
-      return new Response(JSON.stringify({ error: 'DB insert failed', detail: insertError.message, output_md }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+PRODUTO:
+- Tipo: ${product_type}
+- Via de administração: ${route_administration}
+- Forma farmacêutica: ${dosage_form}
+- Princípio ativo: ${active_ingredient}
+- Indicação: ${indication}
+- Regiões alvo: ${target_regions?.join(', ') || 'Brasil'}
+
+ANÁLISE SOLICITADA:
+
+1. CLASSIFICAÇÃO REGULATÓRIA
+   - Categoria do produto (medicamento, fitoterápico, etc.)
+   - Classificação de risco
+   - Requisitos específicos por região
+
+2. CAMINHOS REGULATÓRIOS
+   
+   A) ANVISA (Brasil):
+   - Tipo de registro necessário
+   - Documentação exigida
+   - Prazos estimados
+   - Taxas aplicáveis
+   - Estudos clínicos necessários
+   
+   B) FDA (EUA) - se aplicável:
+   - Via regulatória recomendada (NDA, ANDA, 505(b)(2))
+   - Requisitos pré-clínicos e clínicos
+   - Cronograma esperado
+   
+   C) EMA (Europa) - se aplicável:
+   - Procedimento recomendado (Centralizado, Descentralizado, etc.)
+   - Requisitos específicos
+   - Timeline estimado
+
+3. ESTUDOS E DOCUMENTAÇÃO
+   - Estudos pré-clínicos necessários
+   - Estudos clínicos requeridos (fases)
+   - Documentação técnica (CTD/eCTD)
+   - Estudos de bioequivalência/biodisponibilidade
+
+4. CRONOGRAMA E CUSTOS
+   - Timeline estimado para registro
+   - Custos aproximados por etapa
+   - Marcos críticos do projeto
+
+5. RISCOS E MITIGAÇÕES
+   - Principais riscos regulatórios
+   - Estratégias de mitigação
+   - Pontos de atenção específicos
+
+6. RECOMENDAÇÕES ESTRATÉGICAS
+   - Sequência recomendada de registros
+   - Oportunidades de otimização
+   - Próximos passos sugeridos
+
+Baseie a análise nas regulamentações atuais e forneça informações práticas e acionáveis.`;
+
+    let regulatoryAnalysis = "";
+
+    if (PERPLEXITY_API_KEY) {
+      const response = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-sonar-large-128k-online",
+          messages: [
+            {
+              role: "system",
+              content: `Você é um especialista em assuntos regulatórios farmacêuticos com amplo conhecimento em:
+              - Regulamentações ANVISA (Brasil)
+              - FDA Guidelines (Estados Unidos)  
+              - EMA Regulations (Europa)
+              - ICH Guidelines
+              - Desenvolvimento farmacêutico
+              - Registro de medicamentos
+              - Estudos clínicos e pré-clínicos
+              
+              Forneça análises técnicas precisas e atualizadas baseadas nas regulamentações vigentes.`
+            },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 2500,
+          temperature: 0.5,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        regulatoryAnalysis = data.choices[0]?.message?.content || "Erro ao gerar análise";
+      } else {
+        throw new Error("Erro na API Perplexity");
+      }
+    } else {
+      regulatoryAnalysis = `# Análise Técnica e Regulatória
+
+## Produto Analisado
+- **Tipo**: ${product_type}
+- **Via**: ${route_administration}
+- **Forma farmacêutica**: ${dosage_form}
+- **Princípio ativo**: ${active_ingredient}
+- **Indicação**: ${indication}
+- **Regiões**: ${target_regions?.join(', ') || 'Brasil'}
+
+## 1. CLASSIFICAÇÃO REGULATÓRIA
+
+### ANVISA (Brasil)
+- Classificação como medicamento de acordo com RDC 200/2017
+- Categoria de risco a ser determinada com base no princípio ativo
+- Possível enquadramento em lista de medicamentos específicos
+
+## 2. CAMINHOS REGULATÓRIOS
+
+### Registro ANVISA
+- **Processo**: Registro de medicamento novo ou similar
+- **Documentação**: Dossiê técnico completo conforme RDC 200/2017
+- **Prazo estimado**: 365 dias úteis (pode variar)
+- **Estudos clínicos**: Necessários conforme categoria do produto
+
+### Considerações FDA/EMA
+- Análise de viabilidade para mercados internacionais
+- Requisitos específicos de cada agência
+- Harmonização com diretrizes ICH
+
+## 3. PRÓXIMOS PASSOS RECOMENDADOS
+
+1. **Consulta pré-submissão** com ANVISA
+2. **Desenvolvimento do dossiê técnico** 
+3. **Planejamento de estudos clínicos**
+4. **Estratégia de propriedade intelectual**
+
+## Observação Importante
+Esta análise preliminar é baseada nas informações fornecidas. Para uma análise mais detalhada e atualizada com as regulamentações mais recentes, recomenda-se:
+
+- Consulta direta às agências regulatórias
+- Revisão das normativas mais recentes
+- Consulta com especialistas regulatórios
+- Configuração de APIs de dados regulatórios em tempo real
+
+**Recomendação**: Configure a integração com APIs especializadas para obter análises mais precisas e atualizadas.`;
     }
 
-    return new Response(JSON.stringify({ output: inserted ?? insertPayload }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Salvar resultado no banco
+    const { data: agentOutput, error: insertError } = await supabase
+      .from("ai_agent_outputs")
+      .insert({
+        user_id: auth.user.id,
+        project_id: project_id || null,
+        agent_type: "technical_regulatory",
+        input: body,
+        output_md: regulatoryAnalysis,
+        kpis: {
+          product_type: product_type,
+          regions_analyzed: target_regions?.length || 1,
+          output_length: regulatoryAnalysis.length,
+          has_active_ingredient: !!active_ingredient
+        },
+        handoff_to: ["business_strategist"], // Pode seguir para análise de negócio
+        status: "completed"
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Erro ao salvar output:", insertError);
+    }
+
+    return new Response(JSON.stringify({
+      output: agentOutput,
+      analysis: regulatoryAnalysis,
+      recommendations: {
+        next_steps: [
+          "Consulta pré-submissão com ANVISA",
+          "Desenvolvimento do dossiê técnico", 
+          "Planejamento de estudos clínicos"
+        ],
+        timeline_estimate: "12-18 meses para registro ANVISA",
+        critical_success_factors: [
+          "Qualidade dos dados pré-clínicos",
+          "Estratégia de estudos clínicos",
+          "Conformidade regulatória"
+        ]
+      }
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e: any) {
-    log('Unhandled error', e?.message || e);
-    return new Response(JSON.stringify({ error: e?.message || 'Unknown error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+  } catch (error: any) {
+    console.error("ai-technical-regulatory error:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message || "internal_error" 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
