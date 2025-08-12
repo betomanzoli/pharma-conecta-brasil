@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,8 @@ import IntelligentKnowledgeBase from './IntelligentKnowledgeBase';
 import ConstellationAnalysis from './ConstellationAnalysis';
 import SharedValueSystem from './SharedValueSystem';
 import GomesCasseresExecutiveDashboard from './GomesCasseresExecutiveDashboard';
+import GomesCasseresReference from './GomesCasseresReference';
+import ProjectActions from './ProjectActions';
 
 const EnhancedProjectsPage: React.FC = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -62,6 +65,27 @@ const EnhancedProjectsPage: React.FC = () => {
 
   const handleMethodologyConfigured = (config: any) => {
     console.log('Methodology configured:', config);
+  };
+
+  // Handlers para ProjectActions
+  const handleEditProject = (projectId: string) => {
+    console.log('Edit project:', projectId);
+  };
+
+  const handleCollaborateProject = (projectId: string) => {
+    console.log('Collaborate on project:', projectId);
+  };
+
+  const handleShareProject = (projectId: string) => {
+    console.log('Share project:', projectId);
+  };
+
+  const handleExportProject = (projectId: string) => {
+    console.log('Export project:', projectId);
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    console.log('Delete project:', projectId);
   };
 
   return (
@@ -319,17 +343,16 @@ const EnhancedProjectsPage: React.FC = () => {
                         <Badge variant="outline">{project.status}</Badge>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setSelectedProject(project); setActiveTab('analytics'); }}
-                      >
-                        Ver Analytics
-                      </Button>
-                      <Button size="sm">
-                        Abrir Projeto
-                      </Button>
+                    <div className="ml-6">
+                      <ProjectActions
+                        projectId={project.id}
+                        projectName={project.title}
+                        onEdit={handleEditProject}
+                        onCollaborate={handleCollaborateProject}
+                        onShare={handleShareProject}
+                        onExport={handleExportProject}
+                        onDelete={handleDeleteProject}
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -350,6 +373,7 @@ const EnhancedProjectsPage: React.FC = () => {
             <TabsList>
               <TabsTrigger value="ai-templates">Templates IA</TabsTrigger>
               <TabsTrigger value="adaptive-templates">Templates Adaptativos</TabsTrigger>
+              <TabsTrigger value="gomes-casseres">Estratégia Gomes-Casseres</TabsTrigger>
             </TabsList>
             
             <TabsContent value="ai-templates">
@@ -358,6 +382,10 @@ const EnhancedProjectsPage: React.FC = () => {
             
             <TabsContent value="adaptive-templates">
               <AdaptiveProjectTemplates onTemplateSelected={handleSelectTemplate} />
+            </TabsContent>
+
+            <TabsContent value="gomes-casseres">
+              <GomesCasseresReference />
             </TabsContent>
           </Tabs>
         </TabsContent>
