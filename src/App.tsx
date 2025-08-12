@@ -15,6 +15,7 @@ import DocumentationAssistantAI from "./pages/DocumentationAssistantAI";
 import SynergyDashboard from "./pages/SynergyDashboard";
 import PromptsLibrary from "./pages/PromptsLibrary";
 import MasterAIHub from "./pages/MasterAIHub";
+import FederalLearningSystem from "./components/ai/FederalLearningSystem";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/ai/documentacao" element={<DocumentationAssistantAI />} />
             <Route path="/ai/sinergia" element={<SynergyDashboard />} />
             <Route path="/ai/prompts" element={<PromptsLibrary />} />
+            <Route path="/ai/federal" element={<FederalLearningSystem />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

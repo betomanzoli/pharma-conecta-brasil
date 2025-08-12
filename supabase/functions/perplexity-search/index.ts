@@ -27,7 +27,7 @@ serve(async (req) => {
     const { query, searchType, industry, specialization } = await req.json();
     logStep('Request parameters', { query, searchType, industry, specialization });
 
-    // Construir prompt específico por tipo de busca
+    // Build specific prompt by search type
     let prompt = '';
     switch (searchType) {
       case 'regulatory':
@@ -96,12 +96,12 @@ serve(async (req) => {
 
     logStep('Perplexity API response received', { contentLength: result.content.length });
 
-    // Salvar resultado no cache para futuras consultas
+    // Save result to cache for future queries
     await supabase.from('cache_entries').insert({
       cache_key: `perplexity_${searchType}_${query.toLowerCase().replace(/\s+/g, '_')}`,
       source: 'perplexity',
       cache_data: result,
-      ttl: 3600 // 1 hora
+      ttl: 3600 // 1 hour
     });
 
     logStep('Result cached successfully');

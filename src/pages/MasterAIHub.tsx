@@ -13,7 +13,8 @@ import {
   Workflow,
   Sparkles,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Network
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DemoModeIndicator from '@/components/layout/DemoModeIndicator';
@@ -70,6 +71,13 @@ const aiFeatures = [
     icon: Sparkles,
     href: '/ai/prompts',
     status: 'active'
+  },
+  {
+    title: 'Federal Learning',
+    description: 'Aprendizado colaborativo seguro inspirado no projeto Melloddy',
+    icon: Network,
+    href: '/ai/federal',
+    status: 'beta'
   }
 ];
 
