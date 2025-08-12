@@ -1,417 +1,226 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Bot, 
-  Send, 
-  Mic, 
-  MicOff, 
-  Volume2,
-  VolumeX,
-  RefreshCw,
-  Settings,
-  Zap,
-  Lightbulb,
-  TrendingUp,
-  Users,
-  FileText,
-  Clock
-} from 'lucide-react';
-import { useAIEventLogger } from '@/hooks/useAIEventLogger';
-
-interface Message {
-  id: string;
-  content: string;
-  type: 'user' | 'assistant';
-  timestamp: Date;
-  context?: string;
-  suggestions?: string[];
-}
-
-interface AICapability {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  examples: string[];
-}
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Bot, Brain, FileText, Search, MessageCircle, Zap } from 'lucide-react';
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
 
 const AIAssistant = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Olá! Sou seu assistente de IA especializado em projetos farmacêuticos. Como posso ajudá-lo hoje?',
-      type: 'assistant',
-      timestamp: new Date(),
-      suggestions: [
-        'Como encontrar parceiros para meu projeto?',
-        'Quais são as melhores práticas de segurança?',
-        'Como otimizar minha estratégia de matching?',
-        'Explique as métricas de valor compartilhado'
-      ]
-    }
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [currentContext, setCurrentContext] = useState('general');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { logAIEvent } = useAIEventLogger();
+  const [activeAgent, setActiveAgent] = useState('regulatory');
+  const [prompt, setPrompt] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState('');
+  const { toast } = useToast();
+  const { search } = useKnowledgeBase();
 
-  const aiCapabilities: AICapability[] = [
+  const agents = [
     {
-      id: 'matching',
-      name: 'AI Matching',
-      description: 'Encontre parceiros ideais com base em expertise e compatibilidade',
-      icon: <Zap className="h-5 w-5" />,
-      examples: [
-        'Encontre laboratórios especializados em oncologia',
-        'Sugira parceiros para desenvolvimento de biofármacos',
-        'Analise compatibilidade com empresa X'
-      ]
+      id: 'regulatory',
+      name: 'Especialista Regulatório',
+      icon: FileText,
+      description: 'Análise técnica e regulatória farmacêutica',
+      function: 'ai-technical-regulatory'
     },
     {
-      id: 'insights',
-      name: 'Insights Estratégicos',
-      description: 'Análise preditiva e recomendações estratégicas',
-      icon: <Lightbulb className="h-5 w-5" />,
-      examples: [
-        'Analise tendências do mercado farmacêutico',
-        'Preveja riscos do projeto atual',
-        'Recomende estratégias de crescimento'
-      ]
+      id: 'business',
+      name: 'Estrategista de Negócios',
+      icon: Brain,
+      description: 'Estratégias de mercado e oportunidades',
+      function: 'ai-business-strategist'
     },
     {
-      id: 'metrics',
-      name: 'Análise de Métricas',
-      description: 'Interpretação de KPIs e métricas de performance',
-      icon: <TrendingUp className="h-5 w-5" />,
-      examples: [
-        'Explique as métricas de ROI do projeto',
-        'Analise performance de parcerias',
-        'Compare resultados com benchmarks'
-      ]
+      id: 'analyst',
+      name: 'Analista de Projetos',
+      icon: Search,
+      description: 'Análise e gerenciamento de projetos',
+      function: 'ai-project-analyst'
     },
     {
-      id: 'collaboration',
-      name: 'Otimização de Colaboração',
-      description: 'Melhore a eficiência das parcerias estratégicas',
-      icon: <Users className="h-5 w-5" />,
-      examples: [
-        'Como melhorar comunicação com parceiros?',
-        'Otimize fluxos de trabalho colaborativos',
-        'Resolva conflitos de governança'
-      ]
+      id: 'coordinator',
+      name: 'Coordenador Central',
+      icon: Zap,
+      description: 'Orquestração e síntese de resultados',
+      function: 'ai-coordinator-orchestrator'
     }
   ];
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const handleAgentCall = async () => {
+    if (!prompt.trim()) return;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    setLoading(true);
+    try {
+      const currentAgent = agents.find(a => a.id === activeAgent);
+      if (!currentAgent) throw new Error('Agente não encontrado');
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+      // Get knowledge context first
+      let context = '';
+      try {
+        const searchResults = await search(prompt, 3);
+        context = searchResults.map(r => r.content).join('\n\n');
+      } catch (searchError) {
+        console.log('Search context unavailable:', searchError);
+      }
 
-    const messageToSend = inputMessage;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: messageToSend,
-      type: 'user',
-      timestamp: new Date(),
-      context: currentContext
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    // Log telemetry (non-blocking)
-    logAIEvent({
-      source: 'ai_assistant',
-      action: 'message',
-      message: messageToSend,
-      metadata: { context: currentContext }
-    });
-
-    // Simular resposta da IA
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: generateAIResponse(messageToSend, currentContext),
-        type: 'assistant',
-        timestamp: new Date(),
-        context: currentContext,
-        suggestions: generateSuggestions(messageToSend)
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Log assistant response (non-blocking)
-      logAIEvent({
-        source: 'ai_assistant',
-        action: 'assistant_response',
-        message: assistantMessage.content,
-        metadata: { context: currentContext, suggestions: assistantMessage.suggestions || [] }
+      const { data, error } = await supabase.functions.invoke(currentAgent.function, {
+        body: {
+          input: prompt,
+          context,
+          user_preferences: {
+            industry: 'farmacêutico',
+            region: 'brasil'
+          }
+        }
       });
 
-      setIsLoading(false);
+      if (error) throw error;
 
-      // Síntese de voz se habilitada
-      if (voiceEnabled) {
-        speakText(assistantMessage.content);
-      }
-    }, 1500);
-  };
-
-  const generateAIResponse = (message: string, context: string) => {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('matching') || lowerMessage.includes('parceiro')) {
-      return 'Com base na sua consulta sobre matching, posso ajudá-lo a encontrar parceiros ideais. Considerando suas especificações, identifiquei 3 potenciais parceiros com compatibilidade alta (>85%). Gostaria que eu analise critérios específicos como expertise técnica, capacidade financeira ou localização geográfica?';
-    }
-    
-    if (lowerMessage.includes('segurança') || lowerMessage.includes('confidencial')) {
-      return 'Sobre segurança e confidencialidade: nossa plataforma utiliza criptografia AES-256 e políticas de acesso granulares. Todos os dados são classificados automaticamente e o acesso é controlado por contratos inteligentes. Posso configurar níveis específicos de segurança para seu projeto?';
-    }
-    
-    if (lowerMessage.includes('roi') || lowerMessage.includes('retorno')) {
-      return 'Analisando as métricas de ROI dos seus projetos, identifiquei oportunidades de otimização que podem aumentar o retorno em até 40%. As principais áreas incluem: redução de tempo de desenvolvimento (25%), otimização de recursos (30%) e melhoria na seleção de parceiros (35%). Quer que eu detalhe alguma dessas áreas?';
-    }
-    
-    if (lowerMessage.includes('projeto') || lowerMessage.includes('gestão')) {
-      return 'Para gestão eficaz de projetos farmacêuticos, recomendo implementar: 1) Milestones claros com entregas mensuráveis, 2) Comunicação estruturada entre parceiros, 3) Monitoramento de riscos em tempo real, 4) Métricas de performance alinhadas. Posso criar um plano personalizado para seu projeto específico?';
-    }
-    
-    return 'Entendi sua pergunta. Com base no contexto atual e nas melhores práticas da indústria farmacêutica, posso fornecer insights específicos. Gostaria que eu focasse em algum aspecto particular: estratégico, operacional, regulatório ou financeiro?';
-  };
-
-  const generateSuggestions = (message: string) => {
-    const suggestions = [
-      'Mostrar análise detalhada',
-      'Comparar com benchmarks',
-      'Gerar relatório executivo',
-      'Agendar reunião com especialista'
-    ];
-    return suggestions.slice(0, 3);
-  };
-
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+      setResponse(data?.output?.output_md || 'Resposta gerada com sucesso');
+      toast({
+        title: "Resposta do agente IA",
+        description: `${currentAgent.name} processou sua solicitação`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro no agente IA",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const startListening = () => {
-    if ('webkitSpeechRecognition' in window) {
-      const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.lang = 'pt-BR';
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputMessage(transcript);
-      };
-      recognition.start();
-    }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setInputMessage(suggestion);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  const quickPrompts = {
+    regulatory: [
+      'Analise os requisitos para registro de medicamento genérico no Brasil',
+      'Quais são as principais mudanças na RDC 301/2019?',
+      'Como funciona o processo de importação de insumos farmacêuticos?'
+    ],
+    business: [
+      'Identifique oportunidades de mercado para medicamentos oncológicos',
+      'Analise a viabilidade de parceria com laboratórios internacionais',
+      'Quais são as tendências do mercado farmacêutico brasileiro?'
+    ],
+    analyst: [
+      'Crie um cronograma para desenvolvimento de medicamento inovador',
+      'Analise os riscos de um projeto de P&D farmacêutico',
+      'Elabore KPIs para monitoramento de projeto regulatório'
+    ],
+    coordinator: [
+      'Sintetize os resultados dos agentes anteriores',
+      'Crie um plano executivo integrado',
+      'Identifique próximos passos e responsabilidades'
+    ]
   };
 
   return (
     <div className="space-y-6">
+      <div className="text-center">
+        <div className="flex items-center justify-center space-x-3 mb-4">
+          <Bot className="h-8 w-8 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900">Assistente de IA Especializado</h2>
+        </div>
+        <p className="text-gray-600">
+          Sistema multi-agente para análise farmacêutica e regulatória
+        </p>
+      </div>
+
+      <Tabs value={activeAgent} onValueChange={setActiveAgent}>
+        <TabsList className="grid w-full grid-cols-4">
+          {agents.map((agent) => (
+            <TabsTrigger key={agent.id} value={agent.id} className="flex items-center space-x-2">
+              <agent.icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{agent.name}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {agents.map((agent) => (
+          <TabsContent key={agent.id} value={agent.id} className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <agent.icon className="h-5 w-5 text-blue-600" />
+                  <span>{agent.name}</span>
+                  <Badge variant="secondary">IA Especializada</Badge>
+                </CardTitle>
+                <p className="text-gray-600">{agent.description}</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder={`Faça uma pergunta para o ${agent.name}...`}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAgentCall()}
+                  />
+                  <Button onClick={handleAgentCall} disabled={loading}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    {loading ? 'Processando...' : 'Enviar'}
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700">Prompts Rápidos:</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {quickPrompts[agent.id as keyof typeof quickPrompts]?.map((quickPrompt, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPrompt(quickPrompt)}
+                        className="text-left justify-start h-auto p-3 whitespace-normal"
+                      >
+                        {quickPrompt}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {response && (
+                  <Card className="border-l-4 border-l-blue-500 bg-blue-50">
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold text-blue-900 mb-2">
+                        Resposta do {agent.name}
+                      </h4>
+                      <div className="prose max-w-none">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-700">
+                          {response}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
+
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Bot className="h-5 w-5 text-blue-600" />
-              <span>Assistente de IA PharmaConnect</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setVoiceEnabled(!voiceEnabled)}
-              >
-                {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-              </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
+          <CardTitle className="flex items-center space-x-2">
+            <Zap className="h-5 w-5 text-yellow-600" />
+            <span>Status dos Agentes IA</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Capacidades da IA */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {aiCapabilities.map((capability) => (
-              <Card key={capability.id} className="border-l-4 border-l-blue-500">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      {capability.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{capability.name}</h3>
-                      <p className="text-sm text-gray-600">{capability.description}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-700">Exemplos:</p>
-                    {capability.examples.slice(0, 2).map((example, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestionClick(example)}
-                        className="block text-xs text-blue-600 hover:underline text-left"
-                      >
-                        • {example}
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {agents.map((agent) => (
+              <div key={agent.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <agent.icon className="h-5 w-5 text-gray-600" />
+                  <span className="font-medium">{agent.name}</span>
+                </div>
+                <Badge variant="default">Ativo</Badge>
+              </div>
             ))}
           </div>
-
-          {/* Área de Mensagens */}
-          <Card className="h-96 flex flex-col">
-            <CardContent className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.type === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs opacity-70">
-                          {message.timestamp.toLocaleTimeString()}
-                        </span>
-                        {message.type === 'assistant' && (
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-3 w-3 opacity-70" />
-                            <span className="text-xs opacity-70">IA</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 p-3 rounded-lg">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Sugestões */}
-          {messages.length > 0 && messages[messages.length - 1].suggestions && (
-            <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Sugestões:</p>
-              <div className="flex flex-wrap gap-2">
-                {messages[messages.length - 1].suggestions?.map((suggestion, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="text-xs"
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Input de Mensagem */}
-          <div className="flex items-center space-x-2 mt-4">
-            <div className="flex-1 relative">
-              <Textarea
-                placeholder="Digite sua pergunta ou solicite insights..."
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="min-h-[60px] pr-12 resize-none"
-                rows={2}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={startListening}
-                disabled={isListening}
-                className="absolute right-2 top-2"
-              >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-            </div>
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Status */}
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-gray-600">Online</span>
-            </div>
-            <div className="flex items-center space-x-4 text-xs text-gray-500">
-              <span>Contexto: {currentContext}</span>
-              <span>Modo: {voiceEnabled ? 'Voz ativa' : 'Texto'}</span>
-            </div>
-          </div>
-
-          <Alert className="mt-4">
-            <Bot className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Assistente Especializado:</strong> Este assistente foi treinado especificamente 
-              para o setor farmacêutico brasileiro e integra dados em tempo real da plataforma para 
-              fornecer insights precisos e contextualizados.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
     </div>

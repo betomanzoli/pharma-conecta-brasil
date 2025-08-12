@@ -1,340 +1,224 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const logStep = (step: string, details?: any) => {
+  console.log(`[${new Date().toISOString()}] ${step}`, details || '');
+};
+
+interface IntegrationConfig {
+  name: string;
+  baseUrl: string;
+  endpoints: string[];
+  dataType: string;
+  enabled: boolean;
 }
 
-interface IntegrationRequest {
-  source: string;
-  force_sync?: boolean;
-}
+const INTEGRATIONS: IntegrationConfig[] = [
+  {
+    name: 'anvisa',
+    baseUrl: 'https://dados.anvisa.gov.br/api',
+    endpoints: ['/3/action/package_list', '/3/action/organization_list'],
+    dataType: 'regulatory_alert',
+    enabled: true
+  },
+  {
+    name: 'fda',
+    baseUrl: 'https://api.fda.gov',
+    endpoints: ['/drug/event.json?limit=10', '/drug/enforcement.json?limit=10'],
+    dataType: 'regulatory_alert',
+    enabled: true
+  },
+  {
+    name: 'pubmed',
+    baseUrl: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
+    endpoints: ['/esearch.fcgi?db=pubmed&term=pharmaceutical&retmax=10&retmode=json'],
+    dataType: 'research_publication',
+    enabled: true
+  }
+];
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Set search path for security
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
-
   try {
-    const { source, force_sync = false }: IntegrationRequest = await req.json();
+    logStep('Comprehensive Integration Sync - Starting');
     
-    console.log(`Iniciando sincronização para fonte: ${source}`);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const { source, force_sync = false } = await req.json();
+    logStep('Request parameters', { source, force_sync });
 
-    // Verificar se a sincronização é necessária
-    if (!force_sync) {
-      const { data: lastSync } = await supabase
-        .from('api_configurations')
-        .select('last_sync, sync_frequency_hours')
-        .eq('integration_name', source)
-        .eq('is_active', true)
-        .single();
+    const results = {
+      synced_sources: [] as string[],
+      total_records: 0,
+      errors: [] as string[],
+      timestamp: new Date().toISOString()
+    };
 
-      if (lastSync?.last_sync) {
-        const lastSyncTime = new Date(lastSync.last_sync).getTime();
-        const now = Date.now();
-        const hoursSinceSync = (now - lastSyncTime) / (1000 * 60 * 60);
+    // Filter integrations based on source parameter
+    const targetIntegrations = source 
+      ? INTEGRATIONS.filter(i => i.name === source)
+      : INTEGRATIONS.filter(i => i.enabled);
+
+    for (const integration of targetIntegrations) {
+      try {
+        logStep(`Syncing ${integration.name}`);
         
-        if (hoursSinceSync < (lastSync.sync_frequency_hours || 24)) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              message: 'Sincronização não necessária ainda',
-              last_sync: lastSync.last_sync
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        // Check if we need to sync (unless force_sync is true)
+        if (!force_sync) {
+          const { data: lastSync } = await supabase
+            .from('api_configurations')
+            .select('last_sync')
+            .eq('integration_name', integration.name)
+            .single();
+            
+          if (lastSync?.last_sync) {
+            const lastSyncTime = new Date(lastSync.last_sync);
+            const now = new Date();
+            const hoursSinceSync = (now.getTime() - lastSyncTime.getTime()) / (1000 * 60 * 60);
+            
+            if (hoursSinceSync < 24) {
+              logStep(`Skipping ${integration.name} - synced ${hoursSinceSync.toFixed(1)} hours ago`);
+              continue;
+            }
+          }
         }
+
+        // Sync each endpoint for this integration
+        for (const endpoint of integration.endpoints) {
+          try {
+            const url = `${integration.baseUrl}${endpoint}`;
+            logStep(`Fetching from ${url}`);
+            
+            const response = await fetch(url, {
+              headers: {
+                'User-Agent': 'FarmaTech-Integration/1.0',
+                'Accept': 'application/json'
+              }
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Process data based on integration type
+            const processedRecords = await processIntegrationData(supabase, integration, data);
+            results.total_records += processedRecords;
+            
+            logStep(`Processed ${processedRecords} records from ${integration.name}`);
+            
+          } catch (endpointError: any) {
+            logStep(`Error with endpoint ${endpoint}`, endpointError.message);
+            results.errors.push(`${integration.name}/${endpoint}: ${endpointError.message}`);
+          }
+        }
+
+        // Update last sync time
+        await supabase
+          .from('api_configurations')
+          .upsert({
+            integration_name: integration.name,
+            last_sync: new Date().toISOString(),
+            is_active: true
+          });
+
+        results.synced_sources.push(integration.name);
+        
+      } catch (integrationError: any) {
+        logStep(`Error with integration ${integration.name}`, integrationError.message);
+        results.errors.push(`${integration.name}: ${integrationError.message}`);
       }
     }
 
-    let syncResult;
-    
-    switch (source) {
+    logStep('Sync completed', results);
+
+    return new Response(JSON.stringify(results), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error: any) {
+    logStep('Error in comprehensive sync', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+
+async function processIntegrationData(supabase: any, integration: IntegrationConfig, data: any): Promise<number> {
+  let recordsProcessed = 0;
+
+  try {
+    switch (integration.name) {
       case 'anvisa':
-        syncResult = await syncAnvisa(supabase);
+        if (data.result?.length) {
+          for (const item of data.result.slice(0, 10)) {
+            await supabase.from('integration_data').upsert({
+              source: 'anvisa',
+              data_type: integration.dataType,
+              title: item.title || item.name || 'ANVISA Data',
+              description: item.notes || item.description || '',
+              content: item,
+              url: item.url,
+              published_at: new Date().toISOString()
+            });
+            recordsProcessed++;
+          }
+        }
         break;
+
       case 'fda':
-        syncResult = await syncFDA(supabase);
-        break;
-      case 'regulatory_alerts':
-        syncResult = await syncRegulatoryAlerts(supabase);
-        break;
-      default:
-        throw new Error(`Fonte não suportada: ${source}`);
-    }
-
-    // Atualizar timestamp de última sincronização
-    await supabase
-      .from('api_configurations')
-      .update({ 
-        last_sync: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('integration_name', source);
-
-    // Log da sincronização
-    await supabase
-      .from('performance_metrics')
-      .insert({
-        metric_name: 'integration_sync',
-        metric_value: 1,
-        metric_unit: 'sync',
-        tags: {
-          source,
-          records_synced: syncResult.records_synced,
-          duration_ms: syncResult.duration_ms,
-          status: 'success'
+        if (data.results?.length) {
+          for (const item of data.results.slice(0, 10)) {
+            await supabase.from('integration_data').upsert({
+              source: 'fda',
+              data_type: integration.dataType,
+              title: item.product_description || item.reason_for_recall || 'FDA Alert',
+              description: item.initial_firm_notification || item.product_description || '',
+              content: item,
+              published_at: item.report_date || new Date().toISOString()
+            });
+            recordsProcessed++;
+          }
         }
-      });
+        break;
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        source,
-        ...syncResult
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
-
-  } catch (error) {
-    console.error('Erro na sincronização:', error);
-    
-    // Log do erro
-    await supabase
-      .from('performance_metrics')
-      .insert({
-        metric_name: 'integration_sync_error',
-        metric_value: 1,
-        metric_unit: 'error',
-        tags: {
-          error_message: error.message,
-          source: source || 'unknown'
+      case 'pubmed':
+        if (data.esearchresult?.idlist?.length) {
+          for (const id of data.esearchresult.idlist.slice(0, 5)) {
+            await supabase.from('integration_data').upsert({
+              source: 'pubmed',
+              data_type: 'research_publication',
+              title: `PubMed Article ${id}`,
+              description: 'Research publication from PubMed',
+              content: { pubmed_id: id },
+              url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
+              published_at: new Date().toISOString()
+            });
+            recordsProcessed++;
+          }
         }
-      });
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
-  }
-})
-
-async function syncAnvisa(supabase: any) {
-  const startTime = Date.now();
-  console.log('Iniciando sincronização ANVISA...');
-  
-  try {
-    // Simular busca de dados da ANVISA (em produção, usar API real)
-    const mockAnvisaData = [
-      {
-        source: 'anvisa',
-        data_type: 'regulatory_alert',
-        title: 'Nova Resolução RDC 485/2025',
-        description: 'Estabelece critérios para registro de medicamentos biológicos',
-        content: {
-          regulation_number: 'RDC 485/2025',
-          category: 'medicamentos_biologicos',
-          effective_date: '2025-03-01'
-        },
-        published_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString() // 180 dias
-      },
-      {
-        source: 'anvisa',
-        data_type: 'regulatory_alert',
-        title: 'Alteração nos Prazos de Análise',
-        description: 'Novos prazos para análise de pedidos de registro sanitário',
-        content: {
-          new_timeframes: {
-            medicamentos_novos: '365 dias',
-            medicamentos_genericos: '180 dias',
-            medicamentos_similares: '240 dias'
-          },
-          effective_date: '2025-02-15'
-        },
-        published_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 dia atrás
-        expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() // 90 dias
-      }
-    ];
-
-    // Inserir dados na tabela integration_data
-    const { data, error } = await supabase
-      .from('integration_data')
-      .upsert(mockAnvisaData, { 
-        onConflict: 'source,data_type,title' 
-      });
-
-    if (error) throw error;
-
-    const duration = Date.now() - startTime;
-    console.log(`Sincronização ANVISA concluída: ${mockAnvisaData.length} registros em ${duration}ms`);
-
-    return {
-      records_synced: mockAnvisaData.length,
-      duration_ms: duration,
-      data_types: ['regulatory_alert']
-    };
-
-  } catch (error) {
-    console.error('Erro na sincronização ANVISA:', error);
-    throw error;
-  }
-}
-
-async function syncFDA(supabase: any) {
-  const startTime = Date.now();
-  console.log('Iniciando sincronização FDA...');
-  
-  try {
-    // Simular busca de dados do FDA
-    const mockFdaData = [
-      {
-        source: 'fda',
-        data_type: 'drug_approval',
-        title: 'New Drug Application Approved: EXAMPLE-001',
-        description: 'FDA approves new treatment for rare genetic disorder',
-        content: {
-          application_number: 'NDA 999999',
-          drug_name: 'ExampleDrug',
-          indication: 'Rare genetic metabolic disorder',
-          approval_date: new Date().toISOString(),
-          manufacturer: 'Example Pharmaceuticals Inc.'
-        },
-        published_at: new Date().toISOString(),
-        url: 'https://www.fda.gov/drugs/news-events-human-drugs/example-approval'
-      },
-      {
-        source: 'fda',
-        data_type: 'safety_alert',
-        title: 'Safety Communication: Risk of Serious Side Effects',
-        description: 'FDA warns of potential cardiovascular risks with certain medications',
-        content: {
-          affected_drugs: ['Drug A', 'Drug B'],
-          risk_level: 'moderate',
-          recommended_actions: [
-            'Monitor patients closely',
-            'Consider alternative treatments',
-            'Report adverse events'
-          ]
-        },
-        published_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 dias atrás
-        url: 'https://www.fda.gov/safety/medical-product-safety-information/example-safety-alert'
-      }
-    ];
-
-    const { data, error } = await supabase
-      .from('integration_data')
-      .upsert(mockFdaData, { 
-        onConflict: 'source,data_type,title' 
-      });
-
-    if (error) throw error;
-
-    const duration = Date.now() - startTime;
-    console.log(`Sincronização FDA concluída: ${mockFdaData.length} registros em ${duration}ms`);
-
-    return {
-      records_synced: mockFdaData.length,
-      duration_ms: duration,
-      data_types: ['drug_approval', 'safety_alert']
-    };
-
-  } catch (error) {
-    console.error('Erro na sincronização FDA:', error);
-    throw error;
-  }
-}
-
-async function syncRegulatoryAlerts(supabase: any) {
-  const startTime = Date.now();
-  console.log('Sincronizando alertas regulatórios consolidados...');
-  
-  try {
-    // Buscar dados recentes de todas as fontes
-    const { data: recentData, error } = await supabase
-      .from('integration_data')
-      .select('*')
-      .in('data_type', ['regulatory_alert', 'safety_alert', 'drug_approval'])
-      .gte('published_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // últimos 7 dias
-      .order('published_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Processar e consolidar alertas
-    const consolidatedAlerts = recentData?.map(item => ({
-      source: item.source,
-      title: item.title,
-      description: item.description,
-      alert_type: item.data_type,
-      severity: determineSeverity(item),
-      published_at: item.published_at,
-      expires_at: item.expires_at,
-      url: item.url
-    })) || [];
-
-    // Inserir na tabela de alertas regulatórios
-    if (consolidatedAlerts.length > 0) {
-      const { error: insertError } = await supabase
-        .from('regulatory_alerts')
-        .upsert(consolidatedAlerts, { 
-          onConflict: 'source,title,published_at' 
-        });
-
-      if (insertError) throw insertError;
+        break;
     }
-
-    const duration = Date.now() - startTime;
-    console.log(`Consolidação de alertas concluída: ${consolidatedAlerts.length} alertas em ${duration}ms`);
-
-    return {
-      records_synced: consolidatedAlerts.length,
-      duration_ms: duration,
-      data_types: ['consolidated_alerts']
-    };
-
-  } catch (error) {
-    console.error('Erro na consolidação de alertas:', error);
-    throw error;
+  } catch (error: any) {
+    console.error(`Error processing ${integration.name} data:`, error);
   }
-}
 
-function determineSeverity(item: any): 'low' | 'medium' | 'high' | 'critical' {
-  // Lógica simples para determinar severidade baseada no conteúdo
-  const content = JSON.stringify(item.content).toLowerCase();
-  const title = item.title.toLowerCase();
-  const description = item.description.toLowerCase();
-  
-  const criticalKeywords = ['recall', 'death', 'fatal', 'critical', 'emergency'];
-  const highKeywords = ['warning', 'serious', 'adverse', 'safety'];
-  const mediumKeywords = ['caution', 'monitor', 'risk'];
-  
-  const text = `${title} ${description} ${content}`;
-  
-  if (criticalKeywords.some(keyword => text.includes(keyword))) {
-    return 'critical';
-  } else if (highKeywords.some(keyword => text.includes(keyword))) {
-    return 'high';
-  } else if (mediumKeywords.some(keyword => text.includes(keyword))) {
-    return 'medium';
-  } else {
-    return 'low';
-  }
+  return recordsProcessed;
 }
