@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,10 @@ import Forums from "./pages/Forums";
 import EnhancedChat from "./pages/EnhancedChat";
 import EnhancedDashboard from "./pages/EnhancedDashboard";
 import IntegrationsPage from "./pages/IntegrationsPage";
+import Projects from "./pages/Projects";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
