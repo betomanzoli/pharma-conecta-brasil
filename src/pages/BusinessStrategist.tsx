@@ -1,75 +1,71 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { useAIBusinessStrategist } from '@/hooks/useAIBusinessStrategist';
-import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
-import AgentHandoffButton from '@/components/ai/AgentHandoffButton';
-import { TrendingUp, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { TrendingUp, Target, DollarSign, Users } from 'lucide-react';
 
 const BusinessStrategist = () => {
-  const { analyzeBusinessCase, loading } = useAIBusinessStrategist();
-  const { sendToMasterChat } = useMasterChatBridge();
+  const [productName, setProductName] = useState('');
+  const [marketDescription, setMarketDescription] = useState('');
+  const [analysis, setAnalysis] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [opportunity, setOpportunity] = useState('');
-  const [productType, setProductType] = useState('');
-  const [targetMarket, setTargetMarket] = useState('');
-  const [competitors, setCompetitors] = useState('');
-  const [differentiation, setDifferentiation] = useState('');
-  const [investmentRange, setInvestmentRange] = useState('');
-  const [timeframe, setTimeframe] = useState('');
-  const [risks, setRisks] = useState('');
-  const [outputMd, setOutputMd] = useState<string | null>(null);
-  const [lastOutputId, setLastOutputId] = useState<string | null>(null);
+  const handleAnalyze = async () => {
+    setLoading(true);
+    try {
+      // Simulate AI analysis
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setAnalysis(`
+# Análise Estratégica de Negócios - ${productName}
 
-  useEffect(() => {
-    document.title = 'Estrategista de Negócios IA | PharmaConnect Brasil';
-  }, []);
+## Oportunidades de Mercado
+- Crescimento estimado de 15-20% nos próximos 3 anos
+- Demanda crescente por soluções inovadoras
+- Baixa penetração em mercados emergentes
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const res = await analyzeBusinessCase({ 
-      opportunity, 
-      product_type: productType,
-      target_market: targetMarket,
-      competitors,
-      differentiation,
-      investment_range: investmentRange,
-      timeframe,
-      risks
-    });
-    
-    if (res) {
-      setOutputMd(res.output_md ?? null);
-      setLastOutputId(res.id);
-    }
-  };
+## Análise SWOT
+### Forças
+- Inovação tecnológica
+- Expertise regulatória
+- Rede de distribuição estabelecida
 
-  const handleDownload = () => {
-    if (outputMd) {
-      const branded = `![PharmaConnect Brasil](/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png)\n\n` + outputMd;
-      const blob = new Blob([branded], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `business_case_${opportunity.replace(/\s+/g, '_')}.md`;
-      a.click();
-      URL.revokeObjectURL(url);
+### Fraquezas
+- Alto custo inicial
+- Dependência regulatória
+- Concorrência acirrada
+
+### Oportunidades
+- Expansão internacional
+- Parcerias estratégicas
+- Novos segmentos de mercado
+
+### Ameaças
+- Mudanças regulatórias
+- Entrada de novos players
+- Pressão sobre preços
+
+## Recomendações Estratégicas
+1. Desenvolver parcerias com distribuidores locais
+2. Investir em P&D para diferenciação
+3. Criar programa de acesso ao mercado
+4. Estabelecer pricing strategy competitiva
+      `);
+    } catch (error) {
+      console.error('Error analyzing:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-3 rounded-lg bg-gradient-to-br from-green-500 to-blue-600 text-white">
@@ -78,172 +74,68 @@ const BusinessStrategist = () => {
               <div>
                 <h1 className="text-3xl font-bold">Estrategista de Negócios IA</h1>
                 <p className="text-muted-foreground">
-                  Gere business cases estruturados e análises SWOT para oportunidades farmacêuticas
+                  Análise estratégica e oportunidades de mercado farmacêutico
                 </p>
               </div>
             </div>
-            <Badge variant="secondary">Agente 1 - Business Strategy</Badge>
           </div>
 
-          <section className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Oportunidade de Negócio</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Target className="h-5 w-5" />
+                  <span>Análise de Mercado</span>
+                </CardTitle>
+                <CardDescription>
+                  Forneça informações sobre o produto e mercado para análise
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="opportunity">Oportunidade *</Label>
-                    <Textarea 
-                      id="opportunity" 
-                      value={opportunity} 
-                      onChange={(e) => setOpportunity(e.target.value)}
-                      placeholder="Descreva a oportunidade de negócio..." 
-                      required 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="productType">Tipo de Produto</Label>
-                    <Select value={productType} onValueChange={setProductType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="medicamento">Medicamento</SelectItem>
-                        <SelectItem value="generico">Genérico</SelectItem>
-                        <SelectItem value="similar">Similar</SelectItem>
-                        <SelectItem value="dispositivo">Dispositivo Médico</SelectItem>
-                        <SelectItem value="cosmético">Cosmético</SelectItem>
-                        <SelectItem value="suplemento">Suplemento</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="targetMarket">Mercado-alvo</Label>
-                    <Input 
-                      id="targetMarket" 
-                      value={targetMarket} 
-                      onChange={(e) => setTargetMarket(e.target.value)}
-                      placeholder="Ex: Diabetes tipo 2, idosos..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="competitors">Concorrentes</Label>
-                    <Textarea 
-                      id="competitors" 
-                      value={competitors} 
-                      onChange={(e) => setCompetitors(e.target.value)}
-                      placeholder="Liste os principais concorrentes..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="differentiation">Diferenciação</Label>
-                    <Textarea 
-                      id="differentiation" 
-                      value={differentiation} 
-                      onChange={(e) => setDifferentiation(e.target.value)}
-                      placeholder="Como se diferencia dos concorrentes..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="investmentRange">Faixa de Investimento</Label>
-                    <Select value={investmentRange} onValueChange={setInvestmentRange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a faixa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baixo">Baixo (até R$ 100k)</SelectItem>
-                        <SelectItem value="medio">Médio (R$ 100k - 1M)</SelectItem>
-                        <SelectItem value="alto">Alto (R$ 1M - 10M)</SelectItem>
-                        <SelectItem value="muito-alto">Muito Alto (acima de R$ 10M)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="timeframe">Prazo</Label>
-                    <Select value={timeframe} onValueChange={setTimeframe}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o prazo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="curto">Curto (6-12 meses)</SelectItem>
-                        <SelectItem value="medio">Médio (1-3 anos)</SelectItem>
-                        <SelectItem value="longo">Longo (3+ anos)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="risks">Riscos Identificados</Label>
-                    <Textarea 
-                      id="risks" 
-                      value={risks} 
-                      onChange={(e) => setRisks(e.target.value)}
-                      placeholder="Liste os principais riscos..." 
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? 'Analisando...' : 'Gerar Business Case'}
-                  </Button>
-                </form>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="product">Nome do Produto</Label>
+                  <Input
+                    id="product"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    placeholder="Ex: Novo medicamento oncológico"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="market">Descrição do Mercado</Label>
+                  <Textarea
+                    id="market"
+                    value={marketDescription}
+                    onChange={(e) => setMarketDescription(e.target.value)}
+                    placeholder="Descreva o mercado-alvo, concorrentes, tamanho..."
+                    rows={4}
+                  />
+                </div>
+                <Button onClick={handleAnalyze} disabled={loading || !productName} className="w-full">
+                  {loading ? 'Analisando...' : 'Gerar Análise Estratégica'}
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Business Case & SWOT</CardTitle>
+                <CardTitle>Resultado da Análise</CardTitle>
               </CardHeader>
               <CardContent>
-                {outputMd ? (
-                  <>
-                    <div className="bg-muted p-4 rounded-lg max-h-96 overflow-y-auto mb-4">
-                      <pre className="whitespace-pre-wrap text-sm">{outputMd}</pre>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => sendToMasterChat(outputMd, { metadata: { module: 'business_strategist' } })}
-                      >
-                        Enviar para Chat
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleDownload}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                      {lastOutputId && (
-                        <AgentHandoffButton
-                          sourceAgent="business_strategist"
-                          targetAgents={["technical_regulatory"]}
-                          agentOutputId={lastOutputId}
-                          outputData={{
-                            opportunity,
-                            product_type: productType,
-                            target_market: targetMarket,
-                            business_analysis: outputMd
-                          }}
-                        />
-                      )}
-                    </div>
-                  </>
+                {analysis ? (
+                  <div className="prose prose-sm max-w-none">
+                    <pre className="whitespace-pre-wrap text-sm">{analysis}</pre>
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground">
-                    O business case e análise SWOT aparecerão aqui após a geração.
-                  </p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>A análise estratégica aparecerá aqui</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
-          </section>
-        </main>
+          </div>
+        </div>
       </MainLayout>
     </ProtectedRoute>
   );

@@ -14,7 +14,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ compact = false, className }) => 
       <img
         src={LOGO_URL}
         alt="PharmaConnect Brasil"
-        className={`${compact ? 'h-8' : 'h-10'} w-auto`}
+        className={`${compact ? 'h-12' : 'h-16'} w-auto`}
         loading="lazy"
       />
     </div>

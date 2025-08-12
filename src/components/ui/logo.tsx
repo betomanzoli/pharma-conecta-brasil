@@ -13,20 +13,13 @@ const Logo: React.FC<LogoProps> = ({
   variant = 'icon' 
 }) => {
   const sizeClasses = {
-    sm: 'h-8',
-    md: 'h-10',
-    lg: 'h-12',
-    xl: 'h-14'
+    sm: 'h-12',
+    md: 'h-16',
+    lg: 'h-20',
+    xl: 'h-24'
   };
 
-  const textSizeClasses = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl',
-    xl: 'text-3xl'
-  };
-
-  if (variant === 'icon') {
+  if (variant === 'icon' || variant === 'full') {
     return (
       <img
         src="/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png"
@@ -38,7 +31,7 @@ const Logo: React.FC<LogoProps> = ({
 
   if (variant === 'text') {
     return (
-      <span className={`${textSizeClasses[size]} font-bold text-primary-600 font-poppins ${className}`}>
+      <span className={`text-xl font-bold text-primary-600 font-poppins ${className}`}>
         PharmaConnect Brasil
       </span>
     );
@@ -51,9 +44,6 @@ const Logo: React.FC<LogoProps> = ({
         alt="PharmaConnect Brasil"
         className={`${sizeClasses[size]} w-auto`}
       />
-      <span className={`${textSizeClasses[size]} font-bold text-primary-600 font-poppins`}>
-        PharmaConnect Brasil
-      </span>
     </div>
   );
 };

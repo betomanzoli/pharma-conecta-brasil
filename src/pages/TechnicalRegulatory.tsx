@@ -1,239 +1,179 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { useAITechRegulatory } from '@/hooks/useAITechRegulatory';
-import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
-import AgentHandoffButton from '@/components/ai/AgentHandoffButton';
-import { Settings, Download } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText, Shield, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const TechnicalRegulatory = () => {
-  const { analyzeTechRegulatory, loading } = useAITechRegulatory();
-  const { sendToMasterChat } = useMasterChatBridge();
-
   const [productType, setProductType] = useState('');
-  const [routeOrManufacturing, setRouteOrManufacturing] = useState('');
-  const [dosageForm, setDosageForm] = useState('');
-  const [targetRegions, setTargetRegions] = useState('');
-  const [clinicalStage, setClinicalStage] = useState('');
-  const [referenceProduct, setReferenceProduct] = useState('');
-  const [knownRisks, setKnownRisks] = useState('');
-  const [outputMd, setOutputMd] = useState<string | null>(null);
-  const [lastOutputId, setLastOutputId] = useState<string | null>(null);
+  const [regulatoryBody, setRegulatoryBody] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [analysis, setAnalysis] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    document.title = 'Especialista Técnico-Regulatório IA | PharmaConnect Brasil';
-  }, []);
+  const handleAnalyze = async () => {
+    setLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setAnalysis(`
+# Análise Técnico-Regulatória - ${productType}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const res = await analyzeTechRegulatory({ 
-      product_type: productType,
-      route_or_manufacturing: routeOrManufacturing,
-      dosage_form: dosageForm,
-      target_regions: targetRegions,
-      clinical_stage: clinicalStage,
-      reference_product: referenceProduct,
-      known_risks: knownRisks
-    });
-    
-    if (res) {
-      setOutputMd(res.output_md ?? null);
-      setLastOutputId(res.id);
-    }
-  };
+## Estratégia Regulatória Recomendada
+### Órgão: ${regulatoryBody}
 
-  const handleDownload = () => {
-    if (outputMd) {
-      const branded = `![PharmaConnect Brasil](/lovable-uploads/445e4223-5418-4de4-90fe-41c01a9dda35.png)\n\n` + outputMd;
-      const blob = new Blob([branded], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `technical_regulatory_analysis_${productType.replace(/\s+/g, '_')}.md`;
-      a.click();
-      URL.revokeObjectURL(url);
+## Classificação do Produto
+- Categoria: Medicamento ${productType}
+- Via regulatória: Registro por comparabilidade
+- Tempo estimado: 12-18 meses
+
+## Documentação Necessária
+### CTD Módulo 1 (Regional)
+- Formulário de petição
+- Bula e rotulagem
+- Informações administrativas
+
+### CTD Módulo 2 (Resumos)
+- Resumo de qualidade
+- Resumo não-clínico
+- Resumo clínico
+
+### CTD Módulo 3 (Qualidade)
+- Substância ativa
+- Produto farmacêutico
+- Materiais de embalagem
+
+## Cronograma de Submissão
+1. **Mês 1-3**: Preparação da documentação
+2. **Mês 4**: Submissão inicial
+3. **Mês 5-6**: Screening ANVISA
+4. **Mês 7-12**: Análise técnica
+5. **Mês 13-15**: Questionamentos e respostas
+6. **Mês 16-18**: Decisão final
+
+## Marcos Críticos
+- ✅ Definição da estratégia regulatória
+- ⚠️ Preparação do dossiê CTD
+- ⚠️ Validação analítica
+- ⚠️ Estudos de estabilidade
+- ⚠️ Inspeção GMP (se aplicável)
+
+## Riscos Identificados
+- Questionamentos sobre comparabilidade
+- Exigência de estudos adicionais
+- Problemas na cadeia de suprimentos
+- Mudanças na legislação
+
+## Próximos Passos
+1. Validar estratégia com especialistas
+2. Iniciar preparação do dossiê
+3. Agendar reunião pré-submissão
+4. Preparar plano de respostas
+      `);
+    } catch (error) {
+      console.error('Error analyzing:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <ProtectedRoute>
       <MainLayout>
-        <main className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-red-600 text-white">
-                <Settings className="h-8 w-8" />
+              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <Shield className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Especialista Técnico-Regulatório IA</h1>
+                <h1 className="text-3xl font-bold">Técnico-Regulatório IA</h1>
                 <p className="text-muted-foreground">
-                  Análise técnica, compliance regulatório e pathway ANVISA/FDA/EMA
+                  Compliance ANVISA e estratégia regulatória
                 </p>
               </div>
             </div>
-            <Badge variant="secondary">Agente 2 - Technical & Regulatory</Badge>
           </div>
 
-          <section className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Análise Técnico-Regulatória</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Informações do Produto</span>
+                </CardTitle>
+                <CardDescription>
+                  Dados necessários para análise regulatória
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="productType">Tipo de Produto *</Label>
-                    <Select value={productType} onValueChange={setProductType} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small_molecule">Molécula Pequena</SelectItem>
-                        <SelectItem value="biologic">Biológico</SelectItem>
-                        <SelectItem value="biosimilar">Biossimilar</SelectItem>
-                        <SelectItem value="generic">Genérico</SelectItem>
-                        <SelectItem value="medical_device">Dispositivo Médico</SelectItem>
-                        <SelectItem value="combination">Produto Combinado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="routeOrManufacturing">Rota/Manufatura</Label>
-                    <Input 
-                      id="routeOrManufacturing" 
-                      value={routeOrManufacturing} 
-                      onChange={(e) => setRouteOrManufacturing(e.target.value)}
-                      placeholder="Ex: Síntese química, Fermentação, Cell culture..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dosageForm">Forma Farmacêutica</Label>
-                    <Select value={dosageForm} onValueChange={setDosageForm}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a forma" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="oral_solid">Oral Sólida</SelectItem>
-                        <SelectItem value="oral_liquid">Oral Líquida</SelectItem>
-                        <SelectItem value="injectable">Injetável</SelectItem>
-                        <SelectItem value="topical">Tópica</SelectItem>
-                        <SelectItem value="inhalation">Inalação</SelectItem>
-                        <SelectItem value="transdermal">Transdérmica</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="targetRegions">Regiões-alvo</Label>
-                    <Input 
-                      id="targetRegions" 
-                      value={targetRegions} 
-                      onChange={(e) => setTargetRegions(e.target.value)}
-                      placeholder="Ex: Brasil (ANVISA), EUA (FDA), Europa (EMA)..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="clinicalStage">Estágio Clínico</Label>
-                    <Select value={clinicalStage} onValueChange={setClinicalStage}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estágio" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="preclinical">Pré-clínico</SelectItem>
-                        <SelectItem value="phase1">Fase I</SelectItem>
-                        <SelectItem value="phase2">Fase II</SelectItem>
-                        <SelectItem value="phase3">Fase III</SelectItem>
-                        <SelectItem value="approved">Aprovado</SelectItem>
-                        <SelectItem value="generic_study">Estudo Genérico</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="referenceProduct">Produto de Referência</Label>
-                    <Input 
-                      id="referenceProduct" 
-                      value={referenceProduct} 
-                      onChange={(e) => setReferenceProduct(e.target.value)}
-                      placeholder="Nome do produto de referência..." 
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="knownRisks">Riscos Conhecidos</Label>
-                    <Textarea 
-                      id="knownRisks" 
-                      value={knownRisks} 
-                      onChange={(e) => setKnownRisks(e.target.value)}
-                      placeholder="Descreva riscos técnicos e regulatórios conhecidos..." 
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? 'Analisando...' : 'Analisar Viabilidade Técnico-Regulatória'}
-                  </Button>
-                </form>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="productType">Tipo de Produto</Label>
+                  <Select value={productType} onValueChange={setProductType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="generico">Medicamento Genérico</SelectItem>
+                      <SelectItem value="similar">Medicamento Similar</SelectItem>
+                      <SelectItem value="novo">Medicamento Novo</SelectItem>
+                      <SelectItem value="biologico">Medicamento Biológico</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="regulatory">Órgão Regulatório</Label>
+                  <Select value={regulatoryBody} onValueChange={setRegulatoryBody}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o órgão" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANVISA">ANVISA (Brasil)</SelectItem>
+                      <SelectItem value="FDA">FDA (EUA)</SelectItem>
+                      <SelectItem value="EMA">EMA (Europa)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="description">Descrição do Produto</Label>
+                  <Textarea
+                    id="description"
+                    value={productDescription}
+                    onChange={(e) => setProductDescription(e.target.value)}
+                    placeholder="Descreva o produto, indicações, forma farmacêutica..."
+                    rows={4}
+                  />
+                </div>
+                <Button onClick={handleAnalyze} disabled={loading || !productType} className="w-full">
+                  {loading ? 'Analisando...' : 'Gerar Estratégia Regulatória'}
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Análise Técnico-Regulatória</CardTitle>
+                <CardTitle>Estratégia Regulatória</CardTitle>
               </CardHeader>
               <CardContent>
-                {outputMd ? (
-                  <>
-                    <div className="bg-muted p-4 rounded-lg max-h-96 overflow-y-auto mb-4">
-                      <pre className="whitespace-pre-wrap text-sm">{outputMd}</pre>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => sendToMasterChat(outputMd, { metadata: { module: 'technical_regulatory' } })}
-                      >
-                        Enviar para Chat
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleDownload}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                      {lastOutputId && (
-                        <AgentHandoffButton
-                          sourceAgent="technical_regulatory"
-                          targetAgents={["document_assistant", "coordinator"]}
-                          agentOutputId={lastOutputId}
-                          outputData={{
-                            product_type: productType,
-                            technical_analysis: outputMd
-                          }}
-                        />
-                      )}
-                    </div>
-                  </>
+                {analysis ? (
+                  <div className="prose prose-sm max-w-none">
+                    <pre className="whitespace-pre-wrap text-sm">{analysis}</pre>
+                  </div>
                 ) : (
-                  <p className="text-muted-foreground">
-                    A análise técnico-regulatória aparecerá aqui após a geração.
-                  </p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>A estratégia regulatória aparecerá aqui</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
-          </section>
-        </main>
+          </div>
+        </div>
       </MainLayout>
     </ProtectedRoute>
   );
