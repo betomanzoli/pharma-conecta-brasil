@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -29,6 +30,26 @@ function chunkText(text: string, maxLen = 1500): string[] {
   }
   if (buffer) chunks.push(buffer);
   return chunks;
+}
+
+async function generateEmbedding(text: string): Promise<number[]> {
+  // Simulated embedding - in production, this would call an actual embedding API
+  const dimension = 384; // Common embedding dimension
+  const embedding = [];
+  
+  // Simple hash-based deterministic "embedding" for demonstration
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  for (let i = 0; i < dimension; i++) {
+    embedding.push((Math.sin(hash + i) + 1) / 2); // Normalize to 0-1
+  }
+  
+  return embedding;
 }
 
 serve(async (req) => {
@@ -90,10 +111,36 @@ serve(async (req) => {
       metadata: { seq: idx + 1, total: chunks.length },
     }));
 
-    const { error: chErr } = await supabase.from("knowledge_chunks").insert(rows);
+    const { data: chunkData, error: chErr } = await supabase.from("knowledge_chunks").insert(rows).select();
     if (chErr) throw chErr;
 
-    return new Response(JSON.stringify({ source_id: source.id, chunks: chunks.length }), {
+    // Generate embeddings for each chunk
+    let embeddingsCreated = 0;
+    for (const chunk of chunkData || []) {
+      try {
+        const embedding = await generateEmbedding(chunk.content);
+        
+        await supabase.from("ai_embeddings").insert({
+          user_id: auth.user.id,
+          entity_type: "knowledge_chunk",
+          entity_id: chunk.id,
+          model: "simulated-embedding-v1",
+          dimension: embedding.length,
+          embedding_data: { vector: embedding }
+        });
+        
+        embeddingsCreated++;
+      } catch (embError) {
+        console.error("Error creating embedding for chunk:", embError);
+        // Continue processing other chunks
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      source_id: source.id, 
+      chunks: chunks.length,
+      embeddings_created: embeddingsCreated
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
