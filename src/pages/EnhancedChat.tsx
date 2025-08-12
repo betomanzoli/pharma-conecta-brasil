@@ -7,38 +7,60 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, Bot, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Send, Bot, User, ArrowRight } from 'lucide-react';
+import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  source?: string;
 }
 
 const EnhancedChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sourceInfo, setSourceInfo] = useState<any>(null);
+  const { getBridgeData } = useMasterChatBridge();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check for pending message from other pages
-    const pendingMessage = sessionStorage.getItem('pendingChatMessage');
-    if (pendingMessage) {
-      try {
-        const { message } = JSON.parse(pendingMessage);
-        setInput(message);
-        sessionStorage.removeItem('pendingChatMessage');
-      } catch (error) {
-        console.error('Error parsing pending message:', error);
+    // Check for bridge data first
+    const bridgeData = getBridgeData();
+    if (bridgeData) {
+      console.log('Bridge data received:', bridgeData);
+      setInput(bridgeData.prompt);
+      setSourceInfo(bridgeData.context);
+      
+      toast({
+        title: 'Prompt carregado',
+        description: `Prompt recebido de: ${bridgeData.source || 'Agente IA'}`,
+      });
+    } else {
+      // Check for legacy sessionStorage format
+      const pendingMessage = sessionStorage.getItem('pendingChatMessage');
+      if (pendingMessage) {
+        try {
+          const { message } = JSON.parse(pendingMessage);
+          setInput(message);
+          sessionStorage.removeItem('pendingChatMessage');
+          console.log('Legacy sessionStorage message loaded');
+        } catch (error) {
+          console.error('Error parsing pending message:', error);
+        }
       }
-    }
 
-    // Check for legacy localStorage format
-    const legacyPrompt = localStorage.getItem('pendingChatPrompt');
-    if (legacyPrompt) {
-      setInput(legacyPrompt);
-      localStorage.removeItem('pendingChatPrompt');
+      // Check for legacy localStorage format
+      const legacyPrompt = localStorage.getItem('pendingChatPrompt');
+      if (legacyPrompt) {
+        setInput(legacyPrompt);
+        localStorage.removeItem('pendingChatPrompt');
+        console.log('Legacy localStorage prompt loaded');
+      }
     }
 
     // Add welcome message
@@ -48,7 +70,7 @@ const EnhancedChat = () => {
       content: 'Olá! Sou seu assistente de IA farmacêutica. Como posso ajudá-lo hoje?',
       timestamp: new Date()
     }]);
-  }, []);
+  }, [getBridgeData, toast]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -57,27 +79,37 @@ const EnhancedChat = () => {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      timestamp: new Date()
+      timestamp: new Date(),
+      source: sourceInfo ? `${sourceInfo.title || 'Agente IA'}` : undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
+    setSourceInfo(null); // Clear source info after sending
     setLoading(true);
 
     try {
       // Simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Entendi sua pergunta sobre "${input}". Este é um assistente de demonstração. Em uma implementação real, eu processaria sua consulta usando IA avançada e forneceria respostas especializadas em farmacêutica e regulamentação.`,
+        content: `Entendi sua pergunta sobre "${currentInput}". Este é um assistente de demonstração. Em uma implementação real, eu processaria sua consulta usando IA avançada e forneceria respostas especializadas em farmacêutica e regulamentação.
+
+${sourceInfo ? `\n*Contexto recebido de: ${sourceInfo.title || sourceInfo.metadata?.module || 'Agente IA'}*` : ''}`,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível enviar a mensagem',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -107,6 +139,24 @@ const EnhancedChat = () => {
               </div>
             </div>
           </div>
+
+          {sourceInfo && (
+            <Card className="mb-4 border-blue-200 bg-blue-50">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <ArrowRight className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800">
+                    Prompt recebido de: {sourceInfo.title || sourceInfo.metadata?.module || 'Agente IA'}
+                  </span>
+                  {sourceInfo.category && (
+                    <Badge variant="secondary" className="text-xs">
+                      {sourceInfo.category}
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="h-[600px] flex flex-col">
             <CardHeader>
@@ -144,9 +194,16 @@ const EnhancedChat = () => {
                             : 'bg-muted'
                         }`}>
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          <span className="text-xs opacity-70 mt-1 block">
-                            {message.timestamp.toLocaleTimeString()}
-                          </span>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs opacity-70">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                            {message.source && (
+                              <Badge variant="outline" className="text-xs ml-2">
+                                {message.source}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

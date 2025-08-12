@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,9 +17,15 @@ export const useAIEventLogger = () => {
     try {
       const { data: auth } = await supabase.auth.getUser();
       const currentUser = auth?.user;
-      if (!currentUser) return; // silently ignore if not logged in
+      
+      if (!currentUser) {
+        console.log('[AI Event Logger] User not authenticated, skipping log:', params);
+        return;
+      }
 
-      await supabase.from('ai_chat_events').insert({
+      console.log('[AI Event Logger] Logging event:', params);
+
+      const { error } = await supabase.from('ai_chat_events').insert({
         user_id: currentUser.id,
         source: params.source,
         action: params.action ?? 'message',
@@ -28,8 +35,14 @@ export const useAIEventLogger = () => {
         project_id: params.projectId ?? null,
         metadata: params.metadata ?? {},
       });
+
+      if (error) {
+        console.error('[AI Event Logger] Failed to log event:', error, params);
+      } else {
+        console.log('[AI Event Logger] Event logged successfully');
+      }
     } catch (e) {
-      // Silent fail to avoid impacting UX
+      console.error('[AI Event Logger] Unexpected error:', e, params);
     }
   }, []);
 

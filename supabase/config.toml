@@ -8,18 +8,54 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
-[auth]
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54323
+tenant_id = "realtime-dev"
+
+[studio]
 enabled = true
 port = 54324
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://lovable.dev"]
+api_url = "http://127.0.0.1:54321"
+
+[inbucket]
+enabled = true
+port = 54325
+smtp_port = 54326
+pop3_port = 54327
+
+[storage]
+enabled = true
+port = 54326
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+port = 54321
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
 jwt_expiry = 3600
 enable_signup = true
-enable_anonymous_sign_ups = false
+enable_confirmations = false
 
-[edge_functions]
-enabled = true
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
 
+# AI Agent Functions
 [functions.ai-project-analyst]
 verify_jwt = true
 
@@ -32,25 +68,11 @@ verify_jwt = true
 [functions.ai-document-assistant]
 verify_jwt = true
 
-[functions.ai-coordinator-orchestrator]
+[functions.ai-coordinator]
 verify_jwt = true
 
-[functions.federal-learning-system]
+[functions.chat-system]
 verify_jwt = true
 
-[functions.kb-ingest]
+[functions.perplexity-ai]
 verify_jwt = true
-
-[functions.kb-rag]
-verify_jwt = true
-
-[functions.perplexity-search]
-verify_jwt = false
-
-[functions.comprehensive-integration-sync]
-verify_jwt = false
-
-[realtime]
-enabled = true
-port = 54323
-max_header_length = 4096
