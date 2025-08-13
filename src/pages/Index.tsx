@@ -1,321 +1,293 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building2, FlaskConical, Users, User, CheckCircle, ArrowRight, Star } from "lucide-react";
-import { Link } from "react-router-dom";
-import Logo from "@/components/ui/logo";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Brain, 
+  Users, 
+  Zap, 
+  Shield, 
+  BarChart3, 
+  MessageSquare,
+  ArrowRight,
+  Star,
+  CheckCircle
+} from 'lucide-react';
 
 const Index = () => {
-  const { user, loading } = useAuth();
-
-  console.log('Index page - User status:', { user: user?.email, loading });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-muted flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1565C0] mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (user) {
-    console.log('User authenticated, redirecting to dashboard');
-    return <Navigate to="/dashboard" replace />;
-  }
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Logo size="lg" />
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Brain className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">PharmaConnect Brasil</h1>
+                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
+                  <Star className="h-3 w-3 mr-1" />
+                  Master AI Platform
+                </Badge>
+              </div>
             </div>
+            
             <div className="flex items-center space-x-4">
-              <Link to="/auth#login">
-                <Button variant="ghost" className="text-[#1565C0]">
-                  Entrar
+              {user ? (
+                <Button asChild>
+                  <Link to="/dashboard">
+                    Dashboard
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
                 </Button>
-              </Link>
-              <Link to="/auth#register">
-                <Button className="bg-[#1565C0] hover:bg-[#1565C0]/90">
-                  Cadastrar
-                </Button>
-              </Link>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/login">Entrar</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/register">Cadastrar Grátis</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4 bg-[#1565C0]/10 text-[#1565C0]">
-            🇧🇷 Ecossistema Brasileiro
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            O Futuro da
-            <span className="text-[#1565C0] block">Indústria Farmacêutica</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Conecte-se com os melhores profissionais, laboratórios e empresas do setor farmacêutico brasileiro. 
-            Uma plataforma colaborativa para acelerar a inovação em saúde.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth#register">
-              <Button size="lg" className="bg-[#1565C0] hover:bg-[#1565C0]/90 px-8">
-                Começar Agora
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/auth#login">
-              <Button size="lg" variant="outline" className="border-[#1565C0] text-[#1565C0] hover:bg-[#1565C0] hover:text-white">
-                Já Tenho Conta
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* User Types Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Para Todos os Profissionais do Setor
-            </h2>
-            <p className="text-xl text-gray-600">
-              Independente do seu papel na indústria farmacêutica, temos as ferramentas certas para você
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Plataforma de IA Farmacêutica
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                Master AI Integration
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Conecte empresas farmacêuticas, laboratórios e consultores com 
+              tecnologia avançada de IA, Federal Learning e automação inteligente.
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Building2,
-                title: "Empresas Farmacêuticas",
-                description: "Encontre parceiros, fornecedores e talentos para seus projetos",
-                color: "bg-blue-500"
-              },
-              {
-                icon: FlaskConical,
-                title: "Laboratórios Analíticos", 
-                description: "Conecte-se com empresas que precisam de seus serviços especializados",
-                color: "bg-green-500"
-              },
-              {
-                icon: Users,
-                title: "Consultores Regulatórios",
-                description: "Ofereça sua expertise e encontre novos clientes e projetos",
-                color: "bg-purple-500"
-              },
-              {
-                icon: User,
-                title: "Profissionais Independentes",
-                description: "Faça networking e descubra oportunidades de carreira",
-                color: "bg-orange-500"
-              }
-            ].map((userType, index) => {
-              const Icon = userType.icon;
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${userType.color} flex items-center justify-center mb-4`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <CardTitle className="text-lg">{userType.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-gray-600">
-                      {userType.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              {user ? (
+                <>
+                  <Button size="lg" asChild>
+                    <Link to="/dashboard">
+                      Acessar Dashboard
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild>
+                    <Link to="/master-ai">
+                      Master AI Hub
+                      <Zap className="h-5 w-5 ml-2" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="lg" asChild>
+                    <Link to="/register">
+                      Começar Gratuitamente
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild>
+                    <Link to="/login">
+                      Fazer Login
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Recursos Poderosos
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Recursos Avançados de IA
             </h2>
-            <p className="text-xl text-gray-600">
-              Tudo que você precisa para acelerar seus projetos farmacêuticos
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Nossa plataforma integra as mais avançadas tecnologias de IA para 
+              revolucionar o setor farmacêutico brasileiro.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: "IA Especializada",
-                description: "Assistente de IA treinado especificamente para o setor farmacêutico brasileiro",
-                icon: "🤖"
-              },
-              {
-                title: "Rede de Profissionais",
-                description: "Conecte-se com mais de 10.000 profissionais verificados do setor",
-                icon: "👥"
-              },
-              {
-                title: "Projetos Colaborativos",
-                description: "Participe de projetos inovadores e encontre parceiros ideais",
-                icon: "🚀"
-              },
-              {
-                title: "Biblioteca de Conhecimento",
-                description: "Acesso a documentos, estudos e melhores práticas do setor",
-                icon: "📚"
-              },
-              {
-                title: "Automações Regulatórias",
-                description: "Simplifique processos de compliance com a ANVISA",
-                icon: "⚙️"
-              },
-              {
-                title: "Marketplace",
-                description: "Encontre e ofereça serviços especializados com segurança",
-                icon: "🛒"
-              }
-            ].map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-gray-600">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Testimonials */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Confiado por Líderes do Setor
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "O PharmaConnect Brasil revolucionou nossa forma de encontrar parceiros para projetos regulatórios.",
-                author: "Dr. Ana Silva",
-                role: "Diretora Regulatória, FarmaBrasil"
-              },
-              {
-                quote: "Conseguimos reduzir o tempo de aprovação de nossos produtos em 40% usando as automações da plataforma.",
-                author: "Carlos Mendes", 
-                role: "CEO, LabTech Solutions"
-              },
-              {
-                quote: "A IA especializada nos ajuda diariamente com questões complexas de compliance farmacêutico.",
-                author: "Dra. Maria Santos",
-                role: "Consultora Regulatória Independente"
-              }
-            ].map((testimonial, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <blockquote className="text-gray-600 mb-4 italic">
-                    "{testimonial.quote}"
-                  </blockquote>
-                  <div>
-                    <div className="font-semibold text-gray-900">{testimonial.author}</div>
-                    <div className="text-sm text-gray-500">{testimonial.role}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <Brain className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle>Federal Learning</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Sistema de aprendizado distribuído que preserva a privacidade 
+                  dos dados enquanto melhora continuamente o matching.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Privacy-Preserving ML</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardTitle>Master Chatbot</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Assistente de IA especializado em farmacêutica com acesso a 
+                  bases regulatórias ANVISA, FDA e EMA.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Multi-Modal AI</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                  <Zap className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle>Automação Master</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Workflows inteligentes que se auto-otimizam e executam 
+                  ações preditivas baseadas em padrões.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Auto-Healing Systems</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-orange-600" />
+                </div>
+                <CardTitle>AI Matching</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Algoritmos avançados conectam empresas, laboratórios e 
+                  consultores com base em compatibilidade inteligente.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Neural Networks</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                  <BarChart3 className="h-6 w-6 text-red-600" />
+                </div>
+                <CardTitle>Analytics Preditivo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Análises avançadas com predição de tendências de mercado 
+                  e oportunidades de negócio.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Real-time Insights</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="h-6 w-6 text-indigo-600" />
+                </div>
+                <CardTitle>Compliance IA</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Monitoramento automático de conformidade regulatória com 
+                  alertas preditivos e atualizações em tempo real.
+                </p>
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Auto-Compliance</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#1565C0] text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Pronto para Transformar Seus Projetos Farmacêuticos?
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 py-16">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Pronto para Revolucionar seu Negócio Farmacêutico?
           </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Junte-se a milhares de profissionais que já estão acelerando a inovação em saúde no Brasil
+          <p className="text-xl text-purple-100 mb-8">
+            Junte-se à plataforma mais avançada de IA farmacêutica do Brasil.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth#register">
-              <Button size="lg" variant="secondary" className="px-8 bg-white text-[#1565C0] hover:bg-gray-100">
-                Criar Conta Gratuita
-                <ArrowRight className="ml-2 h-5 w-5" />
+          
+          {!user && (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/register">
+                  Cadastrar Grátis
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Link>
               </Button>
-            </Link>
-          </div>
-          <p className="text-sm mt-4 opacity-75">
-            Sem compromisso • Configuração em 2 minutos
-          </p>
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-purple-600" asChild>
+                <Link to="/login">
+                  Fazer Login
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
-      </section>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <Logo size="md" className="text-white mb-4" />
-              <p className="text-gray-400">
-                O ecossistema colaborativo da indústria farmacêutica brasileira
-              </p>
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Brain className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold">PharmaConnect Brasil</span>
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Produto</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Recursos</li>
-                <li>Preços</li>
-                <li>API</li>
-                <li>Documentação</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Empresa</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Sobre</li>
-                <li>Blog</li>
-                <li>Carreiras</li>
-                <li>Contato</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Suporte</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>Central de Ajuda</li>
-                <li>Status</li>
-                <li>Privacidade</li>
-                <li>Termos</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 PharmaConnect Brasil. Todos os direitos reservados.</p>
+            <p className="text-gray-400 mb-4">
+              Plataforma de IA Master para o setor farmacêutico brasileiro
+            </p>
+            <p className="text-gray-500 text-sm">
+              © 2024 PharmaConnect Brasil. Todos os direitos reservados.
+            </p>
           </div>
         </div>
       </footer>

@@ -1,10 +1,7 @@
-
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-
-console.log('main.tsx: Iniciando aplicação...');
 
 // Error boundary para capturar erros globais
 window.addEventListener('error', (event) => {
@@ -15,23 +12,34 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
+// Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+      
+      console.log('SW registered: ', registration);
+      
+      // Verificar por atualizações a cada 60 segundos
+      setInterval(() => {
+        registration.update();
+      }, 60000);
+      
+    } catch (registrationError) {
+      console.log('SW registration failed: ', registrationError);
+    }
+  });
+}
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  console.error('Root element not found!');
   throw new Error('Root element not found');
 }
 
-console.log('main.tsx: Root element found, creating React root...');
-
-const root = createRoot(rootElement);
-
-try {
-  root.render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
-  console.log('main.tsx: App renderizado com sucesso!');
-} catch (error) {
-  console.error('main.tsx: Erro ao renderizar App:', error);
-}
+createRoot(rootElement).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);

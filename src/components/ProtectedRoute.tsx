@@ -18,6 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -29,14 +30,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Check admin-only routes
   if (adminOnly && profile?.user_type !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Check user type restrictions
   if (allowedUserTypes.length > 0 && profile?.user_type && !allowedUserTypes.includes(profile.user_type)) {
     return <Navigate to="/dashboard" replace />;
   }
