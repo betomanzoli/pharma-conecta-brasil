@@ -42,6 +42,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cleanup function for auth state
+const cleanupAuthState = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -51,12 +65,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && event === 'SIGNED_IN') {
+          // Defer profile fetching to prevent deadlocks
           setTimeout(async () => {
             await fetchProfile(session.user.id);
             await checkSubscription();
@@ -69,12 +87,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
+    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-        checkSubscription();
+        setTimeout(async () => {
+          await fetchProfile(session.user.id);
+          await checkSubscription();
+        }, 0);
       }
       setLoading(false);
     });
@@ -84,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -96,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        // Expandir tipos de usuário para incluir novos tipos
+        console.log('Profile fetched successfully:', data);
         const validUserTypes = [
           'company', 'laboratory', 'consultant', 'individual', 'admin',
           'professional', 'regulatory_body', 'sector_entity', 
@@ -109,6 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } as Profile;
         
         setProfile(profileData);
+      } else {
+        console.log('No profile found for user:', userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -117,9 +141,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      console.log('Attempting signup for:', email);
+      console.log('User data:', userData);
       
-      const { error } = await supabase.auth.signUp({
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -129,6 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Signup error:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -137,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('Signup successful:', data);
       toast({
         title: "Conta criada com sucesso!",
         description: "Verifique seu email para ativar sua conta.",
@@ -145,18 +177,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       console.error('Error signing up:', error);
+      toast({
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting signin for:', email);
+      
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout failed (expected):', err);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Signin error:', error);
         toast({
           title: "Erro no login",
           description: error.message,
@@ -165,36 +215,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('Signin successful:', data);
+      
       if (data.user) {
+        // Force page refresh for clean state
         window.location.href = '/dashboard';
       }
 
       return { error: null };
     } catch (error) {
       console.error('Error signing in:', error);
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('Attempting signout');
+      
+      // Clean up state first
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout error (ignored):', err);
+      }
+      
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/';
+      setSubscription(null);
+      
+      // Force page refresh for clean state
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro ao fazer logout. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
   const resetPassword = async (email: string) => {
     try {
+      console.log('Attempting password reset for:', email);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
+        console.error('Password reset error:', error);
         toast({
           title: "Erro",
           description: error.message,

@@ -1,17 +1,26 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Building2, FlaskConical, Users, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 import Logo from "@/components/ui/logo";
 
 const Auth = () => {
   const { signUp, signIn, resetPassword } = useAuth();
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  
+  // Detect if we're on reset password route
+  const isResetPassword = location.pathname.includes('reset-password');
+  const [activeTab, setActiveTab] = useState(isResetPassword ? "reset" : "login");
+
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -26,26 +35,33 @@ const Auth = () => {
     user_type: "",
     phone: "",
     linkedin_url: "",
-    // Company fields
-    company_name: "",
+    organization_name: "",
     cnpj: "",
-    company_description: "",
-    // Laboratory fields
-    lab_name: "",
-    anvisa_certifications: [] as string[],
-    equipment_list: [] as string[],
-    // Consultant fields
+    description: "",
     expertise_areas: [] as string[],
     certifications: [] as string[],
+    specializations: [] as string[],
   });
 
   const [resetEmail, setResetEmail] = useState("");
+
+  useEffect(() => {
+    if (isResetPassword) {
+      setActiveTab("reset");
+    }
+  }, [isResetPassword]);
 
   const userTypes = [
     { value: "company", label: "Empresa Farmacêutica/Alimentícia", icon: Building2 },
     { value: "laboratory", label: "Laboratório Analítico", icon: FlaskConical },
     { value: "consultant", label: "Consultor Regulatório", icon: Users },
-    { value: "individual", label: "Profissional Individual", icon: User }
+    { value: "professional", label: "Profissional Individual", icon: User },
+    { value: "regulatory_body", label: "Órgão Regulador", icon: Building2 },
+    { value: "sector_entity", label: "Entidade Setorial", icon: Building2 },
+    { value: "research_institution", label: "Instituição de Pesquisa", icon: Building2 },
+    { value: "supplier", label: "Fornecedor", icon: Building2 },
+    { value: "funding_agency", label: "Agência de Fomento", icon: Building2 },
+    { value: "healthcare_provider", label: "Prestador de Saúde", icon: Building2 },
   ];
 
   const expertiseAreas = [
@@ -56,13 +72,20 @@ const Auth = () => {
     "Comercial",
     "Análises Microbiológicas",
     "Análises Físico-Químicas",
-    "Validação de Processos"
+    "Validação de Processos",
+    "Farmacovigilância",
+    "Desenvolvimento Clínico",
+    "Registro de Produtos",
+    "Importação/Exportação"
   ];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!loginData.email || !loginData.password) {
+      return;
+    }
     
+    setLoading(true);
     await signIn(loginData.email, loginData.password);
     setLoading(false);
   };
@@ -70,7 +93,15 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!registerData.email || !registerData.password || !registerData.first_name || !registerData.user_type) {
+      return;
+    }
+    
     if (registerData.password !== registerData.confirmPassword) {
+      return;
+    }
+
+    if (registerData.password.length < 8) {
       return;
     }
 
@@ -82,22 +113,23 @@ const Auth = () => {
       user_type: registerData.user_type,
       phone: registerData.phone,
       linkedin_url: registerData.linkedin_url,
-      company_name: registerData.company_name,
+      organization_name: registerData.organization_name,
       cnpj: registerData.cnpj,
-      company_description: registerData.company_description,
-      lab_name: registerData.lab_name,
-      anvisa_certifications: registerData.anvisa_certifications,
-      equipment_list: registerData.equipment_list,
+      description: registerData.description,
       expertise_areas: registerData.expertise_areas,
       certifications: registerData.certifications,
+      specializations: registerData.specializations,
     };
 
+    console.log('Submitting registration with userData:', userData);
     await signUp(registerData.email, registerData.password, userData);
     setLoading(false);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!resetEmail) return;
+    
     setLoading(true);
     await resetPassword(resetEmail);
     setLoading(false);
@@ -108,106 +140,49 @@ const Auth = () => {
   };
 
   const renderUserTypeFields = () => {
-    switch (registerData.user_type) {
-      case "company":
-        return (
-          <>
+    const needsOrganization = ['company', 'laboratory', 'regulatory_body', 'sector_entity', 'research_institution', 'supplier', 'funding_agency', 'healthcare_provider'];
+    
+    if (needsOrganization.includes(registerData.user_type)) {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="organization_name">Nome da Organização *</Label>
+            <Input
+              id="organization_name"
+              required
+              value={registerData.organization_name}
+              onChange={(e) => handleRegisterInputChange("organization_name", e.target.value)}
+              placeholder="Nome da sua organização"
+            />
+          </div>
+          
+          {(registerData.user_type === 'company' || registerData.user_type === 'laboratory') && (
             <div className="space-y-2">
-              <Label htmlFor="company_name">Nome da Empresa *</Label>
-              <Input
-                id="company_name"
-                required
-                value={registerData.company_name}
-                onChange={(e) => handleRegisterInputChange("company_name", e.target.value)}
-                placeholder="Ex: Farmacorp Ltda"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ *</Label>
+              <Label htmlFor="cnpj">CNPJ</Label>
               <Input
                 id="cnpj"
-                required
                 value={registerData.cnpj}
                 onChange={(e) => handleRegisterInputChange("cnpj", e.target.value)}
                 placeholder="00.000.000/0000-00"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="company_description">Descrição da Empresa</Label>
-              <Input
-                id="company_description"
-                value={registerData.company_description}
-                onChange={(e) => handleRegisterInputChange("company_description", e.target.value)}
-                placeholder="Breve descrição das atividades"
-              />
-            </div>
-          </>
-        );
-      
-      case "laboratory":
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="lab_name">Nome do Laboratório *</Label>
-              <Input
-                id="lab_name"
-                required
-                value={registerData.lab_name}
-                onChange={(e) => handleRegisterInputChange("lab_name", e.target.value)}
-                placeholder="Ex: LabAnalytics"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="anvisa_certifications">Certificações ANVISA *</Label>
-              <Input
-                id="anvisa_certifications"
-                required
-                value={registerData.anvisa_certifications.join(", ")}
-                onChange={(e) => handleRegisterInputChange("anvisa_certifications", e.target.value.split(", "))}
-                placeholder="Ex: RDC 301, ISO 17025"
-              />
-            </div>
-          </>
-        );
-      
-      case "consultant":
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="expertise_areas">Áreas de Expertise *</Label>
-              <Select onValueChange={(value) => {
-                const current = registerData.expertise_areas;
-                if (!current.includes(value)) {
-                  handleRegisterInputChange("expertise_areas", [...current, value]);
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione suas áreas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {expertiseAreas.map((area) => (
-                    <SelectItem key={area} value={area}>
-                      {area}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {registerData.expertise_areas.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {registerData.expertise_areas.map((area, index) => (
-                    <span key={index} className="bg-primary/10 text-primary px-2 py-1 rounded text-sm">
-                      {area}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        );
-      
-      default:
-        return null;
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              value={registerData.description}
+              onChange={(e) => handleRegisterInputChange("description", e.target.value)}
+              placeholder="Descreva sua organização..."
+              rows={3}
+            />
+          </div>
+        </>
+      );
     }
+    
+    return null;
   };
 
   return (
@@ -230,7 +205,7 @@ const Auth = () => {
             <CardTitle className="text-center text-[#1565C0]">Acesso à Plataforma</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>
@@ -383,6 +358,38 @@ const Auth = () => {
                       />
                     </div>
                   </div>
+
+                  {(registerData.user_type === "consultant" || registerData.user_type === "professional") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="expertise_areas">Áreas de Expertise</Label>
+                      <Select onValueChange={(value) => {
+                        const current = registerData.expertise_areas;
+                        if (!current.includes(value)) {
+                          handleRegisterInputChange("expertise_areas", [...current, value]);
+                        }
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione suas áreas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {expertiseAreas.map((area) => (
+                            <SelectItem key={area} value={area}>
+                              {area}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {registerData.expertise_areas.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {registerData.expertise_areas.map((area, index) => (
+                            <span key={index} className="bg-primary/10 text-primary px-2 py-1 rounded text-sm">
+                              {area}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <Button 
                     type="submit" 
