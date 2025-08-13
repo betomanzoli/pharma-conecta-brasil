@@ -25,27 +25,31 @@ export const useAIIntegration = () => {
   const getIntegratedContext = useCallback(async (userId: string): Promise<AIIntegrationContext> => {
     try {
       // Buscar contexto do usuário de múltiplas fontes
+      // Buscar contexto do usuário de múltiplas fontes (sequencial para evitar profundidade de tipos)
+      // Usando 'sb' tipado como any para evitar inferência profunda do cliente
       const sb: any = supabase as any;
-      const [profileData, recentEvents, activeProjects] = await Promise.all([
-        // Perfil do usuário
-        sb.from('profiles').select('*').eq('id', userId).single(),
-        
-        // Eventos recentes de IA
-        sb
-          .from('ai_chat_events')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(20),
-          
-        // Projetos ativos
-        sb
-          .from('projects')
-          .select('*')
-          .eq('user_id', userId)
-          .in('status', ['active', 'planning'])
-          .limit(5)
-      ]);
+      // Perfil do usuário
+      const profileData: any = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // Eventos recentes de IA
+      const recentEvents: any = await sb
+        .from('ai_chat_events')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      // Projetos ativos
+      const activeProjects: any = await sb
+        .from('projects')
+        .select('*')
+        .eq('user_id', userId)
+        .or('status.eq.active,status.eq.planning')
+        .limit(5);
 
       const context: AIIntegrationContext = {
         userId,

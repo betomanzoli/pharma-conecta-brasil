@@ -102,18 +102,103 @@ serve(async (req) => {
 
         if (userMsgError) throw userMsgError;
 
-        // Buscar contexto da conversa (últimas 10 mensagens)
-        const { data: contextMessages } = await supabase
+        // Contagem total de mensagens da thread
+        const { count: totalCount } = await supabase
+          .from('ai_chat_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('thread_id', thread_id);
+
+        let didSummarize = false;
+
+        // Verificar se já existe um resumo recente
+        const { data: lastSummary } = await supabase
+          .from('ai_chat_messages')
+          .select('*')
+          .eq('thread_id', thread_id)
+          .contains('metadata', { type: 'summary' })
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const SUMMARIZE_THRESHOLD = 40;
+
+        // Criar um resumo quando a conversa fica muito longa e ainda não há resumo
+        if ((totalCount || 0) > SUMMARIZE_THRESHOLD && !lastSummary) {
+          const { data: oldMessages } = await supabase
+            .from('ai_chat_messages')
+            .select('role, content, created_at, id')
+            .eq('thread_id', thread_id)
+            .order('created_at', { ascending: true })
+            .limit(30);
+
+          let summaryText = '';
+          const toSummarize = oldMessages?.map(m => `${m.role}: ${m.content}`).join('\n') || '';
+
+          if (PERPLEXITY_API_KEY) {
+            const summarizeResp = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'llama-3.1-sonar-small-128k-online',
+                messages: [
+                  { role: 'system', content: 'Você é um assistente que gera resumos curtos, objetivos e contextuais em português.' },
+                  { role: 'user', content: `Resuma a conversa abaixo mantendo intenções, decisões e pendências em até 12 linhas.\n\n${toSummarize}` }
+                ],
+                max_tokens: 400,
+                temperature: 0.3,
+              }),
+            });
+
+            if (summarizeResp.ok) {
+              const sdata = await summarizeResp.json();
+              summaryText = sdata.choices?.[0]?.message?.content || '';
+            } else {
+              summaryText = '';
+            }
+          }
+
+          if (!summaryText) {
+            summaryText = 'Resumo automático indisponível no momento. Continuaremos com o contexto recente.';
+          }
+
+          const { error: insertSummaryError } = await supabase
+            .from('ai_chat_messages')
+            .insert({
+              thread_id,
+              role: 'system',
+              content: `Resumo da conversa até aqui:\n${summaryText}`,
+              metadata: { type: 'summary', summarized_count: oldMessages?.length || 0, created_at: new Date().toISOString() }
+            });
+
+          if (!insertSummaryError) didSummarize = true;
+        }
+
+        // Buscar contexto da conversa: incluir resumo (se existir) + últimas mensagens
+        const CONTEXT_LIMIT = 12;
+
+        const { data: recentMessages } = await supabase
           .from('ai_chat_messages')
           .select('role, content')
           .eq('thread_id', thread_id)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(CONTEXT_LIMIT);
 
-        const conversationContext = contextMessages
-          ?.reverse()
-          ?.map(msg => `${msg.role}: ${msg.content}`)
-          ?.join('\n') || '';
+        const { data: summaryMessage } = await supabase
+          .from('ai_chat_messages')
+          .select('content')
+          .eq('thread_id', thread_id)
+          .contains('metadata', { type: 'summary' })
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const conversationContext = [
+          summaryMessage?.content ? `system: ${summaryMessage.content}` : '',
+          ...(recentMessages?.reverse()?.map((msg: any) => `${msg.role}: ${msg.content}`) || [])
+        ].filter(Boolean).join('\n');
 
         const systemPrompt = `Você é um assistente AI especializado no setor farmacêutico brasileiro. 
 Seu conhecimento abrange:
@@ -176,6 +261,13 @@ Posso ajudá-lo com:
 Para respostas mais precisas e atualizadas, recomendo configurar a integração com APIs especializadas.
 
 Como posso ajudá-lo especificamente hoje?`;
+        }
+
+        // Sugerir abertura de novo chat e adicionar nota ao final da resposta
+        if ((totalCount || 0) > 60) {
+          assistantResponse += `\n\nNota: Esta conversa já está extensa. Posso abrir um novo chat e carregar um resumo para continuar do ponto em que paramos.`;
+        } else if (didSummarize) {
+          assistantResponse += `\n\nNota: Gereí um resumo da conversa para manter o contexto eficiente.`;
         }
 
         // Salvar resposta do assistente
