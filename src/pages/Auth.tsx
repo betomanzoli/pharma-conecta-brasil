@@ -14,7 +14,6 @@ const Auth = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("login");
-  const [debugMode, setDebugMode] = useState(false);
   
   useEffect(() => {
     // Verificar se é um link de recuperação de senha
@@ -34,13 +33,32 @@ const Auth = () => {
 
     // Verificar hash para tabs
     const hash = window.location.hash.replace('#', '');
-    if (hash === 'register' || hash === 'reset') {
+    if (['register', 'reset', 'new-password'].includes(hash)) {
       setActiveTab(hash);
     }
   }, [searchParams, toast]);
 
+  // Atualizar URL quando tab muda
+  useEffect(() => {
+    const newHash = activeTab === 'login' ? '' : `#${activeTab}`;
+    if (window.location.hash !== newHash) {
+      window.history.replaceState(null, '', `/auth${newHash}`);
+    }
+  }, [activeTab]);
+
   if (user && !loading) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1565C0] mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -57,17 +75,6 @@ const Auth = () => {
             O ecossistema colaborativo da indústria farmacêutica brasileira
           </p>
         </div>
-
-        {debugMode && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Modo debug ativo. URL atual: {window.location.href}
-              <br />
-              Domínio: {window.location.hostname}
-            </AlertDescription>
-          </Alert>
-        )}
 
         <Card className="shadow-lg">
           <CardHeader>

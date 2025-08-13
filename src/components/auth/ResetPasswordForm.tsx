@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,6 +33,13 @@ const ResetPasswordForm = () => {
 
   return (
     <form onSubmit={handleResetPassword} className="space-y-4">
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Digite seu email para receber o link de recuperação de senha.
+        </AlertDescription>
+      </Alert>
+
       <div className="space-y-2">
         <Label htmlFor="reset-email">Email</Label>
         <Input
@@ -42,6 +49,7 @@ const ResetPasswordForm = () => {
           value={resetEmail}
           onChange={(e) => setResetEmail(e.target.value)}
           placeholder="seu@email.com"
+          disabled={isLoading}
         />
       </div>
 
@@ -50,13 +58,20 @@ const ResetPasswordForm = () => {
         className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
         disabled={isLoading}
       >
-        {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Enviando...
+          </>
+        ) : (
+          "Enviar Link de Recuperação"
+        )}
       </Button>
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Se você não receber o email em alguns minutos, verifique sua pasta de spam ou tente novamente.
+          Se você não receber o email em alguns minutos, verifique sua pasta de spam.
         </AlertDescription>
       </Alert>
     </form>

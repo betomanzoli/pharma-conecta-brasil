@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
@@ -15,25 +14,33 @@ const AuthTabs = ({ activeTab, onTabChange }: AuthTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="login">Login</TabsTrigger>
-        <TabsTrigger value="register">Cadastro</TabsTrigger>
-        <TabsTrigger value="reset">Recuperar</TabsTrigger>
-        <TabsTrigger value="new-password">Nova Senha</TabsTrigger>
+        <TabsTrigger value="login" className="text-xs sm:text-sm">
+          Login
+        </TabsTrigger>
+        <TabsTrigger value="register" className="text-xs sm:text-sm">
+          Cadastro
+        </TabsTrigger>
+        <TabsTrigger value="reset" className="text-xs sm:text-sm">
+          Recuperar
+        </TabsTrigger>
+        <TabsTrigger value="new-password" className="text-xs sm:text-sm">
+          Nova Senha
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="login">
+      <TabsContent value="login" className="mt-6">
         <LoginForm />
       </TabsContent>
 
-      <TabsContent value="register">
+      <TabsContent value="register" className="mt-6">
         <RegisterForm />
       </TabsContent>
 
-      <TabsContent value="reset">
+      <TabsContent value="reset" className="mt-6">
         <ResetPasswordForm />
       </TabsContent>
 
-      <TabsContent value="new-password">
+      <TabsContent value="new-password" className="mt-6">
         <NewPasswordForm />
       </TabsContent>
     </Tabs>

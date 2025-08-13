@@ -57,16 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (currentHost === 'pharmaconnect.site' || currentHost === 'www.pharmaconnect.site') {
       return 'https://pharmaconnect.site/auth';
-    } else if (currentHost.includes('pharma-conecta-brasil.lovable.app')) {
-      return `${window.location.origin}/auth`;
-    } else if (currentHost.includes('lovable.app') || currentHost.includes('lovableproject.com')) {
-      return `${window.location.origin}/auth`;
     } else {
       return `${window.location.origin}/auth`;
     }
   };
 
   useEffect(() => {
+    // Configurar listener primeiro
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email);
@@ -74,7 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && event === 'SIGNED_IN') {
+          // Usar setTimeout para evitar deadlock
           setTimeout(async () => {
             await fetchProfile(session.user.id);
             await checkSubscription();
@@ -83,18 +81,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           setSubscription(null);
         }
+        
         setLoading(false);
       }
     );
 
+    // Depois verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        fetchProfile(session.user.id);
-        checkSubscription();
+        setTimeout(async () => {
+          await fetchProfile(session.user.id);
+          await checkSubscription();
+        }, 0);
       }
+      
       setLoading(false);
     });
 
@@ -137,9 +141,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Iniciando cadastro para:', email);
       
-      cleanupAuthState();
-      await performGlobalSignout(supabase);
-      
       const redirectUrl = getRedirectUrl();
       
       const { error } = await supabase.auth.signUp({
@@ -159,6 +160,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           errorMessage = 'Este email já está cadastrado. Tente fazer login ou recuperar sua senha.';
         } else if (error.message.includes('Password should be at least')) {
           errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        } else if (error.message.includes('weak password')) {
+          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres com letras, números e símbolos.';
         }
         
         toast({
@@ -171,12 +174,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Conta criada com sucesso!",
-        description: "Verifique seu email para ativar sua conta.",
+        description: "Verifique seu email para ativar sua conta antes de fazer login.",
       });
 
       return { error: null };
     } catch (error) {
       console.error('Error signing up:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro durante o cadastro. Tente novamente.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
@@ -184,11 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Iniciando login para:', email);
-      
-      cleanupAuthState();
-      await performGlobalSignout(supabase);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
@@ -200,11 +203,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         let errorMessage = error.message;
         if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais ou clique em "Esqueci minha senha".';
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
         } else if (error.message.includes('Email not confirmed')) {
           errorMessage = 'Confirme seu email antes de fazer login. Verifique sua caixa de entrada.';
         } else if (error.message.includes('Too many requests')) {
-          errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.';
+          errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos.';
+        } else if (error.message.includes('signup_disabled')) {
+          errorMessage = 'Cadastros estão temporariamente desabilitados.';
         }
         
         toast({
@@ -219,9 +224,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Login bem-sucedido para:', data.user.email);
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${data.user.email}!`,
+          description: `Bem-vindo de volta!`,
         });
         
+        // Redirecionamento mais suave
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1000);
@@ -232,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error signing in:', error);
       toast({
         title: "Erro inesperado",
-        description: "Ocorreu um erro durante o login. Tente limpar o cache ou entre em contato com o suporte.",
+        description: "Ocorreu um erro durante o login. Tente novamente.",
         variant: "destructive"
       });
       return { error };
@@ -283,13 +289,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         let errorMessage = error.message;
         if (error.message.includes('User not found')) {
-          errorMessage = 'Email não encontrado. Verifique se o email está correto ou cadastre-se.';
+          errorMessage = 'Email não encontrado. Verifique se o email está correto.';
         } else if (error.message.includes('For security purposes')) {
-          errorMessage = 'Por segurança, você só pode solicitar reset a cada 60 segundos.';
+          errorMessage = 'Por segurança, aguarde 60 segundos antes de solicitar novamente.';
         }
         
         toast({
-          title: "Erro",
+          title: "Erro ao enviar email",
           description: errorMessage,
           variant: "destructive"
         });
@@ -298,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Email enviado!",
-        description: "Verifique seu email para redefinir sua senha. Pode demorar alguns minutos para chegar.",
+        description: "Verifique seu email para redefinir sua senha. Pode demorar alguns minutos.",
       });
 
       return { error: null };
@@ -323,7 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.message.includes('Password should be at least')) {
           errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
         } else if (error.message.includes('weak password')) {
-          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres com letras e números.';
+          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres variados.';
         }
         
         toast({
@@ -336,7 +342,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Senha redefinida com sucesso!",
-        description: "Sua nova senha foi salva. Você será redirecionado para o dashboard.",
+        description: "Você será redirecionado para o dashboard.",
       });
 
       setTimeout(() => {
