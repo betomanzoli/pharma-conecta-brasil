@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Navigate } from 'react-router-dom';
 
 interface Profile {
   id: string;
@@ -26,7 +27,7 @@ interface AuthContextType {
   loading: boolean;
   supabase: SupabaseClient;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any; redirect?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
@@ -39,6 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirectToLogin, setRedirectToLogin] = useState(false);
   const { toast } = useToast();
 
   console.log('🔐 AuthProvider rendering...', { 
@@ -51,9 +53,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('🚀 AuthProvider useEffect iniciando...');
     
-    // Configurar listener primeiro para capturar eventos
+    let mounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('🔄 Auth state change:', { 
           event, 
           userEmail: session?.user?.email,
@@ -72,12 +77,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
         }
         
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     );
 
-    // Depois verificar sessão existente
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return;
+      
       if (error) {
         console.error('❌ Error getting session:', error);
       } else {
@@ -93,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => {
+      mounted = false;
       console.log('🔄 Unsubscribing auth listener');
       subscription.unsubscribe();
     };
@@ -172,11 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: "Bem-vindo de volta!",
         });
         
-        // Usar window.location.href para garantir redirecionamento limpo
-        setTimeout(() => {
-          console.log('🔄 Redirecting to dashboard...');
-          window.location.href = '/dashboard';
-        }, 1000);
+        return { error: null, redirect: true };
       }
 
       return { error: null };
@@ -205,10 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Você foi desconectado com segurança.",
       });
       
-      setTimeout(() => {
-        console.log('🔄 Redirecting to home after logout...');
-        window.location.href = '/';
-      }, 500);
+      setRedirectToLogin(true);
     } catch (error) {
       console.error('❌ Error signing out:', error);
       toast({
@@ -277,17 +279,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Você será redirecionado para o dashboard.",
       });
 
-      setTimeout(() => {
-        console.log('🔄 Redirecting to dashboard after password update...');
-        window.location.href = '/dashboard';
-      }, 2000);
-
       return { error: null };
     } catch (error) {
       console.error('💥 Unexpected password update error:', error);
       return { error };
     }
   };
+
+  if (redirectToLogin) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const value = {
     user,

@@ -20,7 +20,7 @@ const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🔑 Login form submitted for:', loginData.email);
+    console.log('🔑 Login form submitted');
     
     if (!loginData.email || !loginData.password) {
       toast({
@@ -117,12 +117,6 @@ const LoginForm = () => {
           "Entrar"
         )}
       </Button>
-      
-      <div className="text-center pt-2">
-        <p className="text-sm text-gray-600">
-          Usuário de teste: <code className="bg-gray-100 px-1 rounded">betomanzoli@gmail.com</code>
-        </p>
-      </div>
     </form>
   );
 };

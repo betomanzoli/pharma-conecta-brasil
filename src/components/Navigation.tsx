@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import Logo from '@/components/ui/logo';
 import { 
   Home, 
   User, 
@@ -31,7 +32,6 @@ const Navigation = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
   };
 
   const getUserTypeIcon = (userType?: string) => {
@@ -61,7 +61,6 @@ const Navigation = () => {
       { path: '/knowledge', icon: BookOpen, label: 'Biblioteca' },
     ];
 
-    // Adicionar itens específicos baseados no tipo de usuário
     const userTypeItems = [];
     
     switch (profile?.user_type) {
@@ -102,18 +101,18 @@ const Navigation = () => {
       <nav className="bg-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link to="/" className="text-2xl font-bold text-primary">
-              PharmaConnect
+            <Link to="/" className="flex items-center">
+              <Logo size="lg" />
             </Link>
             
             <div className="flex items-center space-x-4">
               <Link to="/demo">
                 <Button variant="ghost">Demo</Button>
               </Link>
-              <Link to="/login">
+              <Link to="/auth#login">
                 <Button variant="ghost">Login</Button>
               </Link>
-              <Link to="/register">
+              <Link to="/auth#register">
                 <Button>Cadastrar</Button>
               </Link>
             </div>
@@ -129,8 +128,8 @@ const Navigation = () => {
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <Link to="/dashboard" className="text-2xl font-bold text-primary">
-            PharmaConnect
+          <Link to="/dashboard" className="flex items-center">
+            <Logo size="lg" />
           </Link>
           
           <div className="hidden md:flex items-center space-x-6">

@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -24,20 +26,60 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               
-              {/* Redirects para rotas antigas - CORRIGIDO */}
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Redirects para rotas antigas */}
               <Route path="/login" element={<Navigate to="/auth#login" replace />} />
               <Route path="/register" element={<Navigate to="/auth#register" replace />} />
               
-              {/* Outras rotas redirecionam para Index por enquanto */}
-              <Route path="/dashboard" element={<Index />} />
-              <Route path="/profile" element={<Index />} />
-              <Route path="/projects" element={<Index />} />
-              <Route path="/network" element={<Index />} />
-              <Route path="/mentorship" element={<Index />} />
-              <Route path="/library" element={<Index />} />
-              <Route path="/forum" element={<Index />} />
-              <Route path="/chat" element={<Index />} />
-              <Route path="/ai" element={<Index />} />
+              {/* Placeholder para outras rotas protegidas */}
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/projects" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/network" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/mentorship" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/library" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/forum" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/chat" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/ai" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Rotas públicas */}
               <Route path="/pricing" element={<Index />} />
               <Route path="/about" element={<Index />} />
               <Route path="/contact" element={<Index />} />
