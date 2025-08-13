@@ -262,7 +262,7 @@ const Index = () => {
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-purple-600" asChild>
+              <Button size="lg" variant="outline" className="h-5 w-5 ml-2" asChild>
                 <Link to="/login">
                   Fazer Login
                 </Link>
