@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
+import { useAgentConfig } from '@/hooks/useAgentConfig';
 
 interface Message {
   id: string;
@@ -53,6 +54,7 @@ const EnhancedMasterChatbot = () => {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [conversationContext, setConversationContext] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { config: agentConfig } = useAgentConfig('master_chatbot');
 
   useEffect(() => {
     if (profile?.id) {

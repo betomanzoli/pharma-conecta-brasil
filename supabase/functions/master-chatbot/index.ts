@@ -208,23 +208,29 @@ serve(async (req) => {
           ...(recentMessages?.reverse()?.map((msg: any) => `${msg.role}: ${msg.content}`) || [])
         ].filter(Boolean).join('\n');
 
-        const systemPrompt = `Você é um assistente AI especializado no setor farmacêutico brasileiro. 
+        // Buscar configuração centralizada do agente
+        const { data: agentConfig } = await supabase
+          .from('ai_agent_configs')
+          .select('system_prompt, default_suggestions, metadata, enabled')
+          .eq('agent_key', 'master_chatbot')
+          .maybeSingle();
+
+        const baseSystemPrompt = agentConfig?.system_prompt || `Você é o Assistente AI da PharmaConnect Brasil, especializado no setor farmacêutico brasileiro.
 Seu conhecimento abrange:
 - Regulamentações da ANVISA, FDA e EMA
-- Processos de registro de medicamentos
+- Processos de registro de medicamentos e dossiês (CTD)
 - Boas práticas de fabricação (GMP)
-- Análise de mercado farmacêutico
-- Desenvolvimento de produtos farmacêuticos
-- Compliance regulatório
-- Parcerias estratégicas no setor
+- Análise de mercado e parcerias estratégicas
+- Desenvolvimento de produtos e compliance regulatório
 
-Responda de forma técnica mas acessível, sempre considerando as especificidades do mercado brasileiro.
-Se não souber algo específico, seja honesto e sugira onde o usuário pode buscar mais informações.
+Regras: mantenha o foco em farmacêutica/biotec/healthcare, gere respostas acionáveis (próximos passos, checklists, riscos) e indique quando a plataforma (AI Matching, gestão de projetos, agentes) pode ajudar.`;
+
+        const systemPrompt = `${baseSystemPrompt}
 
 Contexto da conversa:
 ${conversationContext}
 
-Responda à seguinte mensagem.
+Instruções de metadados:
 Ao final da sua resposta, inclua um bloco JSON entre <metadata> e </metadata> no formato:
 {"followups": ["pergunta relacionada 1", "pergunta relacionada 2", "pergunta relacionada 3"], "howto": "dica breve de como aproveitar melhor o chat"}
 Não repita a resposta dentro do JSON.`;
@@ -314,6 +320,19 @@ Não repita a resposta dentro do JSON.`;
             assistantResponse = `Olá! Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com:\n\n• Análises regulatórias (ANVISA, FDA, EMA)\n• Desenvolvimento de produtos farmacêuticos\n• Estratégias de registro de medicamentos\n• Compliance e boas práticas (GMP)\n• Parcerias e oportunidades de mercado\n• Análise de mercado farmacêutico brasileiro\n\nComo posso detalhar sua consulta especificamente?`;
           }
 
+        // Extrair metadados estruturados (followups/howto) do bloco <metadata>...</metadata>
+        const metaMatch = assistantResponse?.match(/<metadata>([\s\S]*?)<\/metadata>/i);
+        if (metaMatch) {
+          try {
+            const parsed = JSON.parse(metaMatch[1].trim());
+            if (Array.isArray(parsed.followups)) followups = parsed.followups;
+            if (typeof parsed.howto === 'string') howto = parsed.howto;
+          } catch (e) {
+            console.error('Failed to parse assistant metadata JSON:', e);
+          }
+          assistantResponse = assistantResponse.replace(metaMatch[0], '').trim();
+        }
+
         // Sugerir abertura de novo chat e adicionar nota ao final da resposta
         if ((totalCount || 0) > 60) {
           assistantResponse += `\n\nNota: Esta conversa já está extensa. Posso abrir um novo chat e carregar um resumo para continuar do ponto em que paramos.`;
@@ -334,6 +353,7 @@ Não repita a resposta dentro do JSON.`;
               response_length: assistantResponse.length,
               followups,
               howto,
+              default_suggestions: agentConfig?.default_suggestions || []
             }
           });
 
@@ -360,6 +380,7 @@ Não repita a resposta dentro do JSON.`;
             timestamp: new Date().toISOString(),
             followups,
             howto,
+            default_suggestions: agentConfig?.default_suggestions || []
           }
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

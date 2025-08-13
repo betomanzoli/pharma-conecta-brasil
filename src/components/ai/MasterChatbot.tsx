@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
-
+import { useAgentConfig } from '@/hooks/useAgentConfig';
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -52,7 +52,7 @@ const MasterChatbot: React.FC<MasterChatbotProps> = ({ initialPrompt }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [detailLevel, setDetailLevel] = useState<'concise' | 'detailed'>('concise');
   const [forceSearch, setForceSearch] = useState(false);
-
+  const { config: agentConfig } = useAgentConfig('master_chatbot');
 useEffect(() => {
   if (profile?.id) {
     initializeChatbot();
@@ -270,7 +270,7 @@ const sendMessage = async (override?: string) => {
   const modelLabel = lastAssistant?.metadata?.model as string | undefined;
   const followups: string[] = (lastAssistant?.metadata?.followups as string[]) || [];
   const howtoText: string | null = (lastAssistant?.metadata?.howto as string) || null;
-
+  const agentSuggestions: string[] = (lastAssistant?.metadata?.default_suggestions as string[]) || (agentConfig?.default_suggestions ?? []);
   return (
     <Card className="h-[500px] flex flex-col">
       <CardHeader className="pb-3">
@@ -326,11 +326,11 @@ const sendMessage = async (override?: string) => {
               <p>Olá! Sou seu assistente AI especializado em farmacêutica.</p>
               <p className="text-sm">Como posso ajudá-lo hoje?</p>
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                {(followups.length > 0 ? followups : [
+                {(followups.length > 0 ? followups : (agentSuggestions.length ? agentSuggestions : [
                   'Quais passos para registro na ANVISA?',
                   'Requisitos de GMP para indústria?',
                   'Estratégias para dossiê CTD no Brasil?'
-                ]).map((sug, idx) => (
+                ])).map((sug, idx) => (
                   <Button key={idx} size="sm" variant="secondary" onClick={() => sendMessage(sug)}>
                     {sug}
                   </Button>
