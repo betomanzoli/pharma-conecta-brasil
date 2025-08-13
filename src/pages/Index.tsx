@@ -256,7 +256,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br decoration-purple-600 to-purple-600 rounded-lg flex items-center justify-center">
                 
               </div>
               <span className="text-xl font-bold">PharmaConnect Brasil</span>
