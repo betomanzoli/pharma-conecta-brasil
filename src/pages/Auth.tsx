@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Users, User, RefreshCw } from "lucide-react";
+import { Building2, FlaskConical, Users, User, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/ui/logo";
 import { cleanupAuthState, performGlobalSignout } from "@/utils/authCleanup";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Navigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const { signUp, signIn, resetPassword, user, loading } = useAuth();
@@ -20,6 +21,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [debugMode, setDebugMode] = useState(false);
   
   const [loginData, setLoginData] = useState({
     email: "",
@@ -35,15 +37,12 @@ const Auth = () => {
     user_type: "",
     phone: "",
     linkedin_url: "",
-    // Company fields
     company_name: "",
     cnpj: "",
     company_description: "",
-    // Laboratory fields
     lab_name: "",
     anvisa_certifications: [] as string[],
     equipment_list: [] as string[],
-    // Consultant fields
     expertise_areas: [] as string[],
     certifications: [] as string[],
   });
@@ -68,7 +67,6 @@ const Auth = () => {
     "Validação de Processos"
   ];
 
-  // Detectar hash na URL para definir a tab ativa
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash === 'register' || hash === 'reset') {
@@ -76,7 +74,6 @@ const Auth = () => {
     }
   }, []);
 
-  // Redirecionar se já estiver logado
   if (user && !loading) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -84,16 +81,36 @@ const Auth = () => {
   const clearCacheAndRetry = async () => {
     setIsClearing(true);
     try {
+      console.log('Limpando cache completo...');
+      
+      // Limpar todos os dados relacionados ao Supabase
       cleanupAuthState();
+      
+      // Tentar logout global
       await performGlobalSignout(supabase);
+      
+      // Limpar cookies se possível
+      if (document.cookie) {
+        document.cookie.split(";").forEach((c) => {
+          const eqPos = c.indexOf("=");
+          const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        });
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
-        title: "Cache limpo",
-        description: "Tente fazer login novamente.",
+        title: "Cache limpo completamente",
+        description: "Todos os dados de autenticação foram removidos. Tente fazer login novamente.",
       });
     } catch (error) {
       console.error('Erro ao limpar cache:', error);
+      toast({
+        title: "Erro ao limpar cache",
+        description: "Tente recarregar a página manualmente.",
+        variant: "destructive"
+      });
     } finally {
       setIsClearing(false);
     }
@@ -105,13 +122,47 @@ const Auth = () => {
     
     try {
       console.log('Tentando login via Auth page com:', loginData.email);
+      
+      // Validações básicas
+      if (!loginData.email || !loginData.password) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Preencha email e senha.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (!loginData.email.includes('@')) {
+        toast({
+          title: "Email inválido",
+          description: "Digite um email válido.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const result = await signIn(loginData.email, loginData.password);
       
       if (result?.error) {
         console.error('Erro de login:', result.error);
+        
+        // Sugerir alternativas
+        if (result.error.message.includes('Invalid login credentials')) {
+          toast({
+            title: "Credenciais inválidas",
+            description: "Tente recuperar sua senha ou verificar se o email está correto.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('Erro inesperado no login:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente limpar o cache ou recarregar a página.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +172,20 @@ const Auth = () => {
     e.preventDefault();
     
     if (registerData.password !== registerData.confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "Verifique se as senhas são iguais.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -148,6 +213,16 @@ const Auth = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!resetEmail || !resetEmail.includes('@')) {
+      toast({
+        title: "Email inválido",
+        description: "Digite um email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     await resetPassword(resetEmail);
     setIsLoading(false);
@@ -275,6 +350,18 @@ const Auth = () => {
           </p>
         </div>
 
+        {/* Alertas de debug se necessário */}
+        {debugMode && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Modo debug ativo. URL atual: {window.location.href}
+              <br />
+              Domínio: {window.location.hostname}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-center text-[#1565C0]">Acesso à Plataforma</CardTitle>
@@ -321,7 +408,7 @@ const Auth = () => {
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                   
-                  <div className="text-center pt-2">
+                  <div className="text-center pt-2 space-y-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -331,8 +418,20 @@ const Auth = () => {
                       className="text-xs"
                     >
                       {isClearing && <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
-                      Problemas para entrar? Limpar Cache
+                      Limpar Cache Completo
                     </Button>
+                    
+                    <div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDebugMode(!debugMode)}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {debugMode ? 'Ocultar' : 'Mostrar'} Info Debug
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </TabsContent>
@@ -479,6 +578,13 @@ const Auth = () => {
                   >
                     {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
                   </Button>
+
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Se você não receber o email em alguns minutos, verifique sua pasta de spam ou tente novamente.
+                    </AlertDescription>
+                  </Alert>
                 </form>
               </TabsContent>
             </Tabs>

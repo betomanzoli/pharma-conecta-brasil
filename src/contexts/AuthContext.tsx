@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -99,7 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        // Expandir tipos de usuário para incluir novos tipos
         const validUserTypes = [
           'company', 'laboratory', 'consultant', 'individual', 'admin',
           'professional', 'regulatory_body', 'sector_entity', 
@@ -122,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Iniciando cadastro para:', email);
       
-      // Limpar estado antes do cadastro
       cleanupAuthState();
       await performGlobalSignout(supabase);
       
@@ -139,9 +138,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Erro no cadastro:', error);
+        
+        let errorMessage = error.message;
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'Este email já está cadastrado. Tente fazer login ou recuperar sua senha.';
+        } else if (error.message.includes('Password should be at least')) {
+          errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        }
+        
         toast({
           title: "Erro no cadastro",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         return { error };
@@ -163,23 +170,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Iniciando login para:', email);
       
-      // Limpar estado antes do login
       cleanupAuthState();
       await performGlobalSignout(supabase);
       
-      // Aguardar um momento
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.toLowerCase().trim(),
         password,
       });
 
       if (error) {
         console.error('Erro no login:', error);
+        
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais ou clique em "Esqueci minha senha".';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Confirme seu email antes de fazer login. Verifique sua caixa de entrada.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.';
+        }
+        
         toast({
           title: "Erro no login",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         return { error };
@@ -192,7 +207,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: `Bem-vindo de volta, ${data.user.email}!`,
         });
         
-        // Redirecionar após um pequeno delay
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1000);
@@ -201,6 +215,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       console.error('Error signing in:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro durante o login. Tente limpar o cache ou entre em contato com o suporte.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
@@ -209,7 +228,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Iniciando logout...');
       
-      // Limpar estado primeiro
       cleanupAuthState();
       
       await supabase.auth.signOut({ scope: 'global' });
@@ -224,7 +242,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Você foi desconectado com sucesso.",
       });
       
-      // Redirecionar após um pequeno delay
       setTimeout(() => {
         window.location.href = '/';
       }, 500);
@@ -235,14 +252,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
+      console.log('Enviando reset de senha para:', email);
+      
+      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim(), 
+        {
+          redirectTo: redirectUrl,
+        }
+      );
 
       if (error) {
+        console.error('Erro no reset:', error);
+        
+        let errorMessage = error.message;
+        if (error.message.includes('User not found')) {
+          errorMessage = 'Email não encontrado. Verifique se o email está correto ou cadastre-se.';
+        } else if (error.message.includes('For security purposes')) {
+          errorMessage = 'Por segurança, você só pode solicitar reset a cada 60 segundos.';
+        }
+        
         toast({
           title: "Erro",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive"
         });
         return { error };
@@ -250,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Email enviado!",
-        description: "Verifique seu email para redefinir sua senha.",
+        description: "Verifique seu email para redefinir sua senha. Pode demorar alguns minutos para chegar.",
       });
 
       return { error: null };
