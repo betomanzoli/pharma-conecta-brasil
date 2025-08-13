@@ -43,8 +43,7 @@ serve(async (req) => {
           .from('ai_chat_threads')
           .insert({
             user_id: auth.user.id,
-            title: title || 'Nova Conversa Master AI',
-            metadata: { source: 'master_chatbot' }
+            title: title || 'Nova Conversa Master AI'
           })
           .select()
           .single();
@@ -222,28 +221,35 @@ Responda à seguinte mensagem:`;
 
         if (PERPLEXITY_API_KEY) {
           // Usar Perplexity API
-          const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "llama-3.1-sonar-small-128k-online",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: message }
-              ],
-              max_tokens: 1000,
-              temperature: 0.7,
-            }),
-          });
+          try {
+            const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "llama-3.1-sonar-small-128k-online",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: message }
+                ],
+                max_tokens: 1000,
+                temperature: 0.7,
+              }),
+            });
 
-          if (perplexityResponse.ok) {
-            const data = await perplexityResponse.json();
-            assistantResponse = data.choices[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
-          } else {
-            throw new Error("Erro na API Perplexity");
+            if (perplexityResponse.ok) {
+              const data = await perplexityResponse.json();
+              assistantResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+            } else {
+              const errText = await perplexityResponse.text();
+              console.error("Perplexity API error:", errText);
+              assistantResponse = `Não consegui acessar a API externa no momento. Ainda assim, segue uma orientação inicial sobre "${message}". Posso detalhar requisitos regulatórios (ANVISA/FDA/EMA), caminhos de registro, GMP e estratégias. Deseja que eu tente novamente com busca atualizada?`;
+            }
+          } catch (err) {
+            console.error("Perplexity fetch failed:", err);
+            assistantResponse = `Não consegui acessar a API externa no momento. Ainda assim, segue uma orientação inicial sobre "${message}". Posso detalhar requisitos regulatórios (ANVISA/FDA/EMA), caminhos de registro, GMP e estratégias. Deseja que eu tente novamente com busca atualizada?`;
           }
         } else {
           // Resposta padrão
