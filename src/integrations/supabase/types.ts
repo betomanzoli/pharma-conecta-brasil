@@ -56,39 +56,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ai_agent_configs: {
-        Row: {
-          agent_key: string
-          created_at: string
-          default_suggestions: Json
-          enabled: boolean
-          id: string
-          metadata: Json
-          system_prompt: string
-          updated_at: string
-        }
-        Insert: {
-          agent_key: string
-          created_at?: string
-          default_suggestions?: Json
-          enabled?: boolean
-          id?: string
-          metadata?: Json
-          system_prompt: string
-          updated_at?: string
-        }
-        Update: {
-          agent_key?: string
-          created_at?: string
-          default_suggestions?: Json
-          enabled?: boolean
-          id?: string
-          metadata?: Json
-          system_prompt?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       ai_agent_outputs: {
         Row: {
           agent_type: string
@@ -228,7 +195,6 @@ export type Database = {
       }
       ai_chat_threads: {
         Row: {
-          conversation_summary: string | null
           created_at: string
           id: string
           last_message_preview: string | null
@@ -238,7 +204,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null
@@ -248,7 +213,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null

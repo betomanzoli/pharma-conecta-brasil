@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAIEventLogger } from '@/hooks/useAIEventLogger';
-import { useAgentConfig } from '@/hooks/useAgentConfig';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -36,11 +36,7 @@ interface Thread {
   last_message_preview: string;
 }
 
-interface MasterChatbotProps {
-  initialPrompt?: string;
-}
-
-const MasterChatbot: React.FC<MasterChatbotProps> = ({ initialPrompt }) => {
+const MasterChatbot = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const { logAIEvent } = useAIEventLogger();
@@ -50,48 +46,29 @@ const MasterChatbot: React.FC<MasterChatbotProps> = ({ initialPrompt }) => {
   const [currentThread, setCurrentThread] = useState<Thread | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [detailLevel, setDetailLevel] = useState<'concise' | 'detailed'>('concise');
-  const [forceSearch, setForceSearch] = useState(false);
-  const { config: agentConfig } = useAgentConfig('master_chatbot');
-useEffect(() => {
-  if (profile?.id) {
-    initializeChatbot();
-  }
-}, [profile?.id]);
 
-useEffect(() => {
-  scrollToBottom();
-}, [messages]);
+  useEffect(() => {
+    if (profile?.id) {
+      initializeChatbot();
+    }
+  }, [profile?.id]);
 
-const hasSentInitialRef = useRef(false);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-// Dispara o prompt inicial (quando vier por bridge) assim que a thread existir
-useEffect(() => {
-  if (currentThread && initialPrompt && !hasSentInitialRef.current) {
-    hasSentInitialRef.current = true;
-    // Envia a mensagem inicial sem depender do estado do input
-    sendMessage(initialPrompt);
-  }
-}, [currentThread, initialPrompt]);
-
-const scrollToBottom = () => {
-  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-};
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const initializeChatbot = async () => {
     try {
       // Buscar threads existentes
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        toast({ title: 'Não autenticado', description: 'Faça login novamente para usar o chat.', variant: 'destructive' });
-        return;
-      }
       const { data: threadsData } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'list_threads', 
           user_id: profile?.id 
-        },
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+        }
       });
 
       if (threadsData?.threads) {
@@ -127,18 +104,12 @@ const scrollToBottom = () => {
 
   const createNewThread = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        toast({ title: 'Não autenticado', description: 'Faça login novamente para criar uma conversa.', variant: 'destructive' });
-        return;
-      }
       const { data } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'init_thread', 
           user_id: profile?.id,
           title: 'Nova Conversa'
-        },
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+        }
       });
 
       if (data?.thread_id) {
@@ -161,19 +132,13 @@ const scrollToBottom = () => {
   };
 
   const loadMessages = async (threadId: string) => {
-  try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        toast({ title: 'Não autenticado', description: 'Faça login novamente para carregar mensagens.', variant: 'destructive' });
-        return;
-      }
+    try {
       const { data } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'get_messages', 
           thread_id: threadId,
           user_id: profile?.id 
-        },
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+        }
       });
 
       if (data?.messages) {
@@ -184,80 +149,73 @@ const scrollToBottom = () => {
     }
   };
 
-const sendMessage = async (override?: string) => {
-  const content = (override ?? newMessage).trim();
-  if (!content || loading || !currentThread) return;
+  const sendMessage = async () => {
+    if (!newMessage.trim() || loading || !currentThread) return;
 
-  setLoading(true);
-  if (!override) setNewMessage('');
+    setLoading(true);
+    const userMessage = newMessage.trim();
+    setNewMessage('');
 
-  // Adicionar mensagem do usuário localmente
-  const tempUserMessage: Message = {
-    id: `temp-${Date.now()}`,
-    role: 'user',
-    content: content,
-    created_at: new Date().toISOString()
+    // Adicionar mensagem do usuário localmente
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      content: userMessage,
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, tempUserMessage]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('master-chatbot', {
+        body: { 
+          action: 'chat', 
+          user_id: profile?.id,
+          thread_id: currentThread.id,
+          message: userMessage
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.assistant_message) {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: data.assistant_message,
+          created_at: new Date().toISOString(),
+          metadata: data.metadata
+        };
+
+        setMessages(prev => {
+          // Remover mensagem temporária e adicionar ambas as mensagens
+          const filtered = prev.filter(m => m.id !== tempUserMessage.id);
+          return [...filtered, 
+            { ...tempUserMessage, id: `user-${Date.now()}` }, 
+            assistantMessage
+          ];
+        });
+
+        await logAIEvent({
+          source: 'master_ai_hub',
+          action: 'message',
+          message: userMessage,
+          metadata: { response_length: data.assistant_message.length }
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      toast({ 
+        title: 'Erro', 
+        description: 'Falha ao enviar mensagem',
+        variant: 'destructive' 
+      });
+      
+      // Remover mensagem temporária em caso de erro
+      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
+    } finally {
+      setLoading(false);
+    }
   };
-  setMessages(prev => [...prev, tempUserMessage]);
-
-  try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData?.session) {
-      throw new Error('Não autenticado');
-    }
-    const { data, error } = await supabase.functions.invoke('master-chatbot', {
-      body: { 
-        action: 'chat', 
-        user_id: profile?.id,
-        thread_id: currentThread.id,
-        message: content,
-        detail_level: detailLevel,
-        force_search: forceSearch,
-      },
-      headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-    });
-
-    if (error) throw error;
-
-    if (data?.assistant_message) {
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.assistant_message,
-        created_at: new Date().toISOString(),
-        metadata: data.metadata
-      };
-
-      setMessages(prev => {
-        // Remover mensagem temporária e adicionar ambas as mensagens
-        const filtered = prev.filter(m => m.id !== tempUserMessage.id);
-        return [...filtered, 
-          { ...tempUserMessage, id: `user-${Date.now()}` }, 
-          assistantMessage
-        ];
-      });
-
-      await logAIEvent({
-        source: 'master_ai_hub',
-        action: 'message',
-        message: content,
-        metadata: { response_length: data.assistant_message.length }
-      });
-    }
-  } catch (error) {
-    console.error('Erro ao enviar mensagem:', error);
-    toast({ 
-      title: 'Erro', 
-      description: `Falha ao enviar mensagem: ${ (error as any)?.message || 'ver console para detalhes' }`,
-      variant: 'destructive' 
-    });
-    
-    // Remover mensagem temporária em caso de erro
-    setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
-  } finally {
-    setLoading(false);
-  }
-};
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -266,11 +224,6 @@ const sendMessage = async (override?: string) => {
     }
   };
 
-  const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
-  const modelLabel = lastAssistant?.metadata?.model as string | undefined;
-  const followups: string[] = (lastAssistant?.metadata?.followups as string[]) || [];
-  const howtoText: string | null = (lastAssistant?.metadata?.howto as string) || null;
-  const agentSuggestions: string[] = (lastAssistant?.metadata?.default_suggestions as string[]) || (agentConfig?.default_suggestions ?? []);
   return (
     <Card className="h-[500px] flex flex-col">
       <CardHeader className="pb-3">
@@ -280,37 +233,14 @@ const sendMessage = async (override?: string) => {
             <span>Assistente AI Master</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-xs">
-              {modelLabel ? `Modelo: ${modelLabel}` : 'Modelo: —'}
-            </Badge>
             <Badge variant="outline" className="text-xs">
               {currentThread ? `Thread: ${currentThread.id.slice(0, 8)}` : 'Carregando...'}
             </Badge>
-            <Button 
-              variant={detailLevel === 'detailed' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setDetailLevel(prev => (prev === 'detailed' ? 'concise' : 'detailed'))}
-              disabled={loading}
-              title="Alternar respostas detalhadas"
-            >
-              Detalhadas
-            </Button>
-            <Button 
-              variant={forceSearch ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setForceSearch(v => !v)}
-              disabled={loading}
-              title="Ativar busca atualizada"
-            >
-              Busca atualizada
-            </Button>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={createNewThread}
               disabled={loading}
-              aria-label="Nova conversa"
-              title="Nova conversa"
             >
               <RefreshCw className="h-3 w-3" />
             </Button>
@@ -325,17 +255,6 @@ const sendMessage = async (override?: string) => {
               <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>Olá! Sou seu assistente AI especializado em farmacêutica.</p>
               <p className="text-sm">Como posso ajudá-lo hoje?</p>
-              <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                {(followups.length > 0 ? followups : (agentSuggestions.length ? agentSuggestions : [
-                  'Quais passos para registro na ANVISA?',
-                  'Requisitos de GMP para indústria?',
-                  'Estratégias para dossiê CTD no Brasil?'
-                ])).map((sug, idx) => (
-                  <Button key={idx} size="sm" variant="secondary" onClick={() => sendMessage(sug)}>
-                    {sug}
-                  </Button>
-                ))}
-              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -392,27 +311,11 @@ const sendMessage = async (override?: string) => {
                   </div>
                 </div>
               )}
-
-              {!loading && followups.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {followups.map((sug, idx) => (
-                    <Button key={idx} size="sm" variant="secondary" onClick={() => sendMessage(sug)}>
-                      {sug}
-                    </Button>
-                  ))}
-                </div>
-              )}
               
               <div ref={messagesEndRef} />
             </div>
           )}
         </ScrollArea>
-
-        {howtoText && (
-          <div className="px-4 py-2 border-t bg-muted">
-            <p className="text-xs text-muted-foreground">{howtoText}</p>
-          </div>
-        )}
 
         <div className="p-4 border-t">
           <div className="flex space-x-2">
@@ -424,7 +327,7 @@ const sendMessage = async (override?: string) => {
               disabled={loading}
             />
             <Button 
-              onClick={() => sendMessage()} 
+              onClick={sendMessage} 
               disabled={!newMessage.trim() || loading}
             >
               {loading ? (

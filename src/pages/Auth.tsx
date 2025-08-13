@@ -5,22 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Users, User, RefreshCw } from "lucide-react";
+import { Building2, FlaskConical, Users, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/ui/logo";
-import { cleanupAuthState, performGlobalSignout } from "@/utils/authCleanup";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Navigate } from "react-router-dom";
-import { useEffect } from "react";
 
 const Auth = () => {
-  const { signUp, signIn, resetPassword, user, loading } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
-  
+  const { signUp, signIn, resetPassword } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -59,7 +50,7 @@ const Auth = () => {
 
   const expertiseAreas = [
     "P&D (Pesquisa e Desenvolvimento)",
-    "Controle de Qualidade", 
+    "Controle de Qualidade",
     "Assuntos Regulatórios",
     "Produção",
     "Comercial",
@@ -68,53 +59,12 @@ const Auth = () => {
     "Validação de Processos"
   ];
 
-  // Detectar hash na URL para definir a tab ativa
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'register' || hash === 'reset') {
-      setActiveTab(hash);
-    }
-  }, []);
-
-  // Redirecionar se já estiver logado
-  if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  const clearCacheAndRetry = async () => {
-    setIsClearing(true);
-    try {
-      cleanupAuthState();
-      await performGlobalSignout(supabase);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Cache limpo",
-        description: "Tente fazer login novamente.",
-      });
-    } catch (error) {
-      console.error('Erro ao limpar cache:', error);
-    } finally {
-      setIsClearing(false);
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     
-    try {
-      console.log('Tentando login via Auth page com:', loginData.email);
-      const result = await signIn(loginData.email, loginData.password);
-      
-      if (result?.error) {
-        console.error('Erro de login:', result.error);
-      }
-    } catch (error) {
-      console.error('Erro inesperado no login:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    await signIn(loginData.email, loginData.password);
+    setLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -124,7 +74,7 @@ const Auth = () => {
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
 
     const userData = {
       first_name: registerData.first_name,
@@ -143,14 +93,14 @@ const Auth = () => {
     };
 
     await signUp(registerData.email, registerData.password, userData);
-    setIsLoading(false);
+    setLoading(false);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     await resetPassword(resetEmail);
-    setIsLoading(false);
+    setLoading(false);
   };
 
   const handleRegisterInputChange = (field: string, value: string | string[]) => {
@@ -280,7 +230,7 @@ const Auth = () => {
             <CardTitle className="text-center text-[#1565C0]">Acesso à Plataforma</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>
@@ -316,24 +266,10 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={isLoading}
+                    disabled={loading}
                   >
-                    {isLoading ? "Entrando..." : "Entrar"}
+                    {loading ? "Entrando..." : "Entrar"}
                   </Button>
-                  
-                  <div className="text-center pt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={clearCacheAndRetry}
-                      disabled={isClearing}
-                      className="text-xs"
-                    >
-                      {isClearing && <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
-                      Problemas para entrar? Limpar Cache
-                    </Button>
-                  </div>
                 </form>
               </TabsContent>
 
@@ -451,9 +387,9 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={isLoading}
+                    disabled={loading}
                   >
-                    {isLoading ? "Criando conta..." : "Criar Conta"}
+                    {loading ? "Criando conta..." : "Criar Conta"}
                   </Button>
                 </form>
               </TabsContent>
@@ -475,9 +411,9 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={isLoading}
+                    disabled={loading}
                   >
-                    {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
+                    {loading ? "Enviando..." : "Enviar Link de Recuperação"}
                   </Button>
                 </form>
               </TabsContent>
