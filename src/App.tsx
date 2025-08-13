@@ -83,7 +83,6 @@ const App = () => (
             <Route path="/privacy" element={<Index />} />
             <Route path="/terms" element={<Index />} />
             <Route path="/ethics" element={<Index />} />
-            <Route path="/auth" element={<Login />} />
             <Route path="/status" element={<Index />} />
             <Route path="/demo" element={<Index />} />
             
