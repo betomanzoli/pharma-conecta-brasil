@@ -142,13 +142,14 @@ serve(async (req) => {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  model: 'llama-3.1-sonar-small-128k-online',
+                  model: 'sonar',
                   messages: [
                     { role: 'system', content: 'Você é um assistente que gera resumos curtos, objetivos e contextuais em português.' },
                     { role: 'user', content: `Resuma a conversa abaixo mantendo intenções, decisões e pendências em até 12 linhas.\n\n${toSummarize}` }
                   ],
                   max_tokens: 400,
                   temperature: 0.3,
+                  disable_search: true,
                 }),
               });
 
@@ -238,7 +239,7 @@ Responda à seguinte mensagem:`;
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                model: "llama-3.1-sonar-small-128k-online",
+                model: "sonar",
                 messages: [
                   { role: "system", content: systemPrompt },
                   { role: "user", content: message }
@@ -268,7 +269,7 @@ Responda à seguinte mensagem:`;
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
-                    model: "llama-3.1-sonar-large-128k-online",
+                    model: "sonar-pro",
                     messages: [
                       { role: "system", content: systemPrompt },
                       { role: "user", content: message }
