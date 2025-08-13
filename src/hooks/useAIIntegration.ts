@@ -4,15 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAIEventLogger } from './useAIEventLogger';
 
+interface UserPreferences {
+  user_type?: string;
+  expertise_areas?: string[];
+  communication_style?: string;
+}
+
 interface AIIntegrationContext {
   userId: string;
   currentProject?: string;
   conversationHistory?: string;
-  userPreferences?: {
-    user_type?: string;
-    expertise_areas?: string[];
-    communication_style?: string;
-  };
+  userPreferences?: UserPreferences;
   businessContext?: string;
 }
 
@@ -78,12 +80,12 @@ export const useAIIntegration = () => {
 
   const executeIntegratedAI = useCallback(async (
     action: 'chat' | 'matching' | 'project_analysis' | 'regulatory_check',
-    input: any,
+    input: unknown,
     context?: AIIntegrationContext
   ) => {
     try {
       let functionName = '';
-      const enhancedInput = { ...input };
+      const enhancedInput: Record<string, unknown> = { ...input as Record<string, unknown> };
 
       // Adicionar contexto integrado ao input
       if (context) {
@@ -95,15 +97,15 @@ export const useAIIntegration = () => {
         case 'chat':
           functionName = 'ai-chatbot';
           enhancedInput.config = {
-            ...enhancedInput.config,
-            systemPrompt: `${enhancedInput.config?.systemPrompt || ''}\n\nContexto do usuário: ${context?.businessContext || ''}`
+            ...(enhancedInput.config as Record<string, unknown> || {}),
+            systemPrompt: `${(enhancedInput.config as any)?.systemPrompt || ''}\n\nContexto do usuário: ${context?.businessContext || ''}`
           };
           break;
           
         case 'matching':
           functionName = 'ai-matching-enhanced';
           enhancedInput.preferences = {
-            ...enhancedInput.preferences,
+            ...(enhancedInput.preferences as Record<string, unknown> || {}),
             user_context: context
           };
           break;
@@ -150,7 +152,7 @@ export const useAIIntegration = () => {
     }
   }, [logAIEvent, toast]);
 
-  const syncUserLearning = useCallback(async (userId: string, learningData: any) => {
+  const syncUserLearning = useCallback(async (userId: string, learningData: unknown) => {
     try {
       // Atualizar perfil de aprendizado do usuário
       await supabase.functions.invoke('federal-learning-system', {
