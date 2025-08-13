@@ -15,11 +15,12 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br stroke-yellow-600 to-purple-600 rounded-lg flex items-center justify-center bg-inherit">
+              <div className="w-10 h-10 bg-gradient-to-br shadow-amber-100 to-purple-600 rounded-lg flex items-center justify-center bg-inherit">
                 
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">PharmaConnect Brasil</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+              </h1>
                 <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
                   <Star className="h-3 w-3 mr-1" />
                   Master AI Platform
