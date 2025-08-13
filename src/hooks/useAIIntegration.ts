@@ -25,12 +25,13 @@ export const useAIIntegration = () => {
   const getIntegratedContext = useCallback(async (userId: string): Promise<AIIntegrationContext> => {
     try {
       // Buscar contexto do usuário de múltiplas fontes
+      const sb: any = supabase as any;
       const [profileData, recentEvents, activeProjects] = await Promise.all([
         // Perfil do usuário
-        supabase.from('profiles').select('*').eq('id', userId).single(),
+        sb.from('profiles').select('*').eq('id', userId).single(),
         
         // Eventos recentes de IA
-        supabase
+        sb
           .from('ai_chat_events')
           .select('*')
           .eq('user_id', userId)
@@ -38,7 +39,7 @@ export const useAIIntegration = () => {
           .limit(20),
           
         // Projetos ativos
-        supabase
+        sb
           .from('projects')
           .select('*')
           .eq('user_id', userId)
