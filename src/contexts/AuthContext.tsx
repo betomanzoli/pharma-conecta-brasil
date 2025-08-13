@@ -3,7 +3,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { cleanupAuthState, performGlobalSignout } from '@/utils/authCleanup';
 
 interface Profile {
   id: string;
@@ -20,18 +19,10 @@ interface Profile {
   updated_at: string;
 }
 
-interface Subscription {
-  subscribed: boolean;
-  subscription_tier?: string;
-  subscription_end?: string;
-  cancel_at_period_end?: boolean;
-}
-
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  subscription: Subscription | null;
   loading: boolean;
   supabase: SupabaseClient;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
@@ -39,7 +30,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
-  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,21 +38,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const getRedirectUrl = () => {
-    const currentHost = window.location.hostname;
-    
-    if (currentHost === 'pharmaconnect.site' || currentHost === 'www.pharmaconnect.site') {
-      return 'https://pharmaconnect.site/auth';
-    } else {
-      return `${window.location.origin}/auth`;
-    }
-  };
+  console.log('AuthProvider rendering...', { user: user?.email, loading });
 
   useEffect(() => {
+    console.log('AuthProvider useEffect iniciando...');
+    
     // Configurar listener primeiro
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -70,18 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user && event === 'SIGNED_IN') {
-          // Usar setTimeout para evitar deadlock
-          setTimeout(async () => {
-            await fetchProfile(session.user.id);
-            await checkSubscription();
-          }, 0);
-        } else {
-          setProfile(null);
-          setSubscription(null);
-        }
-        
         setLoading(false);
       }
     );
@@ -91,143 +62,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Initial session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(async () => {
-          await fetchProfile(session.user.id);
-          await checkSubscription();
-        }, 0);
-      }
-      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      if (data) {
-        const validUserTypes = [
-          'company', 'laboratory', 'consultant', 'individual', 'admin',
-          'professional', 'regulatory_body', 'sector_entity', 
-          'research_institution', 'supplier', 'funding_agency', 'healthcare_provider'
-        ];
-        
-        const profileData = {
-          ...data,
-          user_type: validUserTypes.includes(data.user_type) ? data.user_type : 'individual'
-        } as Profile;
-        
-        setProfile(profileData);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
   const signUp = async (email: string, password: string, userData: any) => {
     try {
-      console.log('Iniciando cadastro para:', email);
-      
-      const redirectUrl = getRedirectUrl();
-      
       const { error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: userData
         }
       });
 
       if (error) {
-        console.error('Erro no cadastro:', error);
-        
-        let errorMessage = error.message;
-        if (error.message.includes('User already registered')) {
-          errorMessage = 'Este email já está cadastrado. Tente fazer login ou recuperar sua senha.';
-        } else if (error.message.includes('Password should be at least')) {
-          errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
-        } else if (error.message.includes('weak password')) {
-          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres com letras, números e símbolos.';
-        }
-        
         toast({
           title: "Erro no cadastro",
-          description: errorMessage,
+          description: error.message,
           variant: "destructive"
         });
         return { error };
       }
 
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para ativar sua conta antes de fazer login.",
+        title: "Conta criada!",
+        description: "Verifique seu email para ativar sua conta.",
       });
 
       return { error: null };
     } catch (error) {
       console.error('Error signing up:', error);
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro durante o cadastro. Tente novamente.",
-        variant: "destructive"
-      });
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Iniciando login para:', email);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
       });
 
       if (error) {
-        console.error('Erro no login:', error);
-        
-        let errorMessage = error.message;
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Confirme seu email antes de fazer login. Verifique sua caixa de entrada.';
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos.';
-        } else if (error.message.includes('signup_disabled')) {
-          errorMessage = 'Cadastros estão temporariamente desabilitados.';
-        }
-        
         toast({
           title: "Erro no login",
-          description: errorMessage,
+          description: "Email ou senha incorretos.",
           variant: "destructive"
         });
         return { error };
       }
 
       if (data.user) {
-        console.log('Login bem-sucedido para:', data.user.email);
         toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta!`,
+          title: "Login realizado!",
+          description: "Bem-vindo de volta!",
         });
         
-        // Redirecionamento mais suave
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1000);
@@ -236,31 +130,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       console.error('Error signing in:', error);
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro durante o login. Tente novamente.",
-        variant: "destructive"
-      });
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('Iniciando logout...');
-      
-      cleanupAuthState();
-      
-      await supabase.auth.signOut({ scope: 'global' });
-      
+      await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setProfile(null);
-      setSubscription(null);
       
       toast({
         title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
+        description: "Você foi desconectado.",
       });
       
       setTimeout(() => {
@@ -273,30 +156,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     try {
-      console.log('Enviando reset de senha para:', email);
-      
-      const redirectUrl = getRedirectUrl();
-      
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(), 
         {
-          redirectTo: redirectUrl,
+          redirectTo: `${window.location.origin}/auth`,
         }
       );
 
       if (error) {
-        console.error('Erro no reset:', error);
-        
-        let errorMessage = error.message;
-        if (error.message.includes('User not found')) {
-          errorMessage = 'Email não encontrado. Verifique se o email está correto.';
-        } else if (error.message.includes('For security purposes')) {
-          errorMessage = 'Por segurança, aguarde 60 segundos antes de solicitar novamente.';
-        }
-        
         toast({
-          title: "Erro ao enviar email",
-          description: errorMessage,
+          title: "Erro",
+          description: error.message,
           variant: "destructive"
         });
         return { error };
@@ -304,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Email enviado!",
-        description: "Verifique seu email para redefinir sua senha. Pode demorar alguns minutos.",
+        description: "Verifique seu email para redefinir sua senha.",
       });
 
       return { error: null };
@@ -316,33 +186,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePassword = async (newPassword: string) => {
     try {
-      console.log('Atualizando senha...');
-      
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
-        console.error('Erro ao atualizar senha:', error);
-        
-        let errorMessage = error.message;
-        if (error.message.includes('Password should be at least')) {
-          errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
-        } else if (error.message.includes('weak password')) {
-          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres variados.';
-        }
-        
         toast({
-          title: "Erro ao redefinir senha",
-          description: errorMessage,
+          title: "Erro",
+          description: error.message,
           variant: "destructive"
         });
         return { error };
       }
 
       toast({
-        title: "Senha redefinida com sucesso!",
-        description: "Você será redirecionado para o dashboard.",
+        title: "Senha redefinida!",
+        description: "Você será redirecionado.",
       });
 
       setTimeout(() => {
@@ -356,35 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const checkSubscription = async () => {
-    if (!session?.user) return;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      
-      if (error) {
-        console.error('Error checking subscription:', error);
-        return;
-      }
-
-      if (data) {
-        setSubscription({
-          subscribed: data.subscribed || false,
-          subscription_tier: data.subscription_tier,
-          subscription_end: data.subscription_end,
-          cancel_at_period_end: data.cancel_at_period_end || false,
-        });
-      }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-    }
-  };
-
   const value = {
     user,
     session,
     profile,
-    subscription,
     loading,
     supabase,
     signUp,
@@ -392,7 +226,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     resetPassword,
     updatePassword,
-    checkSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,33 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/ui/logo";
-import { useToast } from "@/hooks/use-toast";
 import { Navigate, useSearchParams } from "react-router-dom";
 import AuthTabs from "@/components/auth/AuthTabs";
 
 const Auth = () => {
   const { user, loading } = useAuth();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("login");
   
+  console.log('Auth page rendering...', { user: user?.email, loading });
+
   useEffect(() => {
     // Verificar se é um link de recuperação de senha
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
-    
-    if (accessToken && refreshToken && type === 'recovery') {
-      console.log('Link de recuperação de senha detectado');
+    if (type === 'recovery') {
       setActiveTab('new-password');
-      toast({
-        title: "Link de recuperação válido",
-        description: "Defina sua nova senha abaixo.",
-      });
       return;
     }
 
@@ -36,7 +26,7 @@ const Auth = () => {
     if (['register', 'reset', 'new-password'].includes(hash)) {
       setActiveTab(hash);
     }
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   // Atualizar URL quando tab muda
   useEffect(() => {
