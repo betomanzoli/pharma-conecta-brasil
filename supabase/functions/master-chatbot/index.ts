@@ -228,7 +228,7 @@ Responda à seguinte mensagem:`;
         let assistantResponse = "";
 
         if (PERPLEXITY_API_KEY) {
-          // Usar Perplexity API
+          // Usar Perplexity API com modelo correto
           try {
             console.log('Attempting Perplexity API call...');
             const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -258,20 +258,43 @@ Responda à seguinte mensagem:`;
               const errText = await perplexityResponse.text();
               console.error("Perplexity API error:", errText);
               
-              // Fallback específico baseado no erro
-              if (errText.includes('invalid_model')) {
-                assistantResponse = `Sobre sua pergunta: "${message}"\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com análises regulatórias (ANVISA, FDA, EMA), desenvolvimento de produtos, estratégias de registro e compliance.\n\nPara respostas mais atualizadas e específicas, estamos ajustando a configuração da API. Como posso ajudá-lo especificamente hoje?`;
+              // Verificar se é erro de modelo e tentar com modelo diferente
+              if (errText.includes('invalid_model') || errText.includes('model')) {
+                console.log('Trying with alternative model...');
+                const retryResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: "llama-3.1-sonar-large-128k-online",
+                    messages: [
+                      { role: "system", content: systemPrompt },
+                      { role: "user", content: message }
+                    ],
+                    max_tokens: 1000,
+                    temperature: 0.7,
+                  }),
+                });
+
+                if (retryResponse.ok) {
+                  const retryData = await retryResponse.json();
+                  assistantResponse = retryData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+                  console.log('Alternative model worked successfully');
+                } else {
+                  throw new Error('Both models failed');
+                }
               } else {
-                assistantResponse = `Sobre "${message}":\n\nPosso ajudá-lo com orientações farmacêuticas baseadas em minha expertise em regulamentação brasileira e internacional. Como posso detalhar sua consulta?`;
+                throw new Error(`API Error: ${errText}`);
               }
             }
           } catch (err) {
             console.error("Perplexity fetch failed:", err);
-            assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
+            assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
           }
         } else {
           console.log('No PERPLEXITY_API_KEY found, using fallback');
-          // Resposta padrão mais específica
           assistantResponse = `Olá! Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com:\n\n• Análises regulatórias (ANVISA, FDA, EMA)\n• Desenvolvimento de produtos farmacêuticos\n• Estratégias de registro de medicamentos\n• Compliance e boas práticas (GMP)\n• Parcerias e oportunidades de mercado\n• Análise de mercado farmacêutico brasileiro\n\nComo posso detalhar sua consulta especificamente?`;
         }
 
