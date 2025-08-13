@@ -50,6 +50,8 @@ const MasterChatbot: React.FC<MasterChatbotProps> = ({ initialPrompt }) => {
   const [currentThread, setCurrentThread] = useState<Thread | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [detailLevel, setDetailLevel] = useState<'concise' | 'detailed'>('concise');
+  const [forceSearch, setForceSearch] = useState(false);
 
 useEffect(() => {
   if (profile?.id) {
@@ -208,7 +210,9 @@ const sendMessage = async (override?: string) => {
         action: 'chat', 
         user_id: profile?.id,
         thread_id: currentThread.id,
-        message: content
+        message: content,
+        detail_level: detailLevel,
+        force_search: forceSearch,
       },
       headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
     });
@@ -262,6 +266,11 @@ const sendMessage = async (override?: string) => {
     }
   };
 
+  const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+  const modelLabel = lastAssistant?.metadata?.model as string | undefined;
+  const followups: string[] = (lastAssistant?.metadata?.followups as string[]) || [];
+  const howtoText: string | null = (lastAssistant?.metadata?.howto as string) || null;
+
   return (
     <Card className="h-[500px] flex flex-col">
       <CardHeader className="pb-3">
@@ -271,14 +280,37 @@ const sendMessage = async (override?: string) => {
             <span>Assistente AI Master</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="text-xs">
+              {modelLabel ? `Modelo: ${modelLabel}` : 'Modelo: —'}
+            </Badge>
             <Badge variant="outline" className="text-xs">
               {currentThread ? `Thread: ${currentThread.id.slice(0, 8)}` : 'Carregando...'}
             </Badge>
+            <Button 
+              variant={detailLevel === 'detailed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDetailLevel(prev => (prev === 'detailed' ? 'concise' : 'detailed'))}
+              disabled={loading}
+              title="Alternar respostas detalhadas"
+            >
+              Detalhadas
+            </Button>
+            <Button 
+              variant={forceSearch ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setForceSearch(v => !v)}
+              disabled={loading}
+              title="Ativar busca atualizada"
+            >
+              Busca atualizada
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={createNewThread}
               disabled={loading}
+              aria-label="Nova conversa"
+              title="Nova conversa"
             >
               <RefreshCw className="h-3 w-3" />
             </Button>
@@ -293,6 +325,17 @@ const sendMessage = async (override?: string) => {
               <Bot className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>Olá! Sou seu assistente AI especializado em farmacêutica.</p>
               <p className="text-sm">Como posso ajudá-lo hoje?</p>
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                {(followups.length > 0 ? followups : [
+                  'Quais passos para registro na ANVISA?',
+                  'Requisitos de GMP para indústria?',
+                  'Estratégias para dossiê CTD no Brasil?'
+                ]).map((sug, idx) => (
+                  <Button key={idx} size="sm" variant="secondary" onClick={() => sendMessage(sug)}>
+                    {sug}
+                  </Button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -349,11 +392,27 @@ const sendMessage = async (override?: string) => {
                   </div>
                 </div>
               )}
+
+              {!loading && followups.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {followups.map((sug, idx) => (
+                    <Button key={idx} size="sm" variant="secondary" onClick={() => sendMessage(sug)}>
+                      {sug}
+                    </Button>
+                  ))}
+                </div>
+              )}
               
               <div ref={messagesEndRef} />
             </div>
           )}
         </ScrollArea>
+
+        {howtoText && (
+          <div className="px-4 py-2 border-t bg-muted">
+            <p className="text-xs text-muted-foreground">{howtoText}</p>
+          </div>
+        )}
 
         <div className="p-4 border-t">
           <div className="flex space-x-2">

@@ -33,7 +33,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, message, thread_id, user_id, title } = body;
+    const { action, message, thread_id, user_id, title, detail_level, force_search } = body;
 
     switch (action) {
       case 'init_thread': {
@@ -224,11 +224,21 @@ Se não souber algo específico, seja honesto e sugira onde o usuário pode busc
 Contexto da conversa:
 ${conversationContext}
 
-Responda à seguinte mensagem:`;
+Responda à seguinte mensagem.
+Ao final da sua resposta, inclua um bloco JSON entre <metadata> e </metadata> no formato:
+{"followups": ["pergunta relacionada 1", "pergunta relacionada 2", "pergunta relacionada 3"], "howto": "dica breve de como aproveitar melhor o chat"}
+Não repita a resposta dentro do JSON.`;
+
+        // Preferências vindas do frontend
+        const detailLevel = detail_level === 'detailed' ? 'detailed' : 'concise';
+        const forceSearch = !!force_search;
+        const maxTokens = detailLevel === 'detailed' ? 1400 : 800;
+        const temperature = detailLevel === 'detailed' ? 0.7 : 0.3;
 
         let assistantResponse = "";
-
-        if (PERPLEXITY_API_KEY) {
+        let usedModel: string = PERPLEXITY_API_KEY ? "perplexity:sonar" : "fallback";
+        let followups: string[] = [];
+        let howto: string | null = null;
           // Usar Perplexity API com modelo correto
           try {
             console.log('Attempting Perplexity API call...');
@@ -244,8 +254,9 @@ Responda à seguinte mensagem:`;
                   { role: "system", content: systemPrompt },
                   { role: "user", content: message }
                 ],
-                max_tokens: 1000,
-                temperature: 0.7,
+                max_tokens: maxTokens,
+                temperature: temperature,
+                disable_search: forceSearch ? false : true,
               }),
             });
 
@@ -254,6 +265,7 @@ Responda à seguinte mensagem:`;
             if (perplexityResponse.ok) {
               const data = await perplexityResponse.json();
               assistantResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+              usedModel = "perplexity:sonar";
               console.log('Perplexity response received successfully');
             } else {
               const errText = await perplexityResponse.text();
@@ -282,6 +294,7 @@ Responda à seguinte mensagem:`;
                 if (retryResponse.ok) {
                   const retryData = await retryResponse.json();
                   assistantResponse = retryData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+                  usedModel = "perplexity:sonar-pro";
                   console.log('Alternative model worked successfully');
                 } else {
                   throw new Error('Both models failed');
@@ -292,6 +305,7 @@ Responda à seguinte mensagem:`;
             }
           } catch (err) {
             console.error("Perplexity fetch failed:", err);
+            usedModel = "fallback";
             assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
           }
         } else {
@@ -315,8 +329,10 @@ Responda à seguinte mensagem:`;
             role: 'assistant',
             content: assistantResponse,
             metadata: {
-              model: PERPLEXITY_API_KEY ? "perplexity" : "fallback",
-              response_length: assistantResponse.length
+              model: usedModel,
+              response_length: assistantResponse.length,
+              followups,
+              howto,
             }
           });
 
@@ -339,8 +355,10 @@ Responda à seguinte mensagem:`;
         return new Response(JSON.stringify({ 
           assistant_message: assistantResponse,
           metadata: {
-            model: PERPLEXITY_API_KEY ? "perplexity" : "fallback",
-            timestamp: new Date().toISOString()
+            model: usedModel,
+            timestamp: new Date().toISOString(),
+            followups,
+            howto,
           }
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
