@@ -59,7 +59,7 @@ const Auth = () => {
 
   const expertiseAreas = [
     "P&D (Pesquisa e Desenvolvimento)",
-    "Controle de Qualidade",
+    "Controle de Qualidade", 
     "Assuntos Regulatórios",
     "Produção",
     "Comercial",
@@ -124,7 +124,7 @@ const Auth = () => {
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
 
     const userData = {
       first_name: registerData.first_name,
@@ -143,14 +143,14 @@ const Auth = () => {
     };
 
     await signUp(registerData.email, registerData.password, userData);
-    setLoading(false);
+    setIsLoading(false);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
     await resetPassword(resetEmail);
-    setLoading(false);
+    setIsLoading(false);
   };
 
   const handleRegisterInputChange = (field: string, value: string | string[]) => {
@@ -451,9 +451,9 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={loading}
+                    disabled={isLoading}
                   >
-                    {loading ? "Criando conta..." : "Criar Conta"}
+                    {isLoading ? "Criando conta..." : "Criar Conta"}
                   </Button>
                 </form>
               </TabsContent>
@@ -475,9 +475,9 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={loading}
+                    disabled={isLoading}
                   >
-                    {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+                    {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
                   </Button>
                 </form>
               </TabsContent>
