@@ -167,6 +167,7 @@ serve(async (req) => {
             .from('ai_chat_messages')
             .insert({
               thread_id,
+              user_id: auth.user.id,
               role: 'system',
               content: `Resumo da conversa até aqui:\n${summaryText}`,
               metadata: { type: 'summary', summarized_count: oldMessages?.length || 0, created_at: new Date().toISOString() }
@@ -281,6 +282,7 @@ Como posso ajudá-lo especificamente hoje?`;
           .from('ai_chat_messages')
           .insert({
             thread_id,
+            user_id: auth.user.id,
             role: 'assistant',
             content: assistantResponse,
             metadata: {
