@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-const LOGO_URL = '/lovable-uploads/285d7612-e04b-4cbe-b6d8-98abb525b8c5.png';
+const LOGO_URL = '/lovable-uploads/62acdd0f-0e04-46d4-9d01-0c39a5f1c80a.png';
 
 interface BrandLogoProps {
   compact?: boolean;
