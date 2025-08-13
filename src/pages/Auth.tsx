@@ -5,13 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Users, User } from "lucide-react";
+import { Building2, FlaskConical, Users, User, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/ui/logo";
+import { cleanupAuthState, performGlobalSignout } from "@/utils/authCleanup";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Auth = () => {
-  const { signUp, signIn, resetPassword } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { signUp, signIn, resetPassword, user, loading } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+  
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -59,12 +68,53 @@ const Auth = () => {
     "Validação de Processos"
   ];
 
+  // Detectar hash na URL para definir a tab ativa
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'register' || hash === 'reset') {
+      setActiveTab(hash);
+    }
+  }, []);
+
+  // Redirecionar se já estiver logado
+  if (user && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const clearCacheAndRetry = async () => {
+    setIsClearing(true);
+    try {
+      cleanupAuthState();
+      await performGlobalSignout(supabase);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Cache limpo",
+        description: "Tente fazer login novamente.",
+      });
+    } catch (error) {
+      console.error('Erro ao limpar cache:', error);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
     
-    await signIn(loginData.email, loginData.password);
-    setLoading(false);
+    try {
+      console.log('Tentando login via Auth page com:', loginData.email);
+      const result = await signIn(loginData.email, loginData.password);
+      
+      if (result?.error) {
+        console.error('Erro de login:', result.error);
+      }
+    } catch (error) {
+      console.error('Erro inesperado no login:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -230,7 +280,7 @@ const Auth = () => {
             <CardTitle className="text-center text-[#1565C0]">Acesso à Plataforma</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>
@@ -266,10 +316,24 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
-                    disabled={loading}
+                    disabled={isLoading}
                   >
-                    {loading ? "Entrando..." : "Entrar"}
+                    {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
+                  
+                  <div className="text-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={clearCacheAndRetry}
+                      disabled={isClearing}
+                      className="text-xs"
+                    >
+                      {isClearing && <RefreshCw className="mr-1 h-3 w-3 animate-spin" />}
+                      Problemas para entrar? Limpar Cache
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
 

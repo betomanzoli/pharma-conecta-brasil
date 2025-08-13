@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cleanupAuthState, performGlobalSignout } from '@/utils/authCleanup';
 
 interface Profile {
   id: string;
@@ -53,6 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -70,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -117,6 +120,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      console.log('Iniciando cadastro para:', email);
+      
+      // Limpar estado antes do cadastro
+      cleanupAuthState();
+      await performGlobalSignout(supabase);
+      
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
@@ -129,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Erro no cadastro:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -151,12 +161,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Iniciando login para:', email);
+      
+      // Limpar estado antes do login
+      cleanupAuthState();
+      await performGlobalSignout(supabase);
+      
+      // Aguardar um momento
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Erro no login:', error);
         toast({
           title: "Erro no login",
           description: error.message,
@@ -166,7 +186,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        window.location.href = '/dashboard';
+        console.log('Login bem-sucedido para:', data.user.email);
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo de volta, ${data.user.email}!`,
+        });
+        
+        // Redirecionar após um pequeno delay
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       }
 
       return { error: null };
@@ -178,11 +207,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('Iniciando logout...');
+      
+      // Limpar estado primeiro
+      cleanupAuthState();
+      
+      await supabase.auth.signOut({ scope: 'global' });
+      
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/';
+      setSubscription(null);
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      
+      // Redirecionar após um pequeno delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
       console.error('Error signing out:', error);
     }
