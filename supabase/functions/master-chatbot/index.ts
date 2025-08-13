@@ -240,78 +240,79 @@ Não repita a resposta dentro do JSON.`;
         let followups: string[] = [];
         let howto: string | null = null;
           // Usar Perplexity API com modelo correto
-          try {
-            console.log('Attempting Perplexity API call...');
-            const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "sonar",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: message }
-                ],
-                max_tokens: maxTokens,
-                temperature: temperature,
-                disable_search: forceSearch ? false : true,
-              }),
-            });
+          if (PERPLEXITY_API_KEY) {
+            try {
+              console.log('Attempting Perplexity API call...');
+              const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "sonar",
+                  messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message }
+                  ],
+                  max_tokens: maxTokens,
+                  temperature: temperature,
+                  disable_search: forceSearch ? false : true,
+                }),
+              });
 
-            console.log('Perplexity response status:', perplexityResponse.status);
+              console.log('Perplexity response status:', perplexityResponse.status);
 
-            if (perplexityResponse.ok) {
-              const data = await perplexityResponse.json();
-              assistantResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
-              usedModel = "perplexity:sonar";
-              console.log('Perplexity response received successfully');
-            } else {
-              const errText = await perplexityResponse.text();
-              console.error("Perplexity API error:", errText);
-              
-              // Verificar se é erro de modelo e tentar com modelo diferente
-              if (errText.includes('invalid_model') || errText.includes('model')) {
-                console.log('Trying with alternative model...');
-                const retryResponse = await fetch("https://api.perplexity.ai/chat/completions", {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    model: "sonar-pro",
-                    messages: [
-                      { role: "system", content: systemPrompt },
-                      { role: "user", content: message }
-                    ],
-                    max_tokens: 1000,
-                    temperature: 0.7,
-                  }),
-                });
-
-                if (retryResponse.ok) {
-                  const retryData = await retryResponse.json();
-                  assistantResponse = retryData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
-                  usedModel = "perplexity:sonar-pro";
-                  console.log('Alternative model worked successfully');
-                } else {
-                  throw new Error('Both models failed');
-                }
+              if (perplexityResponse.ok) {
+                const data = await perplexityResponse.json();
+                assistantResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+                usedModel = "perplexity:sonar";
+                console.log('Perplexity response received successfully');
               } else {
-                throw new Error(`API Error: ${errText}`);
+                const errText = await perplexityResponse.text();
+                console.error("Perplexity API error:", errText);
+                
+                // Verificar se é erro de modelo e tentar com modelo diferente
+                if (errText.includes('invalid_model') || errText.includes('model')) {
+                  console.log('Trying with alternative model...');
+                  const retryResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+                    method: "POST",
+                    headers: {
+                      "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      model: "sonar-pro",
+                      messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: message }
+                      ],
+                      max_tokens: 1000,
+                      temperature: 0.7,
+                    }),
+                  });
+
+                  if (retryResponse.ok) {
+                    const retryData = await retryResponse.json();
+                    assistantResponse = retryData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+                    usedModel = "perplexity:sonar-pro";
+                    console.log('Alternative model worked successfully');
+                  } else {
+                    throw new Error('Both models failed');
+                  }
+                } else {
+                  throw new Error(`API Error: ${errText}`);
+                }
               }
+            } catch (err) {
+              console.error("Perplexity fetch failed:", err);
+              usedModel = "fallback";
+              assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
             }
-          } catch (err) {
-            console.error("Perplexity fetch failed:", err);
-            usedModel = "fallback";
-            assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
+          } else {
+            console.log('No PERPLEXITY_API_KEY found, using fallback');
+            assistantResponse = `Olá! Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com:\n\n• Análises regulatórias (ANVISA, FDA, EMA)\n• Desenvolvimento de produtos farmacêuticos\n• Estratégias de registro de medicamentos\n• Compliance e boas práticas (GMP)\n• Parcerias e oportunidades de mercado\n• Análise de mercado farmacêutico brasileiro\n\nComo posso detalhar sua consulta especificamente?`;
           }
-        } else {
-          console.log('No PERPLEXITY_API_KEY found, using fallback');
-          assistantResponse = `Olá! Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com:\n\n• Análises regulatórias (ANVISA, FDA, EMA)\n• Desenvolvimento de produtos farmacêuticos\n• Estratégias de registro de medicamentos\n• Compliance e boas práticas (GMP)\n• Parcerias e oportunidades de mercado\n• Análise de mercado farmacêutico brasileiro\n\nComo posso detalhar sua consulta especificamente?`;
-        }
 
         // Sugerir abertura de novo chat e adicionar nota ao final da resposta
         if ((totalCount || 0) > 60) {
