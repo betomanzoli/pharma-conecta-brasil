@@ -3,60 +3,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, RefreshCw, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { cleanupAuthState, performGlobalSignout } from "@/utils/authCleanup";
-import { supabase } from "@/integrations/supabase/client";
 
 const LoginForm = () => {
   const { signIn } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
 
-  const clearCacheAndRetry = async () => {
-    setIsClearing(true);
-    try {
-      console.log('Limpando cache completo...');
-      
-      cleanupAuthState();
-      await performGlobalSignout(supabase);
-      
-      // Limpar cookies também
-      if (document.cookie) {
-        document.cookie.split(";").forEach((c) => {
-          const eqPos = c.indexOf("=");
-          const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-        });
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Cache limpo completamente",
-        description: "Tente fazer login novamente.",
-      });
-    } catch (error) {
-      console.error('Erro ao limpar cache:', error);
-      toast({
-        title: "Erro ao limpar cache",
-        description: "Recarregue a página manualmente se necessário.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsClearing(false);
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('🔑 Login form submitted for:', loginData.email);
     
     if (!loginData.email || !loginData.password) {
       toast({
@@ -79,12 +43,19 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      await signIn(loginData.email, loginData.password);
+      console.log('🚀 Calling signIn function...');
+      const result = await signIn(loginData.email, loginData.password);
+      
+      if (result.error) {
+        console.error('❌ Sign in returned error:', result.error);
+      } else {
+        console.log('✅ Sign in completed successfully');
+      }
     } catch (error) {
-      console.error('Erro inesperado no login:', error);
+      console.error('💥 Unexpected login error:', error);
       toast({
         title: "Erro inesperado",
-        description: "Tente limpar o cache ou recarregar a página.",
+        description: "Tente recarregar a página ou entre em contato com o suporte.",
         variant: "destructive"
       });
     } finally {
@@ -148,23 +119,9 @@ const LoginForm = () => {
       </Button>
       
       <div className="text-center pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={clearCacheAndRetry}
-          disabled={isClearing || isLoading}
-          className="text-xs"
-        >
-          {isClearing ? (
-            <>
-              <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
-              Limpando...
-            </>
-          ) : (
-            "Limpar Cache"
-          )}
-        </Button>
+        <p className="text-sm text-gray-600">
+          Usuário de teste: <code className="bg-gray-100 px-1 rounded">betomanzoli@gmail.com</code>
+        </p>
       </div>
     </form>
   );

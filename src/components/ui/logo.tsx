@@ -15,7 +15,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', className = '' }) => {
 
   return (
     <div className={`font-bold text-[#1565C0] ${sizeClasses[size]} ${className}`}>
-      PharmaConnect
+      PharmaConnect Brasil
     </div>
   );
 };

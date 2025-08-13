@@ -41,35 +41,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  console.log('AuthProvider rendering...', { user: user?.email, loading });
+  console.log('🔐 AuthProvider rendering...', { 
+    user: user?.email, 
+    loading,
+    sessionExists: !!session,
+    timestamp: new Date().toISOString()
+  });
 
   useEffect(() => {
-    console.log('AuthProvider useEffect iniciando...');
+    console.log('🚀 AuthProvider useEffect iniciando...');
     
-    // Configurar listener primeiro
+    // Configurar listener primeiro para capturar eventos
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('🔄 Auth state change:', { 
+          event, 
+          userEmail: session?.user?.email,
+          timestamp: new Date().toISOString()
+        });
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('✅ User signed in successfully:', session.user.email);
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('👋 User signed out');
+          setProfile(null);
+        }
+        
         setLoading(false);
       }
     );
 
     // Depois verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.email);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Error getting session:', error);
+      } else {
+        console.log('📋 Initial session check:', { 
+          hasSession: !!session,
+          userEmail: session?.user?.email 
+        });
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🔄 Unsubscribing auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      console.log('📝 Attempting signup for:', email);
+      
       const { error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
@@ -80,14 +112,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('❌ Signup error:', error);
         toast({
           title: "Erro no cadastro",
-          description: error.message,
+          description: error.message === 'User already registered' 
+            ? 'Este email já está cadastrado. Tente fazer login.' 
+            : error.message,
           variant: "destructive"
         });
         return { error };
       }
 
+      console.log('✅ Signup successful for:', email);
       toast({
         title: "Conta criada!",
         description: "Verifique seu email para ativar sua conta.",
@@ -95,47 +131,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error: null };
     } catch (error) {
-      console.error('Error signing up:', error);
+      console.error('💥 Unexpected signup error:', error);
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('🔑 Attempting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
       });
 
       if (error) {
+        console.error('❌ Login error:', error);
+        
+        let errorMessage = "Email ou senha incorretos.";
+        if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Por favor, confirme seu email antes de fazer login.";
+        } else if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Email ou senha incorretos. Verifique suas credenciais.";
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = "Muitas tentativas de login. Tente novamente em alguns minutos.";
+        }
+        
         toast({
           title: "Erro no login",
-          description: "Email ou senha incorretos.",
+          description: errorMessage,
           variant: "destructive"
         });
         return { error };
       }
 
       if (data.user) {
+        console.log('✅ Login successful for:', email);
         toast({
           title: "Login realizado!",
           description: "Bem-vindo de volta!",
         });
         
+        // Usar window.location.href para garantir redirecionamento limpo
         setTimeout(() => {
+          console.log('🔄 Redirecting to dashboard...');
           window.location.href = '/dashboard';
         }, 1000);
       }
 
       return { error: null };
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('💥 Unexpected login error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente ou entre em contato com o suporte.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
+      console.log('👋 Signing out user...');
+      
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -143,27 +202,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Logout realizado",
-        description: "Você foi desconectado.",
+        description: "Você foi desconectado com segurança.",
       });
       
       setTimeout(() => {
+        console.log('🔄 Redirecting to home after logout...');
         window.location.href = '/';
       }, 500);
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Error signing out:', error);
+      toast({
+        title: "Erro no logout",
+        description: "Ocorreu um erro ao sair. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
   const resetPassword = async (email: string) => {
     try {
+      console.log('🔐 Password reset requested for:', email);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(), 
         {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/auth?type=recovery`,
         }
       );
 
       if (error) {
+        console.error('❌ Password reset error:', error);
         toast({
           title: "Erro",
           description: error.message,
@@ -172,6 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('✅ Password reset email sent to:', email);
       toast({
         title: "Email enviado!",
         description: "Verifique seu email para redefinir sua senha.",
@@ -179,18 +248,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error: null };
     } catch (error) {
-      console.error('Error resetting password:', error);
+      console.error('💥 Unexpected password reset error:', error);
       return { error };
     }
   };
 
   const updatePassword = async (newPassword: string) => {
     try {
+      console.log('🔐 Updating password...');
+      
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
+        console.error('❌ Password update error:', error);
         toast({
           title: "Erro",
           description: error.message,
@@ -199,18 +271,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('✅ Password updated successfully');
       toast({
         title: "Senha redefinida!",
-        description: "Você será redirecionado.",
+        description: "Você será redirecionado para o dashboard.",
       });
 
       setTimeout(() => {
+        console.log('🔄 Redirecting to dashboard after password update...');
         window.location.href = '/dashboard';
       }, 2000);
 
       return { error: null };
     } catch (error) {
-      console.error('Error updating password:', error);
+      console.error('💥 Unexpected password update error:', error);
       return { error };
     }
   };

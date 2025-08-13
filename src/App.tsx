@@ -11,7 +11,7 @@ import Auth from "./pages/Auth";
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log('App component rendering...');
+  console.log('🚀 App component rendering...');
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -23,9 +23,12 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              {/* Redirects para rotas antigas */}
+              
+              {/* Redirects para rotas antigas - CORRIGIDO */}
               <Route path="/login" element={<Navigate to="/auth#login" replace />} />
               <Route path="/register" element={<Navigate to="/auth#register" replace />} />
+              
+              {/* Outras rotas redirecionam para Index por enquanto */}
               <Route path="/dashboard" element={<Index />} />
               <Route path="/profile" element={<Index />} />
               <Route path="/projects" element={<Index />} />

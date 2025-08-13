@@ -11,36 +11,55 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("login");
   
-  console.log('Auth page rendering...', { user: user?.email, loading });
+  console.log('🔐 Auth page rendering...', { 
+    user: user?.email, 
+    loading,
+    currentTab: activeTab,
+    searchParams: Object.fromEntries(searchParams.entries())
+  });
 
   useEffect(() => {
+    console.log('🔄 Auth page useEffect - checking URL params...');
+    
     // Verificar se é um link de recuperação de senha
     const type = searchParams.get('type');
     if (type === 'recovery') {
+      console.log('🔐 Password recovery detected, switching to new-password tab');
       setActiveTab('new-password');
       return;
     }
 
     // Verificar hash para tabs
     const hash = window.location.hash.replace('#', '');
+    console.log('🔗 Current hash:', hash);
+    
     if (['register', 'reset', 'new-password'].includes(hash)) {
+      console.log('📋 Setting tab from hash:', hash);
       setActiveTab(hash);
+    } else if (hash === 'login' || !hash) {
+      console.log('📋 Setting default login tab');
+      setActiveTab('login');
     }
   }, [searchParams]);
 
   // Atualizar URL quando tab muda
   useEffect(() => {
     const newHash = activeTab === 'login' ? '' : `#${activeTab}`;
-    if (window.location.hash !== newHash) {
+    const currentHash = window.location.hash;
+    
+    if (currentHash !== newHash) {
+      console.log('🔗 Updating URL hash:', { from: currentHash, to: newHash });
       window.history.replaceState(null, '', `/auth${newHash}`);
     }
   }, [activeTab]);
 
   if (user && !loading) {
+    console.log('✅ User authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
   if (loading) {
+    console.log('⏳ Auth loading state...');
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
@@ -50,6 +69,8 @@ const Auth = () => {
       </div>
     );
   }
+
+  console.log('🎨 Rendering auth form with tab:', activeTab);
 
   return (
     <div className="min-h-screen bg-muted flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
