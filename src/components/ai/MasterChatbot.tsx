@@ -79,11 +79,17 @@ const scrollToBottom = () => {
   const initializeChatbot = async () => {
     try {
       // Buscar threads existentes
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast({ title: 'Não autenticado', description: 'Faça login novamente para usar o chat.', variant: 'destructive' });
+        return;
+      }
       const { data: threadsData } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'list_threads', 
           user_id: profile?.id 
-        }
+        },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (threadsData?.threads) {
@@ -119,12 +125,18 @@ const scrollToBottom = () => {
 
   const createNewThread = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast({ title: 'Não autenticado', description: 'Faça login novamente para criar uma conversa.', variant: 'destructive' });
+        return;
+      }
       const { data } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'init_thread', 
           user_id: profile?.id,
           title: 'Nova Conversa'
-        }
+        },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (data?.thread_id) {
@@ -147,13 +159,19 @@ const scrollToBottom = () => {
   };
 
   const loadMessages = async (threadId: string) => {
-    try {
+  try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast({ title: 'Não autenticado', description: 'Faça login novamente para carregar mensagens.', variant: 'destructive' });
+        return;
+      }
       const { data } = await supabase.functions.invoke('master-chatbot', {
         body: { 
           action: 'get_messages', 
           thread_id: threadId,
           user_id: profile?.id 
-        }
+        },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (data?.messages) {
@@ -181,13 +199,18 @@ const sendMessage = async (override?: string) => {
   setMessages(prev => [...prev, tempUserMessage]);
 
   try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      throw new Error('Não autenticado');
+    }
     const { data, error } = await supabase.functions.invoke('master-chatbot', {
       body: { 
         action: 'chat', 
         user_id: profile?.id,
         thread_id: currentThread.id,
         message: content
-      }
+      },
+      headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
     });
 
     if (error) throw error;
@@ -221,7 +244,7 @@ const sendMessage = async (override?: string) => {
     console.error('Erro ao enviar mensagem:', error);
     toast({ 
       title: 'Erro', 
-      description: 'Falha ao enviar mensagem',
+      description: `Falha ao enviar mensagem: ${ (error as any)?.message || 'ver console para detalhes' }`,
       variant: 'destructive' 
     });
     
