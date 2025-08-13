@@ -1,34 +1,22 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Brain, 
-  Users, 
-  Zap, 
-  Shield, 
-  BarChart3, 
-  MessageSquare,
-  ArrowRight,
-  Star,
-  CheckCircle
-} from 'lucide-react';
-
+import { Brain, Users, Zap, Shield, BarChart3, MessageSquare, ArrowRight, Star, CheckCircle } from 'lucide-react';
 const Index = () => {
-  const { user } = useAuth();
-
-  return (
-    <div className="min-h-screen bg-background">
+  const {
+    user
+  } = useAuth();
+  return <div className="min-h-screen bg-background">
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br stroke-yellow-600 to-purple-600 rounded-lg flex items-center justify-center bg-inherit">
+                
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">PharmaConnect Brasil</h1>
@@ -40,23 +28,19 @@ const Index = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {user ? (
-                <Button asChild>
+              {user ? <Button asChild>
                   <Link to="/dashboard">
                     Dashboard
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
-                </Button>
-              ) : (
-                <>
+                </Button> : <>
                   <Button variant="ghost" asChild>
                     <Link to="/login">Entrar</Link>
                   </Button>
                   <Button asChild>
                     <Link to="/register">Cadastrar Grátis</Link>
                   </Button>
-                </>
-              )}
+                </>}
             </div>
           </div>
         </div>
@@ -78,8 +62,7 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              {user ? (
-                <>
+              {user ? <>
                   <Button size="lg" asChild>
                     <Link to="/dashboard">
                       Acessar Dashboard
@@ -92,9 +75,7 @@ const Index = () => {
                       <Zap className="h-5 w-5 ml-2" />
                     </Link>
                   </Button>
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Button size="lg" asChild>
                     <Link to="/register">
                       Começar Gratuitamente
@@ -106,8 +87,7 @@ const Index = () => {
                       Fazer Login
                     </Link>
                   </Button>
-                </>
-              )}
+                </>}
             </div>
           </div>
         </div>
@@ -254,8 +234,7 @@ const Index = () => {
             Junte-se à plataforma mais avançada de IA farmacêutica do Brasil.
           </p>
           
-          {!user && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {!user && <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="secondary" asChild>
                 <Link to="/register">
                   Cadastrar Grátis
@@ -267,8 +246,7 @@ const Index = () => {
                   Fazer Login
                 </Link>
               </Button>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
 
@@ -278,7 +256,7 @@ const Index = () => {
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-5 w-5 text-white" />
+                
               </div>
               <span className="text-xl font-bold">PharmaConnect Brasil</span>
             </div>
@@ -291,8 +269,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
