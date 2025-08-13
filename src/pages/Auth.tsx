@@ -1,27 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Users, User, RefreshCw, AlertCircle } from "lucide-react";
+import { Building2, FlaskConical, Users, User, RefreshCw, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/ui/logo";
 import { cleanupAuthState, performGlobalSignout } from "@/utils/authCleanup";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
-  const { signUp, signIn, resetPassword, user, loading } = useAuth();
+  const { signUp, signIn, resetPassword, updatePassword, user, loading } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [debugMode, setDebugMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   
   const [loginData, setLoginData] = useState({
     email: "",
@@ -48,6 +51,8 @@ const Auth = () => {
   });
 
   const [resetEmail, setResetEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const userTypes = [
     { value: "company", label: "Empresa Farmacêutica/Alimentícia", icon: Building2 },
@@ -68,11 +73,27 @@ const Auth = () => {
   ];
 
   useEffect(() => {
+    // Verificar se é um link de recuperação de senha
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const type = searchParams.get('type');
+    
+    if (accessToken && refreshToken && type === 'recovery') {
+      console.log('Link de recuperação de senha detectado');
+      setActiveTab('new-password');
+      toast({
+        title: "Link de recuperação válido",
+        description: "Defina sua nova senha abaixo.",
+      });
+      return;
+    }
+
+    // Verificar hash para tabs
     const hash = window.location.hash.replace('#', '');
     if (hash === 'register' || hash === 'reset') {
       setActiveTab(hash);
     }
-  }, []);
+  }, [searchParams, toast]);
 
   if (user && !loading) {
     return <Navigate to="/dashboard" replace />;
@@ -83,13 +104,9 @@ const Auth = () => {
     try {
       console.log('Limpando cache completo...');
       
-      // Limpar todos os dados relacionados ao Supabase
       cleanupAuthState();
-      
-      // Tentar logout global
       await performGlobalSignout(supabase);
       
-      // Limpar cookies se possível
       if (document.cookie) {
         document.cookie.split(";").forEach((c) => {
           const eqPos = c.indexOf("=");
@@ -121,9 +138,6 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      console.log('Tentando login via Auth page com:', loginData.email);
-      
-      // Validações básicas
       if (!loginData.email || !loginData.password) {
         toast({
           title: "Campos obrigatórios",
@@ -146,15 +160,6 @@ const Auth = () => {
       
       if (result?.error) {
         console.error('Erro de login:', result.error);
-        
-        // Sugerir alternativas
-        if (result.error.message.includes('Invalid login credentials')) {
-          toast({
-            title: "Credenciais inválidas",
-            description: "Tente recuperar sua senha ou verificar se o email está correto.",
-            variant: "destructive"
-          });
-        }
       }
     } catch (error) {
       console.error('Erro inesperado no login:', error);
@@ -225,6 +230,32 @@ const Auth = () => {
     
     setIsLoading(true);
     await resetPassword(resetEmail);
+    setIsLoading(false);
+  };
+
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || newPassword.length < 6) {
+      toast({
+        title: "Senha inválida",
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "Verifique se as senhas são iguais.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    await updatePassword(newPassword);
     setIsLoading(false);
   };
 
@@ -350,7 +381,6 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Alertas de debug se necessário */}
         {debugMode && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
@@ -368,10 +398,11 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>
-                <TabsTrigger value="reset">Recuperar Senha</TabsTrigger>
+                <TabsTrigger value="reset">Recuperar</TabsTrigger>
+                <TabsTrigger value="new-password">Nova Senha</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -390,14 +421,25 @@ const Auth = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Senha</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      required
-                      value={loginData.password}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Sua senha"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={loginData.password}
+                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Sua senha"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
 
                   <Button 
@@ -477,26 +519,48 @@ const Auth = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="password">Senha *</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        required
-                        value={registerData.password}
-                        onChange={(e) => handleRegisterInputChange("password", e.target.value)}
-                        placeholder="Mínimo 8 caracteres"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          required
+                          value={registerData.password}
+                          onChange={(e) => handleRegisterInputChange("password", e.target.value)}
+                          placeholder="Mínimo 6 caracteres"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        required
-                        value={registerData.confirmPassword}
-                        onChange={(e) => handleRegisterInputChange("confirmPassword", e.target.value)}
-                        placeholder="Confirme sua senha"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          required
+                          value={registerData.confirmPassword}
+                          onChange={(e) => handleRegisterInputChange("confirmPassword", e.target.value)}
+                          placeholder="Confirme sua senha"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -585,6 +649,60 @@ const Auth = () => {
                       Se você não receber o email em alguns minutos, verifique sua pasta de spam ou tente novamente.
                     </AlertDescription>
                   </Alert>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="new-password">
+                <form onSubmit={handleNewPassword} className="space-y-4">
+                  <Alert className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Defina uma nova senha forte com pelo menos 6 caracteres.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nova Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="new-password"
+                        type={showNewPassword ? "text" : "password"}
+                        required
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Digite sua nova senha"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      required
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Confirme sua nova senha"
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#1565C0] hover:bg-[#1565C0]/90" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Redefinindo..." : "Redefinir Senha"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>

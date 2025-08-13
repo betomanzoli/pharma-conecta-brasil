@@ -38,6 +38,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
   checkSubscription: () => Promise<void>;
 }
 
@@ -50,6 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Função para obter a URL de redirecionamento correta
+  const getRedirectUrl = () => {
+    const currentHost = window.location.hostname;
+    
+    if (currentHost === 'pharmaconnect.site' || currentHost === 'www.pharmaconnect.site') {
+      return 'https://pharmaconnect.site/auth';
+    } else if (currentHost.includes('lovable.app') || currentHost.includes('lovableproject.com')) {
+      return `${window.location.origin}/auth`;
+    } else {
+      return `${window.location.origin}/auth`;
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -125,10 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cleanupAuthState();
       await performGlobalSignout(supabase);
       
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = getRedirectUrl();
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
@@ -254,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Enviando reset de senha para:', email);
       
-      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+      const redirectUrl = getRedirectUrl();
       
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(), 
@@ -289,6 +303,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       console.error('Error resetting password:', error);
+      return { error };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      console.log('Atualizando senha...');
+      
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        console.error('Erro ao atualizar senha:', error);
+        
+        let errorMessage = error.message;
+        if (error.message.includes('Password should be at least')) {
+          errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        } else if (error.message.includes('weak password')) {
+          errorMessage = 'Senha muito fraca. Use pelo menos 8 caracteres com letras e números.';
+        }
+        
+        toast({
+          title: "Erro ao redefinir senha",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Senha redefinida com sucesso!",
+        description: "Sua nova senha foi salva. Você pode fazer login agora.",
+      });
+
+      // Redirecionar para login após redefinir senha
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 2000);
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating password:', error);
       return { error };
     }
   };
@@ -328,6 +385,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     checkSubscription,
   };
 
