@@ -52,12 +52,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Função para obter a URL de redirecionamento correta
   const getRedirectUrl = () => {
     const currentHost = window.location.hostname;
     
     if (currentHost === 'pharmaconnect.site' || currentHost === 'www.pharmaconnect.site') {
       return 'https://pharmaconnect.site/auth';
+    } else if (currentHost.includes('pharma-conecta-brasil.lovable.app')) {
+      return `${window.location.origin}/auth`;
     } else if (currentHost.includes('lovable.app') || currentHost.includes('lovableproject.com')) {
       return `${window.location.origin}/auth`;
     } else {
@@ -335,12 +336,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Senha redefinida com sucesso!",
-        description: "Sua nova senha foi salva. Você pode fazer login agora.",
+        description: "Sua nova senha foi salva. Você será redirecionado para o dashboard.",
       });
 
-      // Redirecionar para login após redefinir senha
       setTimeout(() => {
-        window.location.href = '/auth';
+        window.location.href = '/dashboard';
       }, 2000);
 
       return { error: null };
