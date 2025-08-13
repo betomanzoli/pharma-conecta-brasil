@@ -36,7 +36,11 @@ interface Thread {
   last_message_preview: string;
 }
 
-const MasterChatbot = () => {
+interface MasterChatbotProps {
+  initialPrompt?: string;
+}
+
+const MasterChatbot: React.FC<MasterChatbotProps> = ({ initialPrompt }) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const { logAIEvent } = useAIEventLogger();
@@ -47,19 +51,30 @@ const MasterChatbot = () => {
   const [threads, setThreads] = useState<Thread[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (profile?.id) {
-      initializeChatbot();
-    }
-  }, [profile?.id]);
+useEffect(() => {
+  if (profile?.id) {
+    initializeChatbot();
+  }
+}, [profile?.id]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+useEffect(() => {
+  scrollToBottom();
+}, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+const hasSentInitialRef = useRef(false);
+
+// Dispara o prompt inicial (quando vier por bridge) assim que a thread existir
+useEffect(() => {
+  if (currentThread && initialPrompt && !hasSentInitialRef.current) {
+    hasSentInitialRef.current = true;
+    // Envia a mensagem inicial sem depender do estado do input
+    sendMessage(initialPrompt);
+  }
+}, [currentThread, initialPrompt]);
+
+const scrollToBottom = () => {
+  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+};
 
   const initializeChatbot = async () => {
     try {
@@ -149,73 +164,73 @@ const MasterChatbot = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || loading || !currentThread) return;
+const sendMessage = async (override?: string) => {
+  const content = (override ?? newMessage).trim();
+  if (!content || loading || !currentThread) return;
 
-    setLoading(true);
-    const userMessage = newMessage.trim();
-    setNewMessage('');
+  setLoading(true);
+  if (!override) setNewMessage('');
 
-    // Adicionar mensagem do usuário localmente
-    const tempUserMessage: Message = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content: userMessage,
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, tempUserMessage]);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('master-chatbot', {
-        body: { 
-          action: 'chat', 
-          user_id: profile?.id,
-          thread_id: currentThread.id,
-          message: userMessage
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.assistant_message) {
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: data.assistant_message,
-          created_at: new Date().toISOString(),
-          metadata: data.metadata
-        };
-
-        setMessages(prev => {
-          // Remover mensagem temporária e adicionar ambas as mensagens
-          const filtered = prev.filter(m => m.id !== tempUserMessage.id);
-          return [...filtered, 
-            { ...tempUserMessage, id: `user-${Date.now()}` }, 
-            assistantMessage
-          ];
-        });
-
-        await logAIEvent({
-          source: 'master_ai_hub',
-          action: 'message',
-          message: userMessage,
-          metadata: { response_length: data.assistant_message.length }
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      toast({ 
-        title: 'Erro', 
-        description: 'Falha ao enviar mensagem',
-        variant: 'destructive' 
-      });
-      
-      // Remover mensagem temporária em caso de erro
-      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
-    } finally {
-      setLoading(false);
-    }
+  // Adicionar mensagem do usuário localmente
+  const tempUserMessage: Message = {
+    id: `temp-${Date.now()}`,
+    role: 'user',
+    content: content,
+    created_at: new Date().toISOString()
   };
+  setMessages(prev => [...prev, tempUserMessage]);
+
+  try {
+    const { data, error } = await supabase.functions.invoke('master-chatbot', {
+      body: { 
+        action: 'chat', 
+        user_id: profile?.id,
+        thread_id: currentThread.id,
+        message: content
+      }
+    });
+
+    if (error) throw error;
+
+    if (data?.assistant_message) {
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.assistant_message,
+        created_at: new Date().toISOString(),
+        metadata: data.metadata
+      };
+
+      setMessages(prev => {
+        // Remover mensagem temporária e adicionar ambas as mensagens
+        const filtered = prev.filter(m => m.id !== tempUserMessage.id);
+        return [...filtered, 
+          { ...tempUserMessage, id: `user-${Date.now()}` }, 
+          assistantMessage
+        ];
+      });
+
+      await logAIEvent({
+        source: 'master_ai_hub',
+        action: 'message',
+        message: content,
+        metadata: { response_length: data.assistant_message.length }
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error);
+    toast({ 
+      title: 'Erro', 
+      description: 'Falha ao enviar mensagem',
+      variant: 'destructive' 
+    });
+    
+    // Remover mensagem temporária em caso de erro
+    setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -327,7 +342,7 @@ const MasterChatbot = () => {
               disabled={loading}
             />
             <Button 
-              onClick={sendMessage} 
+              onClick={() => sendMessage()} 
               disabled={!newMessage.trim() || loading}
             >
               {loading ? (

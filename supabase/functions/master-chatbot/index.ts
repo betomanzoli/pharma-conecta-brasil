@@ -294,7 +294,7 @@ Como posso ajudá-lo especificamente hoje?`;
           metadata: {
             thread_id,
             response_length: assistantResponse.length,
-            context_messages: contextMessages?.length || 0
+            context_messages: (recentMessages?.length || 0)
           }
         });
 
