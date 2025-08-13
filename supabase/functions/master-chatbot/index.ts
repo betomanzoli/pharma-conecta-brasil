@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -7,14 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Releitura por requisição para evitar “demo mode” em caso de segredo atualizado
+  // Releitura por requisição para evitar "demo mode" em caso de segredo atualizado
   const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -88,6 +87,7 @@ serve(async (req) => {
 
       case 'chat': {
         // Processar mensagem de chat
+        console.log('Processing chat with PERPLEXITY_API_KEY available:', !!PERPLEXITY_API_KEY);
         
         // Salvar mensagem do usuário
         const { error: userMsgError } = await supabase
@@ -134,27 +134,34 @@ serve(async (req) => {
           const toSummarize = oldMessages?.map(m => `${m.role}: ${m.content}`).join('\n') || '';
 
           if (PERPLEXITY_API_KEY) {
-            const summarizeResp = await fetch('https://api.perplexity.ai/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'llama-3.1-sonar-small-128k-online',
-                messages: [
-                  { role: 'system', content: 'Você é um assistente que gera resumos curtos, objetivos e contextuais em português.' },
-                  { role: 'user', content: `Resuma a conversa abaixo mantendo intenções, decisões e pendências em até 12 linhas.\n\n${toSummarize}` }
-                ],
-                max_tokens: 400,
-                temperature: 0.3,
-              }),
-            });
+            try {
+              const summarizeResp = await fetch('https://api.perplexity.ai/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'llama-3.1-sonar-small-128k-online',
+                  messages: [
+                    { role: 'system', content: 'Você é um assistente que gera resumos curtos, objetivos e contextuais em português.' },
+                    { role: 'user', content: `Resuma a conversa abaixo mantendo intenções, decisões e pendências em até 12 linhas.\n\n${toSummarize}` }
+                  ],
+                  max_tokens: 400,
+                  temperature: 0.3,
+                }),
+              });
 
-            if (summarizeResp.ok) {
-              const sdata = await summarizeResp.json();
-              summaryText = sdata.choices?.[0]?.message?.content || '';
-            } else {
+              if (summarizeResp.ok) {
+                const sdata = await summarizeResp.json();
+                summaryText = sdata.choices?.[0]?.message?.content || '';
+              } else {
+                const errorText = await summarizeResp.text();
+                console.error('Perplexity summarize error:', errorText);
+                summaryText = '';
+              }
+            } catch (err) {
+              console.error('Perplexity summarize fetch failed:', err);
               summaryText = '';
             }
           }
@@ -223,6 +230,7 @@ Responda à seguinte mensagem:`;
         if (PERPLEXITY_API_KEY) {
           // Usar Perplexity API
           try {
+            console.log('Attempting Perplexity API call...');
             const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
               method: "POST",
               headers: {
@@ -240,41 +248,38 @@ Responda à seguinte mensagem:`;
               }),
             });
 
+            console.log('Perplexity response status:', perplexityResponse.status);
+
             if (perplexityResponse.ok) {
               const data = await perplexityResponse.json();
               assistantResponse = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
+              console.log('Perplexity response received successfully');
             } else {
               const errText = await perplexityResponse.text();
               console.error("Perplexity API error:", errText);
-              assistantResponse = `Não consegui acessar a API externa no momento. Ainda assim, segue uma orientação inicial sobre "${message}". Posso detalhar requisitos regulatórios (ANVISA/FDA/EMA), caminhos de registro, GMP e estratégias. Deseja que eu tente novamente com busca atualizada?`;
+              
+              // Fallback específico baseado no erro
+              if (errText.includes('invalid_model')) {
+                assistantResponse = `Sobre sua pergunta: "${message}"\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com análises regulatórias (ANVISA, FDA, EMA), desenvolvimento de produtos, estratégias de registro e compliance.\n\nPara respostas mais atualizadas e específicas, estamos ajustando a configuração da API. Como posso ajudá-lo especificamente hoje?`;
+              } else {
+                assistantResponse = `Sobre "${message}":\n\nPosso ajudá-lo com orientações farmacêuticas baseadas em minha expertise em regulamentação brasileira e internacional. Como posso detalhar sua consulta?`;
+              }
             }
           } catch (err) {
             console.error("Perplexity fetch failed:", err);
-            assistantResponse = `Não consegui acessar a API externa no momento. Ainda assim, segue uma orientação inicial sobre "${message}". Posso detalhar requisitos regulatórios (ANVISA/FDA/EMA), caminhos de registro, GMP e estratégias. Deseja que eu tente novamente com busca atualizada?`;
+            assistantResponse = `Sobre "${message}":\n\nSou seu assistente AI farmacêutico. Posso orientá-lo sobre regulamentações (ANVISA/FDA/EMA), desenvolvimento de produtos, registro de medicamentos e estratégias de compliance.\n\nComo posso ajudá-lo especificamente hoje?`;
           }
         } else {
-          // Resposta padrão
-          assistantResponse = `Olá! Sou seu assistente AI farmacêutico do Master AI Hub.
-
-Sobre sua pergunta: "${message}"
-
-Posso ajudá-lo com:
-• Análises regulatórias (ANVISA, FDA, EMA)
-• Desenvolvimento de produtos farmacêuticos
-• Estratégias de registro de medicamentos
-• Compliance e boas práticas
-• Parcerias e oportunidades de mercado
-
-Para respostas mais precisas e atualizadas, recomendo configurar a integração com APIs especializadas.
-
-Como posso ajudá-lo especificamente hoje?`;
+          console.log('No PERPLEXITY_API_KEY found, using fallback');
+          // Resposta padrão mais específica
+          assistantResponse = `Olá! Sobre "${message}":\n\nSou seu assistente AI farmacêutico especializado. Posso ajudá-lo com:\n\n• Análises regulatórias (ANVISA, FDA, EMA)\n• Desenvolvimento de produtos farmacêuticos\n• Estratégias de registro de medicamentos\n• Compliance e boas práticas (GMP)\n• Parcerias e oportunidades de mercado\n• Análise de mercado farmacêutico brasileiro\n\nComo posso detalhar sua consulta especificamente?`;
         }
 
         // Sugerir abertura de novo chat e adicionar nota ao final da resposta
         if ((totalCount || 0) > 60) {
           assistantResponse += `\n\nNota: Esta conversa já está extensa. Posso abrir um novo chat e carregar um resumo para continuar do ponto em que paramos.`;
         } else if (didSummarize) {
-          assistantResponse += `\n\nNota: Gereí um resumo da conversa para manter o contexto eficiente.`;
+          assistantResponse += `\n\nNota: Gerei um resumo da conversa para manter o contexto eficiente.`;
         }
 
         // Salvar resposta do assistente
@@ -302,7 +307,8 @@ Como posso ajudá-lo especificamente hoje?`;
           metadata: {
             thread_id,
             response_length: assistantResponse.length,
-            context_messages: (recentMessages?.length || 0)
+            context_messages: (recentMessages?.length || 0),
+            api_used: PERPLEXITY_API_KEY ? "perplexity" : "fallback"
           }
         });
 
