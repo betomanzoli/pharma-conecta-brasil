@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertTriangle, ExternalLink } from "lucide-react";
 
 interface DeployStatusBannerProps {
-  status: 'deploying' | 'success' | 'error';
+  status: 'idle' | 'deploying' | 'success' | 'error';
   url?: string;
   onRetry?: () => void;
 }
 
 const DeployStatusBanner = ({ status, url, onRetry }: DeployStatusBannerProps) => {
+  if (status === 'idle') {
+    return null;
+  }
+
   if (status === 'deploying') {
     return (
       <Alert className="mb-4 border-blue-200 bg-blue-50">
