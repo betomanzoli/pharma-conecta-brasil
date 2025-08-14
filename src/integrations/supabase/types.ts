@@ -4421,6 +4421,10 @@ export type Database = {
         Args: { notification_id: string }
         Returns: boolean
       }
+      migrate_user_to_auth: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       rag_search: {
         Args: { p_query: string; p_top_k?: number }
         Returns: {
