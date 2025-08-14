@@ -3481,37 +3481,70 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          certifications: string[] | null
+          city: string | null
+          cnpj: string | null
           created_at: string | null
+          description: string | null
           email: string
+          expertise_area: string[] | null
           first_name: string | null
           id: string
           last_name: string | null
           linkedin_url: string | null
+          organization_name: string | null
           phone: string | null
+          specializations: string[] | null
+          state: string | null
           updated_at: string | null
           user_type: string
+          website: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          certifications?: string[] | null
+          city?: string | null
+          cnpj?: string | null
           created_at?: string | null
+          description?: string | null
           email: string
+          expertise_area?: string[] | null
           first_name?: string | null
           id: string
           last_name?: string | null
           linkedin_url?: string | null
+          organization_name?: string | null
           phone?: string | null
+          specializations?: string[] | null
+          state?: string | null
           updated_at?: string | null
           user_type: string
+          website?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          certifications?: string[] | null
+          city?: string | null
+          cnpj?: string | null
           created_at?: string | null
+          description?: string | null
           email?: string
+          expertise_area?: string[] | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           linkedin_url?: string | null
+          organization_name?: string | null
           phone?: string | null
+          specializations?: string[] | null
+          state?: string | null
           updated_at?: string | null
           user_type?: string
+          website?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }

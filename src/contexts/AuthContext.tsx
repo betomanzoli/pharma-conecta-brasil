@@ -163,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } as Profile;
         
         setProfile(profileData);
-        console.log('Profile loaded:', profileData);
+        console.log('Profile loaded successfully:', profileData);
       } else {
         console.log('No profile found for user:', userId);
       }

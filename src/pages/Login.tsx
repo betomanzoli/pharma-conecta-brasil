@@ -118,14 +118,6 @@ const Login = () => {
               Não tem conta? Cadastre-se
             </Link>
           </div>
-
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 p-3 bg-muted rounded text-xs">
-              <p className="font-semibold mb-1">Contas de teste:</p>
-              <p>betomanzoli@gmail.com (sua conta existente)</p>
-              <p>admin@pharmaconnect.dev (admin)</p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
