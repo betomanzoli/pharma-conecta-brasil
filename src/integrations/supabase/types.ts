@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -53,6 +53,39 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           variant?: string
+        }
+        Relationships: []
+      }
+      ai_agent_configs: {
+        Row: {
+          agent_key: string
+          created_at: string
+          default_suggestions: Json
+          enabled: boolean
+          id: string
+          metadata: Json
+          system_prompt: string
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          created_at?: string
+          default_suggestions?: Json
+          enabled?: boolean
+          id?: string
+          metadata?: Json
+          system_prompt: string
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          created_at?: string
+          default_suggestions?: Json
+          enabled?: boolean
+          id?: string
+          metadata?: Json
+          system_prompt?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -184,17 +217,11 @@ export type Database = {
             referencedRelation: "ai_chat_threads"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "ai_chat_messages_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "v_ai_chat_context"
-            referencedColumns: ["thread_id"]
-          },
         ]
       }
       ai_chat_threads: {
         Row: {
+          conversation_summary: string | null
           created_at: string
           id: string
           last_message_preview: string | null
@@ -204,6 +231,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null
@@ -213,6 +241,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_summary?: string | null
           created_at?: string
           id?: string
           last_message_preview?: string | null
@@ -1265,13 +1294,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "brazilian_content_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       business_metrics: {
@@ -1389,13 +1411,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "chat_messages_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       chats: {
@@ -1435,13 +1450,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1495,13 +1503,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cnpj_validations_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1579,13 +1580,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "companies_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1697,13 +1691,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "compliance_tracking_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       consultants: {
@@ -1761,13 +1748,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consultants_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2337,13 +2317,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "forum_replies_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "forum_replies_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
@@ -2384,13 +2357,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reply_likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2444,13 +2410,6 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_topics_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2664,13 +2623,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "knowledge_downloads_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       knowledge_items: {
@@ -2742,13 +2694,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "knowledge_items_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       knowledge_ratings: {
@@ -2789,13 +2734,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "knowledge_ratings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2918,13 +2856,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "laboratories_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3067,13 +2998,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "mentors_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       mentorship_sessions: {
@@ -3143,13 +3067,6 @@ export type Database = {
             columns: ["mentee_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mentorship_sessions_mentee_id_fkey"
-            columns: ["mentee_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -3272,13 +3189,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "notification_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       notifications: {
@@ -3315,13 +3225,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3667,24 +3570,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "project_requests_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "project_requests_requester_id_fkey"
             columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3788,24 +3677,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ratings_rated_id_fkey"
-            columns: ["rated_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "ratings_rater_id_fkey"
             columns: ["rater_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4223,13 +4098,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_verification_documents_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_verification_status: {
@@ -4284,24 +4152,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_verification_status_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_verification_status_verified_by_fkey"
             columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_verification_status_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4387,13 +4241,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "verification_badges_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       video_sessions: {
@@ -4442,49 +4289,15 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          created_at: string | null
-          first_name: string | null
-          id: string | null
-          last_name: string | null
-          updated_at: string | null
-          user_type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          first_name?: string | null
-          id?: string | null
-          last_name?: string | null
-          updated_at?: string | null
-          user_type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          first_name?: string | null
-          id?: string | null
-          last_name?: string | null
-          updated_at?: string | null
-          user_type?: string | null
-        }
-        Relationships: []
-      }
-      v_ai_chat_context: {
-        Row: {
-          messages_desc: Json[] | null
-          thread_id: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       audit_log: {
         Args: {
           action_type: string
-          table_name: string
-          record_id: string
           details?: Json
+          record_id: string
+          table_name: string
         }
         Returns: undefined
       }
@@ -4498,45 +4311,56 @@ export type Database = {
       }
       create_system_notification: {
         Args: {
-          target_user_id: string
-          notification_title: string
           notification_message: string
+          notification_title: string
           notification_type?: string
+          target_user_id: string
         }
         Returns: string
       }
       enqueue_ai_handoffs: {
         Args: {
-          p_source_agent: string
-          p_target_agents: string[]
+          p_agent_output_id?: string
           p_input?: Json
           p_project_id?: string
-          p_agent_output_id?: string
+          p_source_agent: string
+          p_target_agents: string[]
         }
         Returns: number
       }
       get_analytics_data: {
-        Args: { start_date?: string; end_date?: string; user_filter?: string }
+        Args: { end_date?: string; start_date?: string; user_filter?: string }
         Returns: Json
       }
       get_available_mentors: {
         Args: {
-          specialty_filter?: string[]
-          min_rating?: number
           max_hourly_rate?: number
+          min_rating?: number
+          specialty_filter?: string[]
         }
         Returns: {
+          average_rating: number
+          bio: string
+          experience_years: number
+          first_name: string
+          hourly_rate: number
+          last_name: string
           mentor_id: string
           profile_id: string
-          first_name: string
-          last_name: string
           specialty: string[]
-          experience_years: number
-          hourly_rate: number
-          bio: string
-          average_rating: number
-          total_sessions: number
           total_ratings: number
+          total_sessions: number
+        }[]
+      }
+      get_public_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          updated_at: string
+          user_type: string
         }[]
       }
       is_admin: {
@@ -4545,12 +4369,12 @@ export type Database = {
       }
       log_security_event: {
         Args: {
-          p_user_id: string
-          p_event_type: string
           p_description: string
+          p_event_type: string
           p_ip_address?: string
-          p_user_agent?: string
           p_metadata?: Json
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -4566,19 +4390,19 @@ export type Database = {
         Args: { p_query: string; p_top_k?: number }
         Returns: {
           chunk_id: string
-          source_id: string
-          title: string
-          source_url: string
           content: string
           rank: number
+          source_id: string
+          source_url: string
+          title: string
         }[]
       }
       safe_get_user_profile: {
         Args: { user_id: string }
         Returns: {
-          id: string
           email: string
           first_name: string
+          id: string
           last_name: string
           user_type: string
         }[]
