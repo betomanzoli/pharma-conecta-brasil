@@ -42,6 +42,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Função para limpar estado de autenticação
+const cleanupAuthState = () => {
+  try {
+    // Limpar localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Limpar sessionStorage se existir
+    if (typeof sessionStorage !== 'undefined') {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error cleaning auth state:', error);
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -51,39 +74,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+
+        console.log('Auth state change:', event, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && event === 'SIGNED_IN') {
+          // Deferir a busca do perfil para evitar deadlock
           setTimeout(async () => {
-            await fetchProfile(session.user.id);
-            await checkSubscription();
-          }, 0);
-        } else {
+            if (isMounted) {
+              await fetchProfile(session.user.id);
+              await checkSubscription();
+            }
+          }, 100);
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setSubscription(null);
         }
-        setLoading(false);
+        
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Verificar sessão inicial
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting initial session:', error);
+        cleanupAuthState();
+      }
+      
+      if (!isMounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        fetchProfile(session.user.id);
-        checkSubscription();
+        setTimeout(async () => {
+          if (isMounted) {
+            await fetchProfile(session.user.id);
+            await checkSubscription();
+          }
+        }, 100);
       }
+      
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -96,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        // Expandir tipos de usuário para incluir novos tipos
+        // Validar tipos de usuário
         const validUserTypes = [
           'company', 'laboratory', 'consultant', 'individual', 'admin',
           'professional', 'regulatory_body', 'sector_entity', 
@@ -109,6 +163,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } as Profile;
         
         setProfile(profileData);
+        console.log('Profile loaded:', profileData);
+      } else {
+        console.log('No profile found for user:', userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -117,18 +174,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      console.log('Starting sign up process for:', email);
+      
+      // Limpar estado anterior
+      cleanupAuthState();
+      
+      // Tentar fazer logout global primeiro
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout during signup:', err);
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: userData
+          data: {
+            ...userData,
+            // Garantir que user_type seja válido
+            user_type: userData.user_type || 'individual'
+          }
         }
       });
 
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -137,6 +211,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('Sign up successful:', data);
+      
       toast({
         title: "Conta criada com sucesso!",
         description: "Verifique seu email para ativar sua conta.",
@@ -145,18 +221,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       console.error('Error signing up:', error);
+      toast({
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Starting sign in process for:', email);
+      
+      // Limpar estado anterior
+      cleanupAuthState();
+      
+      // Tentar fazer logout global primeiro
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout during signin:', err);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Erro no login",
           description: error.message,
@@ -165,26 +259,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
       }
 
+      console.log('Sign in successful:', data);
+
       if (data.user) {
-        window.location.href = '/dashboard';
+        // Forçar refresh da página para garantir estado limpo
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
       }
 
       return { error: null };
     } catch (error) {
       console.error('Error signing in:', error);
+      toast({
+        title: "Erro no login",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive"
+      });
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('Starting sign out process');
+      
+      // Limpar estado local primeiro
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/';
+      setSubscription(null);
+      
+      // Limpar storage
+      cleanupAuthState();
+      
+      // Fazer logout no Supabase
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Forçar refresh da página
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     } catch (error) {
       console.error('Error signing out:', error);
+      // Forçar limpeza mesmo com erro
+      cleanupAuthState();
+      window.location.href = '/';
     }
   };
 
