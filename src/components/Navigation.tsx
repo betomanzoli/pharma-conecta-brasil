@@ -13,7 +13,8 @@ import {
   Brain,
   Zap,
   Database,
-  Activity
+  Activity,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserProfile from './navigation/UserProfile';

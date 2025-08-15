@@ -21,12 +21,17 @@ import AgentHandoffButton from '@/components/ai/AgentHandoffButton';
 
 interface AgentOutput {
   id: string;
-  agent_name: string;
-  input_data: any;
-  output_data: any;
-  processing_time: number;
+  agent_type: string;
+  input: any;
+  output_md: string;
   created_at: string;
-  status: 'completed' | 'failed' | 'processing';
+  status: 'completed' | 'failed' | 'processing' | string;
+  handoff_to: string[];
+  kpis: any;
+  project_id: string | null;
+  user_id: string | null;
+  updated_at: string | null;
+  processing_time?: number;
 }
 
 const AgentsDashboardPage = () => {
@@ -34,7 +39,7 @@ const AgentsDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [runningHandoffs, setRunningHandoffs] = useState(false);
   
-  const { queue, runAll, getQueueStatus } = useAIHandoffs();
+  const { runAll, enqueue, runNext } = useAIHandoffs();
   const { toast } = useToast();
 
   const agents = [
@@ -88,7 +93,7 @@ const AgentsDashboardPage = () => {
         .limit(20);
 
       if (error) throw error;
-      setOutputs(data || []);
+      setOutputs((data || []) as unknown as AgentOutput[]);
     } catch (error) {
       console.error('Error loading outputs:', error);
     } finally {
@@ -99,13 +104,12 @@ const AgentsDashboardPage = () => {
   const handleRunAllHandoffs = async () => {
     setRunningHandoffs(true);
     try {
-      const result = await runAll();
+      const processed = await runAll();
       toast({
         title: "Handoffs executados!",
-        description: `${result.processed} tarefas processadas`,
+        description: `${processed} tarefas processadas`,
       });
       
-      // Reload outputs after handoffs
       setTimeout(() => {
         loadRecentOutputs();
       }, 2000);
@@ -188,8 +192,9 @@ const AgentsDashboardPage = () => {
               ) : (
                 <div className="space-y-4">
                   {outputs.map((output) => {
-                    const agent = getAgentInfo(output.agent_name);
+                    const agent = getAgentInfo(output.agent_type);
                     const IconComponent = agent.icon;
+                    const procMs = Number(output?.kpis?.processing_time_ms ?? output.processing_time ?? 0);
                     
                     return (
                       <Card key={output.id} className="border-l-4 border-l-blue-500">
@@ -211,30 +216,28 @@ const AgentsDashboardPage = () => {
                                 {output.status}
                               </Badge>
                               <Badge variant="outline">
-                                {output.processing_time}ms
+                                {procMs ? `${procMs}ms` : '-'}
                               </Badge>
                             </div>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
-                            {output.output_data && (
+                            {output.output_md && (
                               <div>
                                 <h5 className="text-sm font-medium mb-2">Output:</h5>
                                 <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded">
-                                  {typeof output.output_data === 'object' 
-                                    ? output.output_data.output?.substring(0, 200) + '...'
-                                    : output.output_data.toString().substring(0, 200) + '...'}
+                                  {output.output_md.substring(0, 200) + (output.output_md.length > 200 ? '...' : '')}
                                 </p>
                               </div>
                             )}
                             
                             <div className="flex gap-2">
                               <AgentHandoffButton
-                                sourceAgent={output.agent_name}
+                                sourceAgent={output.agent_type}
                                 targetAgents={['ai-coordinator-orchestrator']}
                                 agentOutputId={output.id}
-                                outputData={output.output_data}
+                                outputData={output.output_md}
                                 onHandoffComplete={loadRecentOutputs}
                               />
                               
@@ -270,28 +273,11 @@ const AgentsDashboardPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {queue.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhum handoff na fila</p>
-                  <p className="text-sm">Use os botões "Handoff" nos outputs para criar tarefas</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {queue.map((handoff, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                      <div className="flex items-center gap-3">
-                        <div className="text-sm">
-                          <span className="font-medium">{handoff.source_agent}</span>
-                          <ArrowRight className="h-4 w-4 mx-2 inline" />
-                          <span className="font-medium">{handoff.target_agents.join(', ')}</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline">Pendente</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>A fila não está disponível para visualização neste hook.</p>
+                <p className="text-sm">Use "Executar Todos" para processar os handoffs pendentes.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -300,9 +286,9 @@ const AgentsDashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {agents.map((agent) => {
               const IconComponent = agent.icon;
-              const recentOutputs = outputs.filter(o => o.agent_name === agent.id);
+              const recentOutputs = outputs.filter(o => o.agent_type === agent.id);
               const avgTime = recentOutputs.length > 0 
-                ? Math.round(recentOutputs.reduce((acc, o) => acc + o.processing_time, 0) / recentOutputs.length)
+                ? Math.round(recentOutputs.reduce((acc, o) => acc + Number(o?.kpis?.processing_time_ms ?? o.processing_time ?? 0), 0) / recentOutputs.length)
                 : 0;
               
               return (
