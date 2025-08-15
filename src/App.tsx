@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Index from '@/pages/Index';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Dashboard from '@/pages/Dashboard';
 import ChatPage from '@/pages/ChatPage';
 import PerformancePage from '@/pages/PerformancePage';
 import StrategicPlan from '@/pages/StrategicPlan';
@@ -38,6 +41,9 @@ function App() {
           <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat/:recipientId?" element={<ChatPage />} />
               <Route path="/performance" element={<PerformancePage />} />
               <Route path="/strategic-plan" element={<StrategicPlan />} />

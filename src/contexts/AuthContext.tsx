@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,12 +41,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Função para limpar estado de autenticação
+// Função para limpar estado de autenticação corrompido
 const cleanupAuthState = () => {
   try {
+    console.log('Cleaning up corrupted auth state...');
+    
     // Limpar localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        console.log('Removing corrupted key:', key);
         localStorage.removeItem(key);
       }
     });
@@ -56,10 +58,13 @@ const cleanupAuthState = () => {
     if (typeof sessionStorage !== 'undefined') {
       Object.keys(sessionStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          console.log('Removing corrupted session key:', key);
           sessionStorage.removeItem(key);
         }
       });
     }
+    
+    console.log('Auth state cleanup completed');
   } catch (error) {
     console.error('Error cleaning auth state:', error);
   }
@@ -76,16 +81,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
 
+    console.log('Initializing auth state...');
+
+    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
 
         console.log('Auth state change:', event, session?.user?.id);
         
+        // Se houver erro de token, limpar estado
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, cleaning up...');
+          cleanupAuthState();
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user && event === 'SIGNED_IN') {
+          console.log('User signed in, fetching profile...');
           // Deferir a busca do perfil para evitar deadlock
           setTimeout(async () => {
             if (isMounted) {
@@ -94,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }, 100);
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing profile...');
           setProfile(null);
           setSubscription(null);
         }
@@ -104,14 +120,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Verificar sessão inicial
+    // Verificar sessão inicial com tratamento de erro
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Error getting initial session:', error);
-        cleanupAuthState();
+        if (error.message.includes('refresh_token_not_found')) {
+          console.log('Refresh token not found, cleaning up...');
+          cleanupAuthState();
+        }
       }
       
       if (!isMounted) return;
+      
+      console.log('Initial session check:', session?.user?.id || 'No session');
       
       setSession(session);
       setUser(session?.user ?? null);
@@ -186,7 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Global signout during signup:', err);
       }
 
-      const redirectUrl = `${window.location.origin}/`;
+      // Configurar URL de redirect correta
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -195,7 +217,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           emailRedirectTo: redirectUrl,
           data: {
             ...userData,
-            // Garantir que user_type seja válido
             user_type: userData.user_type || 'individual'
           }
         }
@@ -215,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Conta criada com sucesso!",
-        description: "Verifique seu email para ativar sua conta.",
+        description: "Você já pode fazer login e acessar a plataforma.",
       });
 
       return { error: null };
@@ -253,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Sign in error:', error);
         toast({
           title: "Erro no login",
-          description: error.message,
+          description: "Credenciais inválidas. Verifique seu email e senha.",
           variant: "destructive"
         });
         return { error };
@@ -262,10 +283,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Sign in successful:', data);
 
       if (data.user) {
-        // Forçar refresh da página para garantir estado limpo
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard...",
+        });
+        
+        // Redirecionamento direto sem forçar refresh
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 500);
+        }, 1000);
       }
 
       return { error: null };
@@ -296,10 +322,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Fazer logout no Supabase
       await supabase.auth.signOut({ scope: 'global' });
       
-      // Forçar refresh da página
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      
+      // Redirecionamento para home
       setTimeout(() => {
         window.location.href = '/';
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error('Error signing out:', error);
       // Forçar limpeza mesmo com erro
