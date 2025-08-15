@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -28,13 +27,17 @@ const NotificationsPage = () => {
     const loadNotifications = async () => {
       try {
         if (isDemo) {
-          // Usar dados demo
-          setNotifications(demoData.notifications.map(n => ({
+          // Use demo data and ensure all required properties are present
+          const demoNotifications = demoData.notifications.map(n => ({
             ...n,
-            type: n.type as 'info' | 'warning' | 'success' | 'error'
-          })));
+            type: n.type as 'info' | 'warning' | 'success' | 'error',
+            read: n.read ?? false, // Ensure read property exists
+            id: n.id || `demo-${Math.random().toString(36).substr(2, 9)}`,
+            created_at: n.created_at || new Date().toISOString()
+          }));
+          setNotifications(demoNotifications);
         } else {
-          // Aqui seria a chamada real para o Supabase
+          // Here would be the real Supabase call
           // const { data, error } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
           setNotifications([]);
         }
@@ -61,7 +64,7 @@ const NotificationsPage = () => {
     );
     
     if (!isDemo) {
-      // Aqui seria a chamada real para marcar como lida no Supabase
+      // Here would be the real Supabase call
       // await supabase.from('notifications').update({ read: true }).eq('id', notificationId);
     }
   };
