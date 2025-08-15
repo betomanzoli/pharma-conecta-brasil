@@ -1,169 +1,143 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import UserProfile from '@/components/navigation/UserProfile';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import { 
-  Building2, 
-  FlaskConical, 
+  Home, 
   MessageCircle, 
-  Users, 
   BarChart3, 
-  User, 
-  FolderOpen, 
-  MessageSquare, 
-  BookOpen, 
-  ShoppingCart, 
-  Handshake,
-  Target,
-  Zap,
-  Brain,
-  Menu,
-  X
+  Target, 
+  Zap, 
+  Sparkles,
+  User,
+  Settings,
+  LogOut,
+  Trophy
 } from 'lucide-react';
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { name: 'Projetos', href: '/projects', icon: FolderOpen },
-    { name: 'Empresas', href: '/company', icon: Building2 },
-    { name: 'Laboratórios', href: '/laboratory', icon: FlaskConical },
-    { name: 'Mentoria', href: '/mentorship', icon: Users },
-    { name: 'Chat', href: '/chat', icon: MessageCircle },
-    { name: 'Fórum', href: '/forum', icon: MessageSquare },
-    { name: 'Conhecimento', href: '/knowledge', icon: BookOpen },
-    { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
-    { name: 'Parcerias', href: '/partnerships', icon: Handshake },
-    { 
-      name: 'Plano Estratégico', 
-      href: '/strategic-plan', 
-      icon: Target,
-      badge: 'Concluído'
-    },
-    { 
-      name: 'Automação', 
-      href: '/automation', 
-      icon: Zap,
-      badge: 'Novo'
-    },
-    { 
-      name: 'AI Hub', 
-      href: '/ai', 
-      icon: Brain,
-      badge: 'Beta'
-    },
+    { path: '/', label: 'Início', icon: Home },
+    { path: '/chat', label: 'Chat IA', icon: MessageCircle },
+    { path: '/performance', label: 'Performance', icon: BarChart3 },
+    { path: '/strategic-plan', label: 'Plano Estratégico', icon: Target, badge: 'Completo' },
+    { path: '/automation', label: 'Automação', icon: Zap, badge: 'Ativo' },
+    { path: '/generative-ai', label: 'IA Generativa', icon: Sparkles, badge: 'Novo' }
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <Building2 className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">PharmaConnect Brasil</span>
-            </Link>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden lg:ml-6 lg:flex lg:space-x-1">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+    <nav className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">PC</span>
+          </div>
+          <span className="font-bold text-xl text-gray-900">PharmaConnect</span>
+          <Badge variant="outline" className="bg-gradient-to-r from-gold-500 to-yellow-500 text-white border-gold-500">
+            <Trophy className="h-3 w-3 mr-1" />
+            Completo
+          </Badge>
+        </Link>
+
+        {/* Navigation Links */}
+        <div className="hidden md:flex items-center space-x-1">
+          {navigationItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <Link key={item.path} to={item.path}>
+                <Button
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                  size="sm"
                 >
-                  <item.icon className="h-4 w-4 mr-2" />
-                  <span>{item.name}</span>
+                  <IconComponent className="h-4 w-4" />
+                  {item.label}
                   {item.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className={`ml-2 text-xs ${
-                        item.badge === 'Novo' ? 'bg-green-100 text-green-800' :
-                        item.badge === 'Beta' ? 'bg-purple-100 text-purple-800' :
-                        item.badge === 'Concluído' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                    <Badge variant="secondary" className="text-xs ml-1">
                       {item.badge}
                     </Badge>
                   )}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <UserProfile />
-                <Button 
-                  variant="ghost" 
-                  onClick={signOut}
-                  className="text-gray-700 hover:text-gray-900"
-                >
-                  Sair
                 </Button>
-              </>
-            ) : (
-              <div className="space-x-2">
-                <Button variant="ghost" asChild>
-                  <Link to="/auth">Entrar</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/auth">Cadastrar</Link>
-                </Button>
-              </div>
-            )}
-            
-            {/* Mobile menu button */}
-            <div className="lg:hidden">
-              <Button
-                variant="ghost"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2"
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div>
-          </div>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden border-t bg-white">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  onClick={() => setIsMobileMenuOpen(false)}
+        {/* User Menu */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 p-1">
+                  <ProfileAvatar user={user} size="sm" />
+                  <span className="hidden md:block text-sm font-medium">
+                    {user.email?.split('@')[0]}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem>
+                  <User className="h-4 w-4 mr-2" />
+                  Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/auth">
+                <Button variant="outline" size="sm">Entrar</Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="sm">Cadastrar</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden mt-3">
+        <div className="flex items-center space-x-1 overflow-x-auto pb-2">
+          {navigationItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <Link key={item.path} to={item.path}>
+                <Button
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  size="sm"
+                  className="flex items-center gap-1 whitespace-nowrap"
                 >
-                  <item.icon className="h-5 w-5 mr-3" />
-                  <span>{item.name}</span>
+                  <IconComponent className="h-4 w-4" />
+                  <span className="text-xs">{item.label}</span>
                   {item.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className={`ml-auto text-xs ${
-                        item.badge === 'Novo' ? 'bg-green-100 text-green-800' :
-                        item.badge === 'Beta' ? 'bg-purple-100 text-purple-800' :
-                        item.badge === 'Concluído' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                    <Badge variant="secondary" className="text-xs">
                       {item.badge}
                     </Badge>
                   )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
