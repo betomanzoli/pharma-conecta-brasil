@@ -1,190 +1,169 @@
 
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserProfile } from '@/components/UserProfile';
+import { Badge } from '@/components/ui/badge';
 import { 
-  Home, 
+  Building2, 
+  FlaskConical, 
+  MessageCircle, 
+  Users, 
+  BarChart3, 
   User, 
-  Settings, 
+  FolderOpen, 
   MessageSquare, 
-  LogOut,
-  Bell,
-  Workflow,
-  BookOpen,
-  BarChart3,
-  Users,
-  Building2,
-  FlaskConical,
-  UserCheck,
-  Briefcase,
-  GraduationCap,
-  Package,
-  DollarSign,
-  Hospital
+  BookOpen, 
+  ShoppingCart, 
+  Handshake,
+  Target,
+  Zap,
+  Brain,
+  Menu,
+  X
 } from 'lucide-react';
 
 const Navigation = () => {
-  const { user, profile, signOut } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
-  };
-
-  const getUserTypeIcon = (userType?: string) => {
-    switch (userType) {
-      case 'regulatory_body': return <Building2 className="h-4 w-4" />;
-      case 'sector_entity': return <Users className="h-4 w-4" />;
-      case 'company': return <Package className="h-4 w-4" />;
-      case 'consultant': return <UserCheck className="h-4 w-4" />;
-      case 'professional': return <UserCheck className="h-4 w-4" />;
-      case 'research_institution': return <GraduationCap className="h-4 w-4" />;
-      case 'supplier': return <Package className="h-4 w-4" />;
-      case 'funding_agency': return <DollarSign className="h-4 w-4" />;
-      case 'healthcare_provider': return <Hospital className="h-4 w-4" />;
-      case 'laboratory': return <FlaskConical className="h-4 w-4" />;
-      case 'individual': return <User className="h-4 w-4" />;
-      case 'admin': return <Settings className="h-4 w-4" />;
-      default: return <User className="h-4 w-4" />;
-    }
-  };
-
-  const getNavigationItems = () => {
-    const commonItems = [
-      { path: '/dashboard', icon: Home, label: 'Dashboard' },
-      { path: '/chat', icon: MessageSquare, label: 'AI Assistant' },
-      { path: '/automation', icon: Workflow, label: 'Automações' },
-      { path: '/notifications', icon: Bell, label: 'Notificações' },
-      { path: '/knowledge', icon: BookOpen, label: 'Biblioteca' },
-    ];
-
-    // Adicionar itens específicos baseados no tipo de usuário
-    const userTypeItems = [];
-    
-    switch (profile?.user_type) {
-      case 'company':
-        userTypeItems.push(
-          { path: '/projects', icon: Briefcase, label: 'Projetos' },
-          { path: '/marketplace', icon: Users, label: 'Marketplace' }
-        );
-        break;
-        
-      case 'laboratory':
-        userTypeItems.push(
-          { path: '/reports', icon: BarChart3, label: 'Relatórios' },
-          { path: '/projects', icon: Briefcase, label: 'Projetos' }
-        );
-        break;
-        
-      case 'regulatory_body':
-        userTypeItems.push(
-          { path: '/reports', icon: BarChart3, label: 'Compliance' },
-          { path: '/projects', icon: Building2, label: 'Regulamentações' }
-        );
-        break;
-        
-      case 'research_institution':
-        userTypeItems.push(
-          { path: '/projects', icon: GraduationCap, label: 'Projetos' },
-          { path: '/reports', icon: BookOpen, label: 'Publicações' }
-        );
-        break;
-    }
-
-    return [...commonItems, ...userTypeItems];
-  };
-
-  if (!user) {
-    return (
-      <nav className="bg-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link to="/" className="text-2xl font-bold text-primary">
-              PharmaConnect
-            </Link>
-            
-            <div className="flex items-center space-x-4">
-              <Link to="/demo">
-                <Button variant="ghost">Demo</Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="ghost">Login</Button>
-              </Link>
-              <Link to="/register">
-                <Button>Cadastrar</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
-  const navigationItems = getNavigationItems();
+  const navigationItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'Projetos', href: '/projects', icon: FolderOpen },
+    { name: 'Empresas', href: '/company', icon: Building2 },
+    { name: 'Laboratórios', href: '/laboratory', icon: FlaskConical },
+    { name: 'Mentoria', href: '/mentorship', icon: Users },
+    { name: 'Chat', href: '/chat', icon: MessageCircle },
+    { name: 'Fórum', href: '/forum', icon: MessageSquare },
+    { name: 'Conhecimento', href: '/knowledge', icon: BookOpen },
+    { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
+    { name: 'Parcerias', href: '/partnerships', icon: Handshake },
+    { 
+      name: 'Plano Estratégico', 
+      href: '/strategic-plan', 
+      icon: Target,
+      badge: 'Concluído'
+    },
+    { 
+      name: 'Automação', 
+      href: '/automation', 
+      icon: Zap,
+      badge: 'Novo'
+    },
+    { 
+      name: 'AI Hub', 
+      href: '/ai', 
+      icon: Brain,
+      badge: 'Beta'
+    },
+  ];
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <Link to="/dashboard" className="text-2xl font-bold text-primary">
-            PharmaConnect
-          </Link>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              
-              return (
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <Building2 className="h-8 w-8 text-blue-600" />
+              <span className="ml-2 text-xl font-bold text-gray-900">PharmaConnect Brasil</span>
+            </Link>
+            
+            {/* Desktop Navigation */}
+            <div className="hidden lg:ml-6 lg:flex lg:space-x-1">
+              {navigationItems.map((item) => (
                 <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-                    isActive 
-                      ? 'text-primary bg-primary/10' 
-                      : 'text-gray-600 hover:text-primary hover:bg-gray-50'
-                  }`}
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
+                  <item.icon className="h-4 w-4 mr-2" />
+                  <span>{item.name}</span>
+                  {item.badge && (
+                    <Badge 
+                      variant="secondary" 
+                      className={`ml-2 text-xs ${
+                        item.badge === 'Novo' ? 'bg-green-100 text-green-800' :
+                        item.badge === 'Beta' ? 'bg-purple-100 text-purple-800' :
+                        item.badge === 'Concluído' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
-              );
-            })}
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {getUserTypeIcon(profile?.user_type)}
-              <span className="text-sm text-gray-600">
-                {profile?.first_name} {profile?.last_name}
-              </span>
+              ))}
             </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <UserProfile />
+                <Button 
+                  variant="ghost" 
+                  onClick={signOut}
+                  className="text-gray-700 hover:text-gray-900"
+                >
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <div className="space-x-2">
+                <Button variant="ghost" asChild>
+                  <Link to="/auth">Entrar</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth">Cadastrar</Link>
+                </Button>
+              </div>
+            )}
             
-            <Link to="/profile">
-              <Button variant="ghost" size="sm">
-                <User className="h-4 w-4" />
+            {/* Mobile menu button */}
+            <div className="lg:hidden">
+              <Button
+                variant="ghost"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2"
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
-            </Link>
-            
-            <Link to="/settings">
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
-            
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden border-t bg-white">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  <span>{item.name}</span>
+                  {item.badge && (
+                    <Badge 
+                      variant="secondary" 
+                      className={`ml-auto text-xs ${
+                        item.badge === 'Novo' ? 'bg-green-100 text-green-800' :
+                        item.badge === 'Beta' ? 'bg-purple-100 text-purple-800' :
+                        item.badge === 'Concluído' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
