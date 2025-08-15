@@ -2277,6 +2277,54 @@ export type Database = {
         }
         Relationships: []
       }
+      federated_learning_metrics: {
+        Row: {
+          created_at: string
+          data_samples: number | null
+          global_accuracy: number | null
+          id: string
+          local_accuracy: number | null
+          metadata: Json | null
+          model_version: string
+          node_id: string
+          round_number: number
+          sync_status: string | null
+          training_time_ms: number | null
+          updated_at: string
+          weights_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_samples?: number | null
+          global_accuracy?: number | null
+          id?: string
+          local_accuracy?: number | null
+          metadata?: Json | null
+          model_version: string
+          node_id: string
+          round_number: number
+          sync_status?: string | null
+          training_time_ms?: number | null
+          updated_at?: string
+          weights_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_samples?: number | null
+          global_accuracy?: number | null
+          id?: string
+          local_accuracy?: number | null
+          metadata?: Json | null
+          model_version?: string
+          node_id?: string
+          round_number?: number
+          sync_status?: string | null
+          training_time_ms?: number | null
+          updated_at?: string
+          weights_hash?: string | null
+        }
+        Relationships: []
+      }
       forum_replies: {
         Row: {
           author_id: string
@@ -3105,6 +3153,59 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_feedback: {
+        Row: {
+          actual_outcome: string
+          created_at: string
+          feedback_data: Json | null
+          id: string
+          model_id: string | null
+          predicted_priority: number
+          query_text: string
+          response_time_ms: number | null
+          source_id: string
+          updated_at: string
+          user_id: string
+          user_rating: number | null
+        }
+        Insert: {
+          actual_outcome: string
+          created_at?: string
+          feedback_data?: Json | null
+          id?: string
+          model_id?: string | null
+          predicted_priority: number
+          query_text: string
+          response_time_ms?: number | null
+          source_id: string
+          updated_at?: string
+          user_id: string
+          user_rating?: number | null
+        }
+        Update: {
+          actual_outcome?: string
+          created_at?: string
+          feedback_data?: Json | null
+          id?: string
+          model_id?: string | null
+          predicted_priority?: number
+          query_text?: string
+          response_time_ms?: number | null
+          source_id?: string
+          updated_at?: string
+          user_id?: string
+          user_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_feedback_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ml_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ml_model_weights: {
         Row: {
           accuracy_score: number
@@ -3138,6 +3239,60 @@ export type Database = {
           training_data_size?: number
           updated_at?: string
           weights?: Json
+        }
+        Relationships: []
+      }
+      ml_models: {
+        Row: {
+          accuracy: number
+          created_at: string
+          f1_score: number | null
+          id: string
+          is_active: boolean | null
+          last_trained: string | null
+          metadata: Json | null
+          model_data: Json | null
+          model_name: string
+          model_type: string
+          precision_score: number | null
+          recall_score: number | null
+          training_data_size: number | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          accuracy?: number
+          created_at?: string
+          f1_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          metadata?: Json | null
+          model_data?: Json | null
+          model_name: string
+          model_type?: string
+          precision_score?: number | null
+          recall_score?: number | null
+          training_data_size?: number | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          accuracy?: number
+          created_at?: string
+          f1_score?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          metadata?: Json | null
+          model_data?: Json | null
+          model_name?: string
+          model_type?: string
+          precision_score?: number | null
+          recall_score?: number | null
+          training_data_size?: number | null
+          updated_at?: string
+          version?: string
         }
         Relationships: []
       }
