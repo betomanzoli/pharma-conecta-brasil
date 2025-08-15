@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './App.css';
-import HomePage from './pages/HomePage';
-import MatchingPage from './pages/MatchingPage';
-import StrategicPlanningPage from './pages/StrategicPlanningPage';
+import Index from './pages/Index';
+import Opportunities from './pages/Opportunities';
+import StrategicPlan from './pages/StrategicPlan';
 import KnowledgeLibrary from './pages/KnowledgeLibrary';
 import AIPage from './pages/AIPage';
 import ChatPage from './pages/ChatPage';
@@ -14,15 +15,15 @@ import AgentDashboard from './pages/ai/AgentDashboard';
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage />,
+    element: <Index />,
   },
   {
     path: "/matching",
-    element: <MatchingPage />,
+    element: <Opportunities />,
   },
   {
     path: "/strategic-planning",
-    element: <StrategicPlanningPage />,
+    element: <StrategicPlan />,
   },
   {
     path: "/knowledge-library",
