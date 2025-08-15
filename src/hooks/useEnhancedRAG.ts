@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { EnhancedRAGService, EnhancedSearchResult, SearchContext } from '@/services/enhancedRagService';
+import { enhancedRAGService, EnhancedSearchResult, SearchContext } from '@/services/enhancedRagService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useEnhancedRAG = () => {
@@ -25,7 +25,7 @@ export const useEnhancedRAG = () => {
     setLoading(true);
     try {
       console.log(`[RAG Hook] Searching for: "${query}"`);
-      const searchResults = await EnhancedRAGService.semanticSearch(query, context, topK);
+      const searchResults = await enhancedRAGService.semanticSearch(query, context, topK);
       
       setResults(searchResults);
       
@@ -62,7 +62,7 @@ export const useEnhancedRAG = () => {
   ) => {
     setLoading(true);
     try {
-      const searchResults = await EnhancedRAGService.searchForAgent(query, agentType, topK);
+      const searchResults = await enhancedRAGService.searchForAgent(query, agentType, topK);
       setResults(searchResults);
       return searchResults;
     } catch (error) {
@@ -80,12 +80,12 @@ export const useEnhancedRAG = () => {
 
   const searchByDomain = useCallback(async (
     query: string, 
-    domain: SearchContext['domain'], 
+    domain: string, 
     topK?: number
   ) => {
     setLoading(true);
     try {
-      const searchResults = await EnhancedRAGService.searchByDomain(query, domain, topK);
+      const searchResults = await enhancedRAGService.searchByDomain(query, domain, topK);
       setResults(searchResults);
       return searchResults;
     } catch (error) {
@@ -107,7 +107,7 @@ export const useEnhancedRAG = () => {
 
   const refreshKnowledgeBase = useCallback(async () => {
     try {
-      await EnhancedRAGService.refreshKnowledgeBase();
+      await enhancedRAGService.refreshKnowledgeBase();
       toast({
         title: 'Base atualizada',
         description: 'Cache do conhecimento foi renovado',

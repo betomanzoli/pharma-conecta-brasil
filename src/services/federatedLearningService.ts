@@ -46,9 +46,9 @@ export class FederatedLearningService {
 
   static async getNodes(): Promise<FederatedNode[]> {
     try {
-      const cached = await SmartCacheService.get<FederatedNode[]>('federated_nodes');
+      const cached = await SmartCacheService.get('federated_nodes');
       if (cached) {
-        return cached;
+        return cached as FederatedNode[];
       }
 
       // Simulate federated nodes data
@@ -97,9 +97,9 @@ export class FederatedLearningService {
 
   static async getModels(): Promise<FederatedModel[]> {
     try {
-      const cached = await SmartCacheService.get<FederatedModel[]>('federated_models');
+      const cached = await SmartCacheService.get('federated_models');
       if (cached) {
-        return cached;
+        return cached as FederatedModel[];
       }
 
       // Simulate federated models data
@@ -145,7 +145,7 @@ export class FederatedLearningService {
         status: 'active'
       };
 
-      // Simulate storing sync round information without actual database call
+      // Simulate storing sync round information
       console.log('Starting sync round:', syncRound);
 
       return syncRound;
@@ -189,3 +189,5 @@ export class FederatedLearningService {
     }
   }
 }
+
+export const federatedLearningService = FederatedLearningService;

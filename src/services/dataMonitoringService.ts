@@ -30,13 +30,13 @@ export interface DataTrend {
   source: string;
   metric: string;
   value: number;
-  values?: number[];
+  values: number[];
   timestamp: string;
   anomalies: Array<{
     type: string;
     severity: 'low' | 'medium' | 'high';
     description: string;
-    timestamp?: string;
+    timestamp: string;
   }>;
 }
 
@@ -59,9 +59,9 @@ export class DataMonitoringService {
 
   static async getDataHealthMetrics(): Promise<DataHealthMetric[]> {
     try {
-      const cached = await SmartCacheService.get<DataHealthMetric[]>('health_metrics');
+      const cached = await SmartCacheService.get('health_metrics');
       if (cached) {
-        return cached;
+        return cached as DataHealthMetric[];
       }
 
       // Simulate data health metrics
@@ -98,9 +98,9 @@ export class DataMonitoringService {
 
   static async assessDataQuality(sources?: string[]): Promise<DataQualityScore[]> {
     try {
-      const cached = await SmartCacheService.get<DataQualityScore[]>('quality_scores');
+      const cached = await SmartCacheService.get('quality_scores');
       if (cached) {
-        return cached;
+        return cached as DataQualityScore[];
       }
 
       // Simulate data quality scores
@@ -208,3 +208,5 @@ export class DataMonitoringService {
     }
   }
 }
+
+export const dataMonitoringService = DataMonitoringService;

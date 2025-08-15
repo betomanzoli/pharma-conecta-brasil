@@ -47,9 +47,9 @@ export class MLPrioritizationService {
 
   static async loadActiveModel(): Promise<MLModel | null> {
     try {
-      const cached = await SmartCacheService.get<MLModel>('active_ml_model');
+      const cached = await SmartCacheService.get('active_ml_model');
       if (cached) {
-        return cached;
+        return cached as MLModel;
       }
 
       // Simulate active ML model data

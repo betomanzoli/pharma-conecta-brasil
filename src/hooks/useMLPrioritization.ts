@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { mlPrioritization, SourceMetrics, PrioritizedResult, MLModel } from '@/services/mlPrioritizationService';
+import { MLPrioritizationService, SourceMetrics, PrioritizedResult, MLModel } from '@/services/mlPrioritizationService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useMLPrioritization = () => {
@@ -17,7 +17,7 @@ export const useMLPrioritization = () => {
 
   const loadActiveModel = async () => {
     try {
-      const activeModel = await mlPrioritization.loadActiveModel();
+      const activeModel = await MLPrioritizationService.loadActiveModel();
       setModel(activeModel);
     } catch (error) {
       console.error('Error loading ML model:', error);
@@ -26,7 +26,7 @@ export const useMLPrioritization = () => {
 
   const loadPerformanceMetrics = async () => {
     try {
-      const metrics = await mlPrioritization.getModelPerformanceMetrics();
+      const metrics = await MLPrioritizationService.getModelPerformanceMetrics();
       setPerformanceMetrics(metrics);
     } catch (error) {
       console.error('Error loading performance metrics:', error);
@@ -44,7 +44,7 @@ export const useMLPrioritization = () => {
   ) => {
     setLoading(true);
     try {
-      const results = await mlPrioritization.calculateSourcePriority(
+      const results = await MLPrioritizationService.calculateSourcePriority(
         sourceMetrics,
         queryContext
       );
@@ -69,7 +69,7 @@ export const useMLPrioritization = () => {
     response_time: number;
   }[]) => {
     try {
-      await mlPrioritization.updateModelWeights(feedbackData);
+      await MLPrioritizationService.updateModelWeights(feedbackData);
       await loadActiveModel();
       await loadPerformanceMetrics();
       
