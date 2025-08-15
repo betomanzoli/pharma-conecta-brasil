@@ -13,38 +13,18 @@ const Logo: React.FC<LogoProps> = ({
   variant = 'icon' 
 }) => {
   const sizeClasses = {
-    sm: 'h-12',
-    md: 'h-16',
-    lg: 'h-20',
-    xl: 'h-24'
+    sm: 'h-8',
+    md: 'h-12',
+    lg: 'h-16',
+    xl: 'h-20'
   };
 
-  if (variant === 'icon' || variant === 'full') {
-    return (
-      <img
-        src="/lovable-uploads/4dbceddc-fe7b-4d92-b370-7b25ef46b02e.png"
-        alt="PharmaConnect Brasil"
-        className={`${sizeClasses[size]} w-auto ${className}`}
-      />
-    );
-  }
-
-  if (variant === 'text') {
-    return (
-      <span className={`text-xl font-bold text-primary-600 font-poppins ${className}`}>
-        PharmaConnect Brasil
-      </span>
-    );
-  }
-
   return (
-    <div className={`flex items-center space-x-3 ${className}`}>
-      <img
-        src="/lovable-uploads/4dbceddc-fe7b-4d92-b370-7b25ef46b02e.png"
-        alt="PharmaConnect Brasil"
-        className={`${sizeClasses[size]} w-auto`}
-      />
-    </div>
+    <img
+      src="/lovable-uploads/9c96c4a3-866a-4e28-a69f-55d561dad6e5.png"
+      alt="PharmaConnect Brasil"
+      className={`${sizeClasses[size]} w-auto ${className}`}
+    />
   );
 };
 

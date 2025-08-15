@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,38 +58,17 @@ export const ApiIntegrationDashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [endpoints, syncData] = await Promise.all([
-        ApiMonitoringService.getEndpoints(),
+      const [health, sync] = await Promise.all([
+        ApiMonitoringService.monitorAllApis(),
         ApiMonitoringService.getSyncStatuses()
       ]);
       
-      // Transform endpoints to health checks
-      const healthData: ApiHealthCheck[] = endpoints.map(endpoint => ({
-        service: endpoint.name,
-        status: endpoint.status === 'active' ? 'healthy' : endpoint.status === 'error' ? 'down' : 'degraded',
-        responseTime: endpoint.response_time,
-        lastCheck: endpoint.last_check,
-        errorCount: endpoint.error_count,
-        successRate: endpoint.success_rate,
-        endpoint: endpoint.url
-      }));
+      setHealthChecks(health);
+      setSyncStatuses(sync);
 
-      // Transform sync statuses
-      const syncStatusData: SyncStatus[] = syncData.map(sync => ({
-        service: sync.name,
-        lastSync: sync.last_sync,
-        nextSync: sync.next_sync,
-        status: sync.status === 'synced' ? 'completed' : sync.status as any,
-        recordsProcessed: Math.floor(Math.random() * 1000),
-        errorMessage: sync.error_message
-      }));
-      
-      setHealthChecks(healthData);
-      setSyncStatuses(syncStatusData);
-
-      // Load performance metrics
+      // Carregar métricas para o serviço selecionado
       if (selectedService) {
-        const metrics = await ApiMonitoringService.getPerformanceMetrics();
+        const metrics = await ApiMonitoringService.getPerformanceMetrics(selectedService, 24);
         setPerformanceMetrics(metrics);
       }
     } catch (err) {
@@ -416,7 +394,7 @@ export const ApiIntegrationDashboard: React.FC = () => {
               size="sm"
               variant="outline"
               onClick={async () => {
-                const metrics = await ApiMonitoringService.getPerformanceMetrics();
+                const metrics = await ApiMonitoringService.getPerformanceMetrics(selectedService, 24);
                 setPerformanceMetrics(metrics);
               }}
             >
@@ -429,28 +407,28 @@ export const ApiIntegrationDashboard: React.FC = () => {
             <ResponsiveGrid columns={{ default: 1, md: 2, lg: 4 }} gap="md">
               <StatsCard
                 title="Total de Requests"
-                value={performanceMetrics.total_requests}
+                value={performanceMetrics.totalRequests}
                 icon={Activity}
                 variant="primary"
               />
               
               <StatsCard
                 title="Taxa de Sucesso"
-                value={`${performanceMetrics.success_rate}%`}
+                value={`${performanceMetrics.successRate}%`}
                 icon={CheckCircle}
                 variant="secondary"
               />
               
               <StatsCard
                 title="Tempo Médio"
-                value={`${performanceMetrics.average_response_time}ms`}
+                value={`${performanceMetrics.avgResponseTime}ms`}
                 icon={Clock}
                 variant="accent"
               />
               
               <StatsCard
                 title="Erros"
-                value={performanceMetrics.failed_requests}
+                value={performanceMetrics.errorCount}
                 icon={AlertCircle}
                 variant="default"
               />

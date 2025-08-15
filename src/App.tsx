@@ -1,198 +1,112 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Index from './pages/Index';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AuthPage from './pages/AuthPage';
-import DashboardPage from './pages/DashboardPage';
-import AIMatchingPage from './pages/AIMatchingPage';
-import MarketplacePage from './pages/MarketplacePage';
-import ProjectsPage from './pages/ProjectsPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import ProfilePage from './pages/ProfilePage';
-import VerificationPage from './pages/VerificationPage';
-import NotificationsPage from './pages/NotificationsPage';
-import AdminPage from './pages/AdminPage';
-import SubscriptionPage from './pages/SubscriptionPage';
-import ReportsPage from './pages/ReportsPage';
-import SecurityDashboard from './components/security/SecurityDashboard';
-import PhaseConsolidationDashboard from './components/strategic-plan/consolidation/PhaseConsolidationDashboard';
-import EnhancedChatSystem from './components/chat/EnhancedChatSystem';
-import AIAssistantPage from './pages/AIAssistantPage';
-import GenerativeAIHubPage from './pages/GenerativeAIHubPage';
-import AgentsDashboardPage from './pages/AgentsDashboardPage';
-import KnowledgeHubPage from './pages/KnowledgeHubPage';
-import StartHerePage from './pages/StartHerePage';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navigation from './components/Navigation';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { Toaster } from '@/components/ui/toaster';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AIHealthCheckPage from './pages/AIHealthCheckPage';
+
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
+import Analytics from "./pages/Analytics";
+import KnowledgeLibrary from "./pages/KnowledgeLibrary";
+import ProjectAnalyst from "./pages/ProjectAnalyst";
+import BusinessStrategist from "./pages/BusinessStrategist";
+import TechnicalRegulatory from "./pages/TechnicalRegulatory";
+import DocumentationAssistant from "./pages/DocumentationAssistant";
+import ChatDocumentAssistant from "./pages/ChatDocumentAssistant";
+import Coordination from "./pages/Coordination";
+import ANVISAAlerts from "./pages/ANVISAAlerts";
+import FederalLearning from "./pages/FederalLearning";
+import AutomationPage from "./pages/AutomationPage";
+import AIMatchingDashboard from "./pages/AIMatchingDashboard";
+import BusinessMetricsDashboard from "./pages/BusinessMetricsDashboard";
+import MasterAIHub from "./pages/MasterAIHub";
+import PromptsLibrary from "./pages/PromptsLibrary";
+import SynergyDashboard from "./pages/SynergyDashboard";
+import Network from "./pages/Network";
+import Marketplace from "./pages/Marketplace";
+import MentorshipHub from "./pages/MentorshipHub";
+import Verification from "./pages/Verification";
+import Forums from "./pages/Forums";
+import EnhancedChat from "./pages/EnhancedChat";
+import EnhancedDashboard from "./pages/EnhancedDashboard";
+import IntegrationsPage from "./pages/IntegrationsPage";
+import Projects from "./pages/Projects";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/auth" element={<AuthPage />} />
-              
-              {/* Onboarding */}
-              <Route path="/start-here" element={<StartHerePage />} />
-              
-              {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <DashboardPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/matching" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AIMatchingPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/marketplace" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <MarketplacePage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/chat" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <EnhancedChatSystem />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/projects" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <ProjectsPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AnalyticsPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* AI Tools */}
-              <Route path="/ai-assistant" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AIAssistantPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/agents-dashboard" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AgentsDashboardPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/knowledge-hub" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <KnowledgeHubPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/generative-ai" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <GenerativeAIHubPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/ai-health" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AIHealthCheckPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* System */}
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <ReportsPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/security" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <SecurityDashboard />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/subscription" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <SubscriptionPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* Legacy routes */}
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <ProfilePage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/verification" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <VerificationPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/notifications" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <NotificationsPage />
-                </ProtectedRoute>
-              } />
-              
-              {/* Strategic Plan Routes */}
-              <Route path="/strategic-consolidation" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <PhaseConsolidationDashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Admin routes */}
-              <Route path="/admin/*" element={
-                <ProtectedRoute>
-                  <Navigation />
-                  <AdminPage />
-                </ProtectedRoute>
-              } />
-            </Routes>
-            <Toaster />
-          </div>
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/knowledge" element={<KnowledgeLibrary />} />
+            <Route path="/ai/hub" element={<MasterAIHub />} />
+            <Route path="/master-ai" element={<MasterAIHub />} />
+            <Route path="/ai/analista-projetos" element={<ProjectAnalyst />} />
+            <Route path="/ai/estrategista" element={<BusinessStrategist />} />
+            <Route path="/ai/tecnico-regulatorio" element={<TechnicalRegulatory />} />
+            <Route path="/ai/documentacao" element={<DocumentationAssistant />} />
+            <Route path="/ai/documentacao-chat" element={<ChatDocumentAssistant />} />
+            <Route path="/ai/coordenacao" element={<Coordination />} />
+            <Route path="/ai/prompts" element={<PromptsLibrary />} />
+            <Route path="/ai/sinergia" element={<SynergyDashboard />} />
+            <Route path="/regulatory/alerts" element={<ANVISAAlerts />} />
+            <Route path="/ai/federal" element={<FederalLearning />} />
+            <Route path="/automation" element={<AutomationPage />} />
+            <Route path="/ai/matching-dashboard" element={<AIMatchingDashboard />} />
+            <Route path="/ai/business-metrics" element={<BusinessMetricsDashboard />} />
+            
+            {/* Static pages */}
+            <Route path="/about" element={<Index />} />
+            <Route path="/contact" element={<Index />} />
+            <Route path="/careers" element={<Index />} />
+            <Route path="/privacy" element={<Index />} />
+            <Route path="/terms" element={<Index />} />
+            <Route path="/ethics" element={<Index />} />
+            <Route path="/auth" element={<Login />} />
+            <Route path="/status" element={<Index />} />
+            <Route path="/demo" element={<Index />} />
+            
+            {/* Protected routes */}
+            <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+            <Route path="/mentorship" element={<ProtectedRoute><MentorshipHub /></ProtectedRoute>} />
+            <Route path="/apis" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />
+            <Route path="/verification" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
+            <Route path="/forums" element={<ProtectedRoute><Forums /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><EnhancedChat /></ProtectedRoute>} />
+            <Route path="/enhanced-dashboard" element={<ProtectedRoute><EnhancedDashboard /></ProtectedRoute>} />
+            
+            {/* Missing routes added */}
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;

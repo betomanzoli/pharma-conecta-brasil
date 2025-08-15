@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Bot, User, ArrowRight } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useMasterChatBridge } from '@/hooks/useMasterChatBridge';
 import { useToast } from '@/hooks/use-toast';
+import MasterChatbot from '@/components/ai/MasterChatbot';
 
 interface Message {
   id: string;
@@ -63,57 +64,13 @@ const EnhancedChat = () => {
       }
     }
 
-    // Add welcome message
-    setMessages([{
-      id: '1',
-      role: 'assistant',
-      content: 'Olá! Sou seu assistente de IA farmacêutica. Como posso ajudá-lo hoje?',
-      timestamp: new Date()
-    }]);
-  }, [getBridgeData, toast]);
+// Mensagem de boas-vindas opcional via MasterChatbot
+// Mantemos o input apenas para repasse inicial do prompt
+}, [getBridgeData, toast]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-      source: sourceInfo ? `${sourceInfo.title || 'Agente IA'}` : undefined
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
-    setInput('');
-    setSourceInfo(null); // Clear source info after sending
-    setLoading(true);
-
-    try {
-      // Simulate AI response
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Entendi sua pergunta sobre "${currentInput}". Este é um assistente de demonstração. Em uma implementação real, eu processaria sua consulta usando IA avançada e forneceria respostas especializadas em farmacêutica e regulamentação.
-
-${sourceInfo ? `\n*Contexto recebido de: ${sourceInfo.title || sourceInfo.metadata?.module || 'Agente IA'}*` : ''}`,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível enviar a mensagem',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleSend = async () => {
+  // Não usado: MasterChatbot gerencia envio
+};
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -122,128 +79,47 @@ ${sourceInfo ? `\n*Contexto recebido de: ${sourceInfo.title || sourceInfo.metada
     }
   };
 
-  return (
-    <ProtectedRoute>
-      <MainLayout>
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          <div className="mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                <MessageSquare className="h-8 w-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold">Chat IA Farmacêutica</h1>
-                <p className="text-muted-foreground">
-                  Assistente especializado em consultoria farmacêutica
-                </p>
-              </div>
+return (
+  <ProtectedRoute>
+    <MainLayout>
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+              <MessageSquare className="h-8 w-8" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Chat IA Farmacêutica</h1>
+              <p className="text-muted-foreground">
+                Assistente especializado em consultoria farmacêutica
+              </p>
             </div>
           </div>
+        </div>
 
-          {sourceInfo && (
-            <Card className="mb-4 border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <ArrowRight className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">
-                    Prompt recebido de: {sourceInfo.title || sourceInfo.metadata?.module || 'Agente IA'}
-                  </span>
-                  {sourceInfo.category && (
-                    <Badge variant="secondary" className="text-xs">
-                      {sourceInfo.category}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="h-[600px] flex flex-col">
-            <CardHeader>
-              <CardTitle>Conversa</CardTitle>
-              <CardDescription>
-                Faça perguntas sobre regulamentação, desenvolvimento e estratégia farmacêutica
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col">
-              <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex items-start space-x-3 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      <div className={`flex items-start space-x-3 max-w-[80%] ${
-                        message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                      }`}>
-                        <div className={`p-2 rounded-full ${
-                          message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        }`}>
-                          {message.role === 'user' ? (
-                            <User className="h-4 w-4" />
-                          ) : (
-                            <Bot className="h-4 w-4" />
-                          )}
-                        </div>
-                        <div className={`p-3 rounded-lg ${
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground ml-auto'
-                            : 'bg-muted'
-                        }`}>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs opacity-70">
-                              {message.timestamp.toLocaleTimeString()}
-                            </span>
-                            {message.source && (
-                              <Badge variant="outline" className="text-xs ml-2">
-                                {message.source}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {loading && (
-                    <div className="flex items-start space-x-3">
-                      <div className="p-2 rounded-full bg-muted">
-                        <Bot className="h-4 w-4" />
-                      </div>
-                      <div className="p-3 rounded-lg bg-muted">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                          <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-
-              <div className="mt-4 flex space-x-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)"
-                  className="flex-1 resize-none"
-                  rows={1}
-                />
-                <Button onClick={handleSend} disabled={loading || !input.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
+        {sourceInfo && (
+          <Card className="mb-4 border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-blue-800">
+                  Prompt recebido de: {sourceInfo.title || sourceInfo.metadata?.module || 'Agente IA'}
+                </span>
+                {sourceInfo.category && (
+                  <Badge variant="secondary" className="text-xs">
+                    {sourceInfo.category}
+                  </Badge>
+                )}
               </div>
             </CardContent>
           </Card>
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
+        )}
+
+        {/* MasterChatbot integrado com suporte a threads e sumários */}
+        <MasterChatbot initialPrompt={input} />
+      </div>
+    </MainLayout>
+  </ProtectedRoute>
+);
 };
 
 export default EnhancedChat;
