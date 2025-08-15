@@ -27,13 +27,15 @@ const NotificationsPage = () => {
     const loadNotifications = async () => {
       try {
         if (isDemo) {
-          // Use demo data and ensure all required properties are present
+          // Use demo data and ensure all required properties are present,
+          // without accessing n.read (which doesn't exist on demo data type)
           const demoNotifications = demoData.notifications.map(n => ({
-            ...n,
-            type: n.type as 'info' | 'warning' | 'success' | 'error',
-            read: n.read ?? false, // Ensure read property exists
             id: n.id || `demo-${Math.random().toString(36).substr(2, 9)}`,
-            created_at: n.created_at || new Date().toISOString()
+            title: n.title,
+            message: n.message,
+            type: (n.type as 'info' | 'warning' | 'success' | 'error') ?? 'info',
+            read: false,
+            created_at: n.created_at || new Date().toISOString(),
           }));
           setNotifications(demoNotifications);
         } else {
