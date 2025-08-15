@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Brain, Target, BarChart3 } from 'lucide-react';
-import { isDemoMode, demoData } from '@/utils/demoMode';
+import { isDemoMode } from '@/utils/demoMode';
+import { demoData } from '@/utils/demoData';
 
 const PredictiveInsights = () => {
   const isDemo = isDemoMode();

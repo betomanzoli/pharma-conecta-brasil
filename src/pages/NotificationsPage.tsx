@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Bell, Check, Info, AlertTriangle, MessageSquare, Users, BookOpen, Settings } from 'lucide-react';
-import { isDemoMode, demoData } from '@/utils/demoMode';
+import { isDemoMode } from '@/utils/demoMode';
+import { demoData } from '@/utils/demoData';
 
 interface Notification {
   id: string;
