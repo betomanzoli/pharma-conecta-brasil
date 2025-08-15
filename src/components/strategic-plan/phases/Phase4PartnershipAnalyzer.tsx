@@ -1,304 +1,307 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Users, 
   TrendingUp, 
+  TrendingDown, 
+  Users, 
   Target, 
-  Award,
-  Globe,
-  Handshake,
-  BarChart3,
-  CheckCircle2
+  Shield, 
+  Globe, 
+  BookOpen,
+  AlertTriangle
 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 
-interface Partnership {
-  id: string;
-  partner_name: string;
-  partnership_type: 'strategic' | 'operational' | 'research' | 'commercial';
-  status: 'active' | 'negotiating' | 'completed' | 'paused';
-  gomes_casseres_score: number;
-  complementarity_index: number;
-  reciprocity_score: number;
-  governance_flexibility: number;
-  trust_level: number;
-  innovation_potential: number;
-  sustainability_score: number;
-  start_date: string;
-  key_benefits: string[];
-  risk_factors: string[];
-  value_created: number;
-}
+const Phase4PartnershipAnalyzer: React.FC = () => {
+  const [partnershipMetrics, setPartnershipMetrics] = React.useState([
+    { metric: 'Market Share', current_value: 25, trend: 2 },
+    { metric: 'Customer Acquisition', current_value: 150, trend: -5 },
+    { metric: 'Revenue Growth', current_value: 18, trend: 3 },
+    { metric: 'Operational Efficiency', current_value: 65, trend: 1 }
+  ]);
 
-interface Phase4PartnershipAnalyzerProps {
-  projectId?: string;
-}
+  const [partnerships, setPartnerships] = React.useState([
+    { id: 'p1', name: 'PharmaCorp', type: 'Distribution', status: 'excellent', roi: 25 },
+    { id: 'p2', name: 'Global Labs', type: 'Research', status: 'good', roi: 18 },
+    { id: 'p3', name: 'MediServe', type: 'Technology', status: 'fair', roi: 12 }
+  ]);
 
-const Phase4PartnershipAnalyzer: React.FC<Phase4PartnershipAnalyzerProps> = ({ projectId }) => {
-  const [partnerships, setPartnerships] = useState<Partnership[]>([]);
-  const [analytics, setAnalytics] = useState<any>({});
+  const [riskFactors, setRiskFactors] = React.useState([
+    { factor: 'Regulatory Changes', level: 'medium', description: 'New regulations impacting partnership operations' },
+    { factor: 'Market Competition', level: 'high', description: 'Increased competition affecting market share' },
+    { factor: 'Technological Obsolescence', level: 'low', description: 'Risk of technology becoming outdated' }
+  ]);
 
-  useEffect(() => {
-    // Simulate partnership data
-    const mockPartnerships: Partnership[] = [
-      {
-        id: '1',
-        partner_name: 'BioTech Labs International',
-        partnership_type: 'research',
-        status: 'active',
-        gomes_casseres_score: 89,
-        complementarity_index: 0.92,
-        reciprocity_score: 0.88,
-        governance_flexibility: 0.85,
-        trust_level: 0.91,
-        innovation_potential: 0.94,
-        sustainability_score: 0.87,
-        start_date: '2024-01-15',
-        key_benefits: ['Acesso a tecnologia exclusiva', 'Redução de custos P&D', 'Aceleração time-to-market'],
-        risk_factors: ['Dependência tecnológica', 'Conflito de propriedade intelectual'],
-        value_created: 2100000
-      },
-      {
-        id: '2',
-        partner_name: 'Global Pharma Solutions',
-        partnership_type: 'commercial',
-        status: 'active',
-        gomes_casseres_score: 76,
-        complementarity_index: 0.78,
-        reciprocity_score: 0.82,
-        governance_flexibility: 0.74,
-        trust_level: 0.79,
-        innovation_potential: 0.71,
-        sustainability_score: 0.83,
-        start_date: '2023-11-20',
-        key_benefits: ['Expansão de mercado', 'Rede de distribuição', 'Expertise regulatória'],
-        risk_factors: ['Concorrência interna', 'Diferenças culturais'],
-        value_created: 1450000
-      }
-    ];
+  const [marketOpportunities, setMarketOpportunities] = React.useState([
+    { market: 'Emerging Markets', potential: 30, description: 'Expansion into new geographic regions', investment: '$500k', timeline: '18 months' },
+    { market: 'New Product Lines', potential: 25, description: 'Development of innovative products', investment: '$750k', timeline: '24 months' }
+  ]);
 
-    const mockAnalytics = {
-      total_partnerships: mockPartnerships.length,
-      active_partnerships: mockPartnerships.filter(p => p.status === 'active').length,
-      average_gc_score: Math.round(mockPartnerships.reduce((sum, p) => sum + p.gomes_casseres_score, 0) / mockPartnerships.length),
-      total_value_created: mockPartnerships.reduce((sum, p) => sum + p.value_created, 0),
-      performance_by_law: {
-        complementarity: Math.round(mockPartnerships.reduce((sum, p) => sum + p.complementarity_index, 0) / mockPartnerships.length * 100),
-        reciprocity: Math.round(mockPartnerships.reduce((sum, p) => sum + p.reciprocity_score, 0) / mockPartnerships.length * 100),
-        governance: Math.round(mockPartnerships.reduce((sum, p) => sum + p.governance_flexibility, 0) / mockPartnerships.length * 100),
-        trust: Math.round(mockPartnerships.reduce((sum, p) => sum + p.trust_level, 0) / mockPartnerships.length * 100),
-        innovation: Math.round(mockPartnerships.reduce((sum, p) => sum + p.innovation_potential, 0) / mockPartnerships.length * 100),
-        sustainability: Math.round(mockPartnerships.reduce((sum, p) => sum + p.sustainability_score, 0) / mockPartnerships.length * 100)
-      }
-    };
+  const [gomesCasseresLaws, setGomesCasseresLaws] = React.useState([
+    { name: 'Law of the Few', description: 'Strategic partnerships with a limited number of key players', compliance_score: 80, impact: 'high' },
+    { name: 'Law of Value Creation', description: 'Focus on creating mutual value for all partners', compliance_score: 90, impact: 'high' },
+    { name: 'Law of Asymmetry', description: 'Recognizing and leveraging the different strengths of each partner', compliance_score: 70, impact: 'medium' }
+  ]);
 
-    setPartnerships(mockPartnerships);
-    setAnalytics(mockAnalytics);
-  }, [projectId]);
+  const [strategicRecommendations, setStrategicRecommendations] = React.useState([
+    { title: 'Diversify Partnership Portfolio', description: 'Explore partnerships in emerging markets', priority: 'high', impact: 80, effort: 'medium' },
+    { title: 'Enhance Technology Integration', description: 'Invest in seamless technology integration', priority: 'medium', impact: 65, effort: 'high' },
+    { title: 'Improve Risk Management', description: 'Implement robust risk management processes', priority: 'low', impact: 50, effort: 'low' }
+  ]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'negotiating': return 'text-blue-600 bg-blue-100';
-      case 'completed': return 'text-gray-600 bg-gray-100';
-      case 'paused': return 'text-yellow-600 bg-yellow-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'excellent': return 'text-green-600';
+      case 'good': return 'text-blue-600';
+      case 'fair': return 'text-yellow-600';
+      case 'poor': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'strategic': return 'text-purple-600 bg-purple-100';
-      case 'operational': return 'text-blue-600 bg-blue-100';
-      case 'research': return 'text-orange-600 bg-orange-100';
-      case 'commercial': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'excellent': return 'default';
+      case 'good': return 'secondary';
+      case 'fair': return 'outline';
+      case 'poor': return 'destructive';
+      default: return 'secondary';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-            <Handshake className="h-5 w-5 text-blue-500" />
-            <span>Analisador de Parcerias Estratégicas</span>
-          </h3>
-          <p className="text-gray-600 mt-1">
-            Análise baseada nas Leis de Gomes-Casseres para parcerias de alto desempenho
-          </p>
+          <h2 className="text-2xl font-bold">Partnership Strategic Analyzer</h2>
+          <p className="text-muted-foreground">Análise estratégica baseada nas Leis de Gomes-Casseres</p>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-blue-600">{analytics.average_gc_score}%</div>
-          <div className="text-sm text-gray-600">Score Médio G-C</div>
-        </div>
+        <Button className="gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Gerar Relatório
+        </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="partnerships">Parcerias</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-600">{analytics.total_partnerships}</div>
-                <div className="text-sm text-gray-600">Total de Parcerias</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-600">{analytics.active_partnerships}</div>
-                <div className="text-sm text-gray-600">Parcerias Ativas</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Award className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-orange-600">{analytics.average_gc_score}%</div>
-                <div className="text-sm text-gray-600">Score G-C Médio</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6 text-center">
-                <TrendingUp className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-600">
-                  R$ {(analytics.total_value_created / 1000000).toFixed(1)}M
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {partnershipMetrics.map((metric) => (
+          <Card key={metric.metric}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {metric.metric}
+                  </p>
+                  <p className="text-2xl font-bold">{metric.current_value}</p>
                 </div>
-                <div className="text-sm text-gray-600">Valor Criado</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Performance by Law */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>Performance por Lei de Gomes-Casseres</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {Object.entries(analytics.performance_by_law || {}).map(([law, score]) => (
-                  <div key={law} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium capitalize">{law}</span>
-                      <span className="text-sm font-medium">{score}%</span>
-                    </div>
-                    <Progress value={score as number} className="h-2" />
-                  </div>
-                ))}
+                <div className={`text-right ${metric.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {metric.trend > 0 ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-medium ml-1">
+                    {metric.trend > 0 ? '+' : ''}{metric.trend}%
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
+        ))}
+      </div>
+
+      <Tabs defaultValue="analysis" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="analysis">Análise de Parcerias</TabsTrigger>
+          <TabsTrigger value="laws">Leis de Gomes-Casseres</TabsTrigger>
+          <TabsTrigger value="recommendations">Recomendações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analysis" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Partnership Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Performance das Parcerias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {partnerships.map((partnership) => (
+                    <div key={partnership.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{partnership.name}</h4>
+                        <p className="text-sm text-muted-foreground">{partnership.type}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={getStatusBadge(partnership.status)}>
+                          {partnership.status}
+                        </Badge>
+                        <p className="text-sm mt-1">
+                          ROI: <span className="font-medium text-green-600">
+                            {String(partnership.roi)}%
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Strategic Alignment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Alinhamento Estratégico
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">85%</div>
+                      <div className="text-sm text-muted-foreground">Alinhamento Geral</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">12</div>
+                      <div className="text-sm text-muted-foreground">Parcerias Ativas</div>
+                    </div>
+                  </div>
+                  
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={partnershipMetrics}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="metric" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="current_value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Risk Assessment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Avaliação de Riscos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {riskFactors.map((risk, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className={`h-4 w-4 ${
+                          risk.level === 'high' ? 'text-red-500' : 
+                          risk.level === 'medium' ? 'text-yellow-500' : 
+                          'text-green-500'
+                        }`} />
+                        <div>
+                          <p className="font-medium">{risk.factor}</p>
+                          <p className="text-sm text-muted-foreground">{risk.description}</p>
+                        </div>
+                      </div>
+                      <Badge variant={
+                        risk.level === 'high' ? 'destructive' : 
+                        risk.level === 'medium' ? 'outline' : 
+                        'secondary'
+                      }>
+                        {risk.level}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Market Opportunities */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Oportunidades de Mercado
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {marketOpportunities.map((opportunity, index) => (
+                    <div key={index} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{opportunity.market}</h4>
+                        <Badge variant="default">
+                          Potencial: {String(opportunity.potential)}%
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {opportunity.description}
+                      </p>
+                      <div className="flex justify-between text-sm">
+                        <span>Investimento: <strong>{opportunity.investment}</strong></span>
+                        <span>Timeline: <strong>{opportunity.timeline}</strong></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="partnerships" className="mt-6">
-          <div className="space-y-6">
-            {partnerships.map((partnership) => (
-              <Card key={partnership.id} className="hover:shadow-lg transition-shadow">
+        <TabsContent value="laws" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {gomesCasseresLaws.map((law, index) => (
+              <Card key={index}>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-2">
-                      <Globe className="h-5 w-5 text-blue-500" />
-                      <span>{partnership.partner_name}</span>
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getTypeColor(partnership.partnership_type)}>
-                        {partnership.partnership_type}
-                      </Badge>
-                      <Badge className={getStatusColor(partnership.status)}>
-                        {partnership.status}
-                      </Badge>
-                    </div>
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    {law.name}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Gomes-Casseres Score */}
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">Score Gomes-Casseres</span>
-                      <span className="font-bold text-blue-600">{partnership.gomes_casseres_score}%</span>
-                    </div>
-                    <Progress value={partnership.gomes_casseres_score} className="h-3" />
-                  </div>
-
-                  {/* Individual Scores */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-600">
-                        {Math.round(partnership.complementarity_index * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Complementaridade</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-blue-600">
-                        {Math.round(partnership.reciprocity_score * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Reciprocidade</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-600">
-                        {Math.round(partnership.trust_level * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Confiança</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-orange-600">
-                        {Math.round(partnership.innovation_potential * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Inovação</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-yellow-600">
-                        {Math.round(partnership.governance_flexibility * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Governança</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-indigo-600">
-                        {Math.round(partnership.sustainability_score * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Sustentabilidade</div>
-                    </div>
-                  </div>
-
-                  {/* Benefits and Risks */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">{law.description}</p>
+                  
+                  <div className="space-y-3">
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Benefícios Chave</h4>
-                      <ul className="space-y-1">
-                        {partnership.key_benefits.map((benefit, index) => (
-                          <li key={index} className="text-sm text-gray-600 flex items-center space-x-2">
-                            <CheckCircle2 className="h-3 w-3 text-green-500" />
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <h4 className="font-semibold mb-2">Aplicação Atual:</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${law.compliance_score}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">{law.compliance_score}%</span>
+                      </div>
                     </div>
+                    
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Fatores de Risco</h4>
-                      <ul className="space-y-1">
-                        {partnership.risk_factors.map((risk, index) => (
-                          <li key={index} className="text-sm text-gray-600 flex items-center space-x-2">
-                            <Target className="h-3 w-3 text-red-500" />
-                            <span>{risk}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <h4 className="font-semibold mb-2">Impacto:</h4>
+                      <Badge variant={
+                        law.impact === 'high' ? 'default' : 
+                        law.impact === 'medium' ? 'secondary' : 
+                        'outline'
+                      }>
+                        {law.impact}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -307,53 +310,44 @@ const Phase4PartnershipAnalyzer: React.FC<Phase4PartnershipAnalyzerProps> = ({ p
           </div>
         </TabsContent>
 
-        <TabsContent value="performance" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Performance by Law Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance por Lei</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(analytics.performance_by_law || {}).map(([law, score]) => (
-                    <div key={law} className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium capitalize">{law}</span>
-                        <span className="text-sm font-medium">{score}%</span>
-                      </div>
-                      <Progress value={score as number} className="h-3" />
+        <TabsContent value="recommendations" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recomendações Estratégicas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {strategicRecommendations.map((rec, index) => (
+                  <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
+                    <div className={`p-2 rounded-full ${
+                      rec.priority === 'high' ? 'bg-red-100 text-red-600' :
+                      rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                      'bg-green-100 text-green-600'
+                    }`}>
+                      <TrendingUp className="h-4 w-4" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Value Creation */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Criação de Valor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {partnerships.map((partnership, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <div className="font-medium">{partnership.partner_name}</div>
-                        <div className="text-sm text-gray-600">{partnership.partnership_type}</div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold">{rec.title}</h4>
+                        <Badge variant={
+                          rec.priority === 'high' ? 'destructive' :
+                          rec.priority === 'medium' ? 'outline' :
+                          'secondary'
+                        }>
+                          {rec.priority}
+                        </Badge>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-green-600">
-                          R$ {(partnership.value_created / 1000000).toFixed(1)}M
-                        </div>
-                        <div className="text-sm text-gray-600">valor criado</div>
+                      <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
+                      <div className="flex justify-between text-sm">
+                        <span>Impacto: <strong>{String(rec.impact)}%</strong></span>
+                        <span>Esforço: <strong>{rec.effort}</strong></span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

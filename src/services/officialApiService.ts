@@ -21,6 +21,27 @@ export interface ApiConfiguration {
   retry_count: number;
 }
 
+export interface OfficialDataResult {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
+  url: string;
+  relevance_score: number;
+  timestamp: string;
+  metadata: Record<string, any>;
+}
+
+export interface ApiSource {
+  id: string;
+  name: string;
+  description: string;
+  available: boolean;
+  last_sync: string;
+  status: 'active' | 'inactive' | 'error';
+  total_records: number;
+}
+
 export class OfficialApiService {
   private static readonly CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
@@ -99,6 +120,116 @@ export class OfficialApiService {
     } catch (error) {
       console.error('Error testing API connection:', error);
       return false;
+    }
+  }
+
+  static async searchOfficialData(
+    query: string,
+    sources: string[] = ['anvisa', 'fda', 'pubmed'],
+    limit: number = 20
+  ): Promise<OfficialDataResult[]> {
+    try {
+      const cacheKey = `official_search_${query}_${sources.join(',')}_${limit}`;
+      const cached = await SmartCacheService.get(cacheKey);
+      if (cached) {
+        return cached as OfficialDataResult[];
+      }
+
+      // Simulate search results
+      const results: OfficialDataResult[] = Array.from({ length: Math.min(limit, 10) }, (_, i) => ({
+        id: `result-${i}`,
+        title: `Official Document ${i + 1}: ${query}`,
+        content: `This is official content related to ${query} from regulatory sources.`,
+        source: sources[i % sources.length],
+        url: `https://${sources[i % sources.length]}.gov/doc-${i}`,
+        relevance_score: Math.random() * 0.5 + 0.5,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          document_type: 'regulation',
+          classification: 'public',
+          language: 'pt-BR'
+        }
+      }));
+
+      await SmartCacheService.set(cacheKey, results, this.CACHE_TTL);
+      return results;
+    } catch (error) {
+      console.error('Error searching official data:', error);
+      return [];
+    }
+  }
+
+  static async getAvailableSources(): Promise<ApiSource[]> {
+    try {
+      const cached = await SmartCacheService.get('api_sources');
+      if (cached) {
+        return cached as ApiSource[];
+      }
+
+      const sources: ApiSource[] = [
+        {
+          id: 'anvisa',
+          name: 'ANVISA',
+          description: 'Agência Nacional de Vigilância Sanitária',
+          available: true,
+          last_sync: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          status: 'active',
+          total_records: 15000
+        },
+        {
+          id: 'fda',
+          name: 'FDA',
+          description: 'Food and Drug Administration',
+          available: true,
+          last_sync: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+          status: 'active',
+          total_records: 25000
+        },
+        {
+          id: 'pubmed',
+          name: 'PubMed',
+          description: 'Medical Literature Database',
+          available: true,
+          last_sync: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          status: 'active',
+          total_records: 50000
+        }
+      ];
+
+      await SmartCacheService.set('api_sources', sources, this.CACHE_TTL);
+      return sources;
+    } catch (error) {
+      console.error('Error fetching available sources:', error);
+      return [];
+    }
+  }
+
+  static async syncAllSources(): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log('Starting sync of all official sources...');
+      
+      // Simulate sync process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const success = Math.random() > 0.1; // 90% success rate
+      
+      if (success) {
+        return {
+          success: true,
+          message: 'Sincronização concluída com sucesso. Todas as fontes foram atualizadas.'
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Falha na sincronização. Algumas fontes podem estar indisponíveis.'
+        };
+      }
+    } catch (error: any) {
+      console.error('Error syncing sources:', error);
+      return {
+        success: false,
+        message: error.message || 'Erro desconhecido durante a sincronização'
+      };
     }
   }
 }
