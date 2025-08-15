@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -186,10 +187,22 @@ const Phase1AIMatching: React.FC<Phase1AIMatchingProps> = ({ projects, onProject
   const submitFeedback = async (matchId: string, rating: number, comments: string = '') => {
     setFeedbackSubmitting(matchId);
     try {
-      // Store feedback in database
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erro de Autenticação",
+          description: "Você precisa estar logado para enviar feedback",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Store feedback in database with user_id
       await supabase
         .from('match_feedback')
         .insert({
+          user_id: user.id, // Add the missing user_id field
           match_id: matchId,
           feedback_type: rating > 3 ? 'positive' : 'negative',
           match_score: rating,
