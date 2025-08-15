@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Bot, Brain, FileText, Search, MessageCircle, Zap } from 'lucide-react';
-import { useKnowledgeBase } from '@/hooks/useKnowledgeBase';
+import { Bot, Brain, FileText, Search, MessageCircle, Zap, CheckCircle, AlertCircle } from 'lucide-react';
+import { isDemoMode, demoData } from '@/utils/demoMode';
 
 const AIAssistant = () => {
   const [activeAgent, setActiveAgent] = useState('regulatory');
@@ -16,7 +16,7 @@ const AIAssistant = () => {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState('');
   const { toast } = useToast();
-  const { search } = useKnowledgeBase();
+  const isDemo = isDemoMode();
 
   const agents = [
     {
@@ -24,52 +24,133 @@ const AIAssistant = () => {
       name: 'Especialista Regulatório',
       icon: FileText,
       description: 'Análise técnica e regulatória farmacêutica',
-      function: 'ai-technical-regulatory'
+      function: 'ai-technical-regulatory',
+      status: isDemo ? 'active' : 'checking'
     },
     {
       id: 'business',
       name: 'Estrategista de Negócios',
       icon: Brain,
       description: 'Estratégias de mercado e oportunidades',
-      function: 'ai-business-strategist'
+      function: 'ai-business-strategist',
+      status: isDemo ? 'active' : 'checking'
     },
     {
       id: 'analyst',
       name: 'Analista de Projetos',
       icon: Search,
       description: 'Análise e gerenciamento de projetos',
-      function: 'ai-project-analyst'
+      function: 'ai-project-analyst',
+      status: isDemo ? 'active' : 'checking'
     },
     {
       id: 'coordinator',
       name: 'Coordenador Central',
       icon: Zap,
       description: 'Orquestração e síntese de resultados',
-      function: 'ai-coordinator-orchestrator'
+      function: 'ai-coordinator-orchestrator',
+      status: isDemo ? 'active' : 'checking'
     }
   ];
 
   const handleAgentCall = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Digite uma pergunta ou solicitação",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setLoading(true);
+    setResponse('');
+
     try {
       const currentAgent = agents.find(a => a.id === activeAgent);
       if (!currentAgent) throw new Error('Agente não encontrado');
 
-      // Get knowledge context first
-      let context = '';
-      try {
-        const searchResults = await search(prompt, 3);
-        context = searchResults.map(r => r.content).join('\n\n');
-      } catch (searchError) {
-        console.log('Search context unavailable:', searchError);
+      if (isDemo) {
+        // Simular resposta para modo demo
+        setTimeout(() => {
+          const demoResponses = {
+            regulatory: `# Análise Regulatória
+
+Com base na sua solicitação: "${prompt}"
+
+## Principais Considerações ANVISA:
+- Documentação técnica necessária conforme RDC 301/2019
+- Prazo estimado: 60-90 dias para análise
+- Taxa de aprovação: 85% para documentação completa
+
+## Próximos Passos:
+1. Preparar dossiê técnico
+2. Submeter protocolo ANVISA
+3. Acompanhar análise técnica
+
+*Resposta gerada em modo demonstração*`,
+            business: `# Análise de Oportunidade de Negócio
+
+Solicitação analisada: "${prompt}"
+
+## Oportunidades Identificadas:
+- Mercado potencial: R$ 150M
+- Crescimento anual: 12%
+- Concorrência: Média intensidade
+
+## Recomendações Estratégicas:
+1. Investimento inicial: R$ 2-5M
+2. Prazo de retorno: 18-24 meses
+3. Parcerias recomendadas: Distribuidores regionais
+
+*Resposta gerada em modo demonstração*`,
+            analyst: `# Project Charter
+
+Projeto analisado: "${prompt}"
+
+## Estrutura do Projeto:
+- Duração estimada: 18 meses
+- Equipe necessária: 8-12 profissionais
+- Orçamento: R$ 3-7M
+
+## Principais Riscos:
+1. Regulatórios: Médio
+2. Técnicos: Baixo
+3. Mercado: Alto
+
+*Resposta gerada em modo demonstração*`,
+            coordinator: `# Plano de Coordenação
+
+Coordenação solicitada: "${prompt}"
+
+## Síntese dos Agentes:
+- Aprovação regulatória: 85% probabilidade
+- Viabilidade comercial: Alta
+- Complexidade técnica: Média
+
+## Ações Prioritárias:
+1. Iniciar documentação ANVISA
+2. Validar mercado alvo
+3. Formar equipe técnica
+
+*Resposta gerada em modo demonstração*`
+          };
+
+          setResponse(demoResponses[activeAgent as keyof typeof demoResponses] || 'Resposta simulada gerada.');
+          setLoading(false);
+          toast({
+            title: "Resposta Simulada",
+            description: "Dados demonstrativos gerados com sucesso"
+          });
+        }, 2000);
+        return;
       }
 
+      // Chamar edge function real
       const { data, error } = await supabase.functions.invoke(currentAgent.function, {
         body: {
           input: prompt,
-          context,
+          context: '',
           user_preferences: {
             industry: 'farmacêutico',
             region: 'brasil'
@@ -77,19 +158,34 @@ const AIAssistant = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Erro na comunicação: ${error.message}`);
+      }
 
-      setResponse(data?.output?.output_md || 'Resposta gerada com sucesso');
-      toast({
-        title: "Resposta do agente IA",
-        description: `${currentAgent.name} processou sua solicitação`
-      });
-    } catch (error: any) {
+      if (data?.output?.output_md) {
+        setResponse(data.output.output_md);
+        toast({
+          title: "Resposta do agente IA",
+          description: `${currentAgent.name} processou sua solicitação`
+        });
+      } else {
+        throw new Error('Resposta inválida do servidor');
+      }
+    ) catch (error: any) {
+      console.error('AI Assistant error:', error);
       toast({
         title: "Erro no agente IA",
-        description: error.message,
+        description: error.message || 'Tente novamente em alguns momentos',
         variant: "destructive"
       });
+      
+      // Fallback para modo demo em caso de erro
+      setResponse(`Erro ao conectar com o agente. Certifique-se de que as configurações estão corretas.
+
+**Solicitação:** ${prompt}
+
+Para testar a funcionalidade, ative o modo Demo no topo da página.`);
     } finally {
       setLoading(false);
     }
@@ -97,24 +193,24 @@ const AIAssistant = () => {
 
   const quickPrompts = {
     regulatory: [
-      'Analise os requisitos para registro de medicamento genérico no Brasil',
-      'Quais são as principais mudanças na RDC 301/2019?',
-      'Como funciona o processo de importação de insumos farmacêuticos?'
+      'Como registrar um medicamento genérico na ANVISA?',
+      'Quais documentos são necessários para RDC 301/2019?',
+      'Prazo médio para aprovação de registro farmacêutico?'
     ],
     business: [
-      'Identifique oportunidades de mercado para medicamentos oncológicos',
-      'Analise a viabilidade de parceria com laboratórios internacionais',
-      'Quais são as tendências do mercado farmacêutico brasileiro?'
+      'Oportunidades no mercado de medicamentos oncológicos',
+      'Viabilidade de parceria com laboratórios internacionais',
+      'Tendências do mercado farmacêutico brasileiro 2024'
     ],
     analyst: [
-      'Crie um cronograma para desenvolvimento de medicamento inovador',
-      'Analise os riscos de um projeto de P&D farmacêutico',
-      'Elabore KPIs para monitoramento de projeto regulatório'
+      'Cronograma para desenvolvimento de medicamento inovador',
+      'Análise de riscos em projeto de P&D farmacêutico',
+      'KPIs para monitoramento de projeto regulatório'
     ],
     coordinator: [
-      'Sintetize os resultados dos agentes anteriores',
-      'Crie um plano executivo integrado',
-      'Identifique próximos passos e responsabilidades'
+      'Sintetizar resultados de análises anteriores',
+      'Criar plano executivo integrado',
+      'Próximos passos e responsabilidades do projeto'
     ]
   };
 
@@ -128,6 +224,13 @@ const AIAssistant = () => {
         <p className="text-gray-600">
           Sistema multi-agente para análise farmacêutica e regulatória
         </p>
+        {isDemo && (
+          <div className="mt-2">
+            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+              Modo Demonstração - Dados Simulados
+            </Badge>
+          </div>
+        )}
       </div>
 
       <Tabs value={activeAgent} onValueChange={setActiveAgent}>
@@ -144,10 +247,24 @@ const AIAssistant = () => {
           <TabsContent key={agent.id} value={agent.id} className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <agent.icon className="h-5 w-5 text-blue-600" />
-                  <span>{agent.name}</span>
-                  <Badge variant="secondary">IA Especializada</Badge>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <agent.icon className="h-5 w-5 text-blue-600" />
+                    <span>{agent.name}</span>
+                  </div>
+                  <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
+                    {agent.status === 'active' ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Ativo
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Verificando
+                      </>
+                    )}
+                  </Badge>
                 </CardTitle>
                 <p className="text-gray-600">{agent.description}</p>
               </CardHeader>
@@ -157,7 +274,7 @@ const AIAssistant = () => {
                     placeholder={`Faça uma pergunta para o ${agent.name}...`}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAgentCall()}
+                    onKeyPress={(e) => e.key === 'Enter' && !loading && handleAgentCall()}
                   />
                   <Button onClick={handleAgentCall} disabled={loading}>
                     <MessageCircle className="h-4 w-4 mr-2" />
@@ -189,7 +306,7 @@ const AIAssistant = () => {
                         Resposta do {agent.name}
                       </h4>
                       <div className="prose max-w-none">
-                        <pre className="whitespace-pre-wrap text-sm text-gray-700">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-white p-3 rounded border">
                           {response}
                         </pre>
                       </div>
@@ -217,10 +334,21 @@ const AIAssistant = () => {
                   <agent.icon className="h-5 w-5 text-gray-600" />
                   <span className="font-medium">{agent.name}</span>
                 </div>
-                <Badge variant="default">Ativo</Badge>
+                <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
+                  {agent.status === 'active' ? 'Ativo' : 'Verificando'}
+                </Badge>
               </div>
             ))}
           </div>
+          
+          {!isDemo && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Nota:</strong> Para funcionalidade completa, certifique-se de que as chaves de API estão configuradas corretamente no Supabase.
+                Ou use o modo Demo para testar a interface.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

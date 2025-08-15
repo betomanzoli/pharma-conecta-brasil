@@ -1,70 +1,49 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/contexts/AuthContext';
-import Index from '@/pages/Index';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import Dashboard from '@/pages/Dashboard';
-import ChatPage from '@/pages/ChatPage';
-import PerformancePage from '@/pages/PerformancePage';
-import StrategicPlan from '@/pages/StrategicPlan';
-import AutomationPage from '@/pages/AutomationPage';
-import GenerativeAIPage from '@/pages/GenerativeAIPage';
-import ConsolidationPage from '@/pages/ConsolidationPage';
-import AIAssistantPage from '@/pages/AIAssistantPage';
-import MasterChatPage from '@/pages/MasterChatPage';
-import EnhancedChat from '@/pages/EnhancedChat';
-import OptimizationPage from '@/pages/OptimizationPage';
-import './App.css';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes
-      retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors except for 408, 429
-        if (error?.status >= 400 && error?.status < 500 && ![408, 429].includes(error?.status)) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-    },
-  },
-});
+// Import pages
+import HomePage from "@/pages/HomePage";
+import ProjectsPage from "@/pages/ProjectsPage";
+import ConsultantsPage from "@/pages/ConsultantsPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
+import AuthPage from "@/pages/AuthPage";
+import AIAssistantPage from "@/pages/AIAssistantPage";
+import MasterChatPage from "@/pages/MasterChatPage";
+import NotificationsPage from "@/pages/NotificationsPage";
+import AgentDashboard from "@/pages/ai/AgentDashboard";
 
-function App() {
-  console.log('App starting - QueryClient initialized');
-  
-  return (
-    <QueryClientProvider client={queryClient}>
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
       <AuthProvider>
-        <Router>
+        <BrowserRouter>
           <div className="min-h-screen bg-background">
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/chat/:recipientId?" element={<ChatPage />} />
-              <Route path="/enhanced-chat" element={<EnhancedChat />} />
-              <Route path="/master-chat" element={<MasterChatPage />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/consultants" element={<ConsultantsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/ai-assistant" element={<AIAssistantPage />} />
-              <Route path="/performance" element={<PerformancePage />} />
-              <Route path="/strategic-plan" element={<StrategicPlan />} />
-              <Route path="/automation" element={<AutomationPage />} />
-              <Route path="/generative-ai" element={<GenerativeAIPage />} />
-              <Route path="/consolidation" element={<ConsolidationPage />} />
-              <Route path="/optimization" element={<OptimizationPage />} />
+              <Route path="/chat" element={<MasterChatPage />} />
+              <Route path="/ai/dashboard" element={<AgentDashboard />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/register" element={<AuthPage />} />
             </Routes>
-            <Toaster />
           </div>
-        </Router>
+          <Toaster />
+          <Sonner />
+        </BrowserRouter>
       </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
