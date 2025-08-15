@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Play, 
   Pause, 
-  Sync, 
+  RefreshCw, 
   Shield, 
   Network, 
   Activity,
@@ -73,7 +73,7 @@ const FederatedLearningDashboard: React.FC = () => {
             disabled={isSyncing || !selectedModel}
             className="gap-2"
           >
-            <Sync className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             Sincronizar
           </Button>
           <Button 
