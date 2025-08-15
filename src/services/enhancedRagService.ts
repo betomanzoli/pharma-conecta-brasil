@@ -25,6 +25,10 @@ export interface EnhancedSearchResult {
   source: string;
   context?: string;
   relevance?: number;
+  chunk_id?: string;
+  title?: string;
+  source_type?: string;
+  source_url?: string;
 }
 
 export interface SearchContext {
@@ -36,6 +40,7 @@ export interface SearchContext {
   }>;
   domain?: string;
   search_preferences?: Record<string, any>;
+  search_depth?: number;
 }
 
 export interface EnhancedRAGContext {
@@ -80,7 +85,11 @@ class EnhancedRAGService {
         similarity_score: Math.random() * 0.5 + 0.5, // 0.5 to 1.0
         source: `Knowledge Base ${i + 1}`,
         context: context?.domain || 'general',
-        relevance: Math.random() * 100
+        relevance: Math.random() * 100,
+        chunk_id: `chunk-${i}`,
+        title: `Document ${i + 1}`,
+        source_type: 'document',
+        source_url: `https://example.com/doc-${i}`
       }));
 
       // Cache the results
@@ -140,7 +149,7 @@ class EnhancedRAGService {
   async refreshKnowledgeBase(): Promise<void> {
     console.log('Refreshing knowledge base cache...');
     // Clear relevant caches
-    // This would typically clear cached embeddings and search results
+    await SmartCacheService.clear();
   }
 
   async updateKnowledgeBase(
@@ -204,4 +213,3 @@ class EnhancedRAGService {
 }
 
 export const enhancedRAGService = new EnhancedRAGService();
-export const EnhancedRAGService = enhancedRAGService;
