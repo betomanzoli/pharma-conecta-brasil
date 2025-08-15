@@ -16,7 +16,8 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react';
-import { isDemoMode, demoData } from '@/utils/demoMode';
+import { isDemoMode } from '@/utils/demoMode';
+import { demoData } from '@/utils/demoData';
 import { useToast } from '@/hooks/use-toast';
 
 const AutomationDashboard = () => {
