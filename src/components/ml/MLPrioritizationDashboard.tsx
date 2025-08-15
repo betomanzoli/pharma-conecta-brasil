@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -91,7 +92,7 @@ const MLPrioritizationDashboard = () => {
 
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600">
-                {model?.training_data_size || 0}
+                {model?.training_samples || 0}
               </div>
               <div className="text-sm text-muted-foreground">Dados de Treino</div>
             </div>
@@ -333,7 +334,7 @@ const MLPrioritizationDashboard = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Dados:</span>
-                      <span className="ml-2 font-medium">{model.training_data_size} amostras</span>
+                      <span className="ml-2 font-medium">{model.training_samples} amostras</span>
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,11 @@ interface MLModel {
   training_samples: number;
   weights: Record<string, number>;
   last_trained: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  model_data: Record<string, any>;
+  metadata: Record<string, any>;
 }
 
 interface PrioritizedSource {
@@ -54,13 +59,34 @@ export const useMLPrioritization = () => {
       }
 
       if (data) {
-        setModel(data);
+        // Transform Supabase data to match our interface
+        const transformedModel: MLModel = {
+          id: data.id,
+          model_name: data.model_name,
+          model_type: data.model_type,
+          version: data.version,
+          accuracy: data.accuracy || 0,
+          precision_score: data.precision_score || 0,
+          recall_score: data.recall_score || 0,
+          f1_score: data.f1_score || 0,
+          is_active: data.is_active,
+          training_samples: data.training_samples || 0,
+          weights: (data.weights as Record<string, number>) || {},
+          last_trained: data.last_trained,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          user_id: data.user_id,
+          model_data: (data.model_data as Record<string, any>) || {},
+          metadata: (data.metadata as Record<string, any>) || {}
+        };
+
+        setModel(transformedModel);
         setPerformanceMetrics({
-          accuracy: data.accuracy,
-          precision: data.precision_score,
-          recall: data.recall_score,
-          f1_score: data.f1_score,
-          confidence_avg: (data.accuracy + data.precision_score + data.recall_score + data.f1_score) / 4
+          accuracy: transformedModel.accuracy,
+          precision: transformedModel.precision_score,
+          recall: transformedModel.recall_score,
+          f1_score: transformedModel.f1_score,
+          confidence_avg: (transformedModel.accuracy + transformedModel.precision_score + transformedModel.recall_score + transformedModel.f1_score) / 4
         });
       }
     } catch (error) {
