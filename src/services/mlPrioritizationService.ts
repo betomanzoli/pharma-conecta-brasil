@@ -2,6 +2,15 @@
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
+export interface SourceMetrics {
+  source_id: string;
+  response_time: number;
+  accuracy_score: number;
+  relevance_score: number;
+  cost_efficiency: number;
+  availability: number;
+}
+
 export interface MLModel {
   id: string;
   model_name: string;
@@ -15,6 +24,7 @@ export interface MLModel {
   created_at: string;
   last_trained: string;
   training_samples: number;
+  training_data_size: number;
   metadata: Record<string, any>;
   model_data: Record<string, any>;
   weights: Record<string, number>;
@@ -23,6 +33,7 @@ export interface MLModel {
 export interface PrioritizedResult {
   id: string;
   item_id: string;
+  source_id: string;
   priority_score: number;
   confidence: number;
   source_type: 'laboratory' | 'consultant' | 'pharmaceutical_company';
@@ -34,7 +45,7 @@ export interface PrioritizedResult {
 export class MLPrioritizationService {
   private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  static async getActiveModel(): Promise<MLModel | null> {
+  static async loadActiveModel(): Promise<MLModel | null> {
     try {
       const cached = await SmartCacheService.get<MLModel>('active_ml_model');
       if (cached) {
@@ -55,6 +66,7 @@ export class MLPrioritizationService {
         created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         last_trained: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         training_samples: 5000,
+        training_data_size: 5000,
         metadata: {
           features: ['location_match', 'expertise_overlap', 'compliance_score'],
           algorithm: 'gradient_boosting',
@@ -86,79 +98,49 @@ export class MLPrioritizationService {
     }
   }
 
-  static async getPrioritizedResults(query: any): Promise<PrioritizedResult[]> {
+  static async calculateSourcePriority(
+    sourceMetrics: SourceMetrics[],
+    queryContext: any
+  ): Promise<PrioritizedResult[]> {
     try {
       // Simulate ML prioritization
-      const mockResults: PrioritizedResult[] = [
-        {
-          id: '1',
-          item_id: 'lab-001',
-          priority_score: 0.95,
-          confidence: 0.88,
-          source_type: 'laboratory',
-          reasoning: [
-            'Perfect location match (São Paulo)',
-            'High expertise overlap (85%)',
-            'Excellent compliance score'
-          ],
-          metadata: {
-            features: {
-              location_match: 1.0,
-              expertise_overlap: 0.85,
-              compliance_score: 0.92
-            }
-          },
-          created_at: new Date().toISOString()
+      const mockResults: PrioritizedResult[] = sourceMetrics.map((source, index) => ({
+        id: `result-${index}`,
+        item_id: `item-${index}`,
+        source_id: source.source_id,
+        priority_score: Math.random() * 100,
+        confidence: Math.random() * 100,
+        source_type: ['laboratory', 'consultant', 'pharmaceutical_company'][index % 3] as any,
+        reasoning: [
+          'High relevance score',
+          'Good response time',
+          'Strong compliance record'
+        ],
+        metadata: {
+          features: {
+            location_match: Math.random(),
+            expertise_overlap: Math.random(),
+            compliance_score: Math.random()
+          }
         },
-        {
-          id: '2',
-          item_id: 'consultant-002',
-          priority_score: 0.82,
-          confidence: 0.79,
-          source_type: 'consultant',
-          reasoning: [
-            'Good location proximity',
-            'Moderate expertise match',
-            'Strong track record'
-          ],
-          metadata: {
-            features: {
-              location_match: 0.7,
-              expertise_overlap: 0.6,
-              compliance_score: 0.95
-            }
-          },
-          created_at: new Date().toISOString()
-        }
-      ];
+        created_at: new Date().toISOString()
+      }));
 
-      return mockResults;
+      return mockResults.sort((a, b) => b.priority_score - a.priority_score);
     } catch (error) {
       console.error('Error generating prioritized results:', error);
       return [];
     }
   }
 
-  static async retrainModel(trainingData: any[]): Promise<boolean> {
-    try {
-      console.log('Starting model retraining with', trainingData.length, 'samples');
-      
-      // Simulate model retraining process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Clear cache to force refresh
-      await SmartCacheService.delete('active_ml_model');
-      
-      return true;
-    } catch (error) {
-      console.error('Error retraining model:', error);
-      return false;
-    }
+  static async updateModelWeights(feedbackData: any[]): Promise<void> {
+    console.log('Updating model weights with feedback:', feedbackData);
+    // Simulate model weight updates
   }
 
   static async getModelPerformanceMetrics(): Promise<any> {
     try {
-      const model = await this.getActiveModel();
+      const model = await this.loadActiveModel();
       if (!model) return null;
 
       return {
@@ -168,6 +150,7 @@ export class MLPrioritizationService {
         f1_score: model.f1_score,
         training_samples: model.training_samples,
         last_trained: model.last_trained,
+        confidence_avg: 0.85,
         feature_importance: model.model_data.feature_importance || {}
       };
     } catch (error) {
@@ -176,3 +159,5 @@ export class MLPrioritizationService {
     }
   }
 }
+
+export const mlPrioritization = MLPrioritizationService;

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  dataMonitoringService, 
+  DataMonitoringService, 
   DataHealthMetric, 
   DataQualityScore, 
   DataTrend, 
@@ -36,9 +36,9 @@ export const useDataMonitoring = (): UseDataMonitoringReturn => {
     
     try {
       const [health, quality, alerts] = await Promise.all([
-        dataMonitoringService.getDataHealthMetrics(),
-        dataMonitoringService.assessDataQuality(),
-        dataMonitoringService.getActiveAlerts()
+        DataMonitoringService.getDataHealthMetrics(),
+        DataMonitoringService.assessDataQuality(),
+        DataMonitoringService.getActiveAlerts()
       ]);
       
       setHealthMetrics(health);
@@ -59,7 +59,7 @@ export const useDataMonitoring = (): UseDataMonitoringReturn => {
     setError(null);
     
     try {
-      const trendData = await dataMonitoringService.analyzeTrends(source, timeframe);
+      const trendData = await DataMonitoringService.analyzeTrends(source, timeframe);
       setTrends(trendData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze trends');
@@ -73,7 +73,7 @@ export const useDataMonitoring = (): UseDataMonitoringReturn => {
     setError(null);
     
     try {
-      const quality = await dataMonitoringService.assessDataQuality(sources);
+      const quality = await DataMonitoringService.assessDataQuality(sources);
       setQualityScores(quality);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assess data quality');
@@ -83,16 +83,16 @@ export const useDataMonitoring = (): UseDataMonitoringReturn => {
   }, []);
 
   const startMonitoring = useCallback((interval: number = 60000) => {
-    dataMonitoringService.startMonitoring(interval);
+    DataMonitoringService.startMonitoring(interval);
     
     // Subscribe to alerts
-    dataMonitoringService.onAlert((alert: MonitoringAlert) => {
+    DataMonitoringService.onAlert((alert: MonitoringAlert) => {
       setActiveAlerts(prev => [alert, ...prev.slice(0, 49)]); // Keep last 50 alerts
     });
   }, []);
 
   const stopMonitoring = useCallback(() => {
-    dataMonitoringService.stopMonitoring();
+    DataMonitoringService.stopMonitoring();
   }, []);
 
   useEffect(() => {
