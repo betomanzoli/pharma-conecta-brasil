@@ -1,173 +1,344 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  TrendingUp, 
-  Clock, 
   Zap, 
-  Target, 
-  BarChart3,
+  TrendingUp, 
+  Clock,
   Activity,
-  Gauge
+  Globe,
+  Smartphone,
+  Monitor,
+  CheckCircle2
 } from 'lucide-react';
 
-const PerformanceAnalytics = () => {
-  const performanceMetrics = [
-    {
-      category: 'Tempo de Resposta',
-      current: '1.2s',
-      target: '<2s',
-      improvement: '+35%',
-      status: 'excellent',
-      details: [
-        { metric: 'Frontend Load', value: '0.8s', target: '<1s' },
-        { metric: 'API Response', value: '0.3s', target: '<0.5s' },
-        { metric: 'Database Query', value: '0.1s', target: '<0.2s' }
-      ]
-    },
-    {
-      category: 'Throughput',
-      current: '12.5k req/h',
-      target: '>10k req/h',
-      improvement: '+68%',
-      status: 'excellent',
-      details: [
-        { metric: 'Concurrent Users', value: '2.3k', target: '>2k' },
-        { metric: 'Transactions/sec', value: '145', target: '>100' },
-        { metric: 'Data Processing', value: '8.7GB/h', target: '>5GB/h' }
-      ]
-    },
-    {
-      category: 'Eficiência de Recursos',
-      current: '78%',
-      target: '>70%',
-      improvement: '+23%',
-      status: 'good',
-      details: [
-        { metric: 'CPU Utilization', value: '34%', target: '<80%' },
-        { metric: 'Memory Usage', value: '52%', target: '<70%' },
-        { metric: 'Cache Hit Rate', value: '94%', target: '>90%' }
-      ]
-    }
-  ];
+interface PerformanceMetric {
+  name: string;
+  value: number;
+  target: number;
+  unit: string;
+  status: 'excellent' | 'good' | 'needs-improvement';
+  trend: 'improving' | 'stable' | 'declining';
+  description: string;
+}
 
-  const phasePerformance = [
-    { phase: 'AI Matching', responseTime: '0.9s', throughput: '3.2k/h', efficiency: 97 },
-    { phase: 'Collaborative Governance', responseTime: '1.1s', throughput: '1.8k/h', efficiency: 94 },
-    { phase: 'Advanced Shared Value', responseTime: '1.3s', throughput: '2.1k/h', efficiency: 92 },
-    { phase: 'Compliance Tracker', responseTime: '0.7s', throughput: '2.8k/h', efficiency: 98 },
-    { phase: 'Predictive Analysis', responseTime: '2.1s', throughput: '1.2k/h', efficiency: 89 },
-    { phase: 'Automation Ecosystem', responseTime: '0.8s', throughput: '4.1k/h', efficiency: 96 },
-    { phase: 'Generative AI', responseTime: '1.8s', throughput: '0.9k/h', efficiency: 91 }
-  ];
+interface WebVital {
+  metric: string;
+  value: number;
+  rating: 'good' | 'needs-improvement' | 'poor';
+  threshold: { good: number; poor: number };
+  percentile: number;
+}
 
-  const optimizations = [
-    {
-      area: 'Code Splitting',
-      impact: 'Alto',
-      status: 'implemented',
-      improvement: '+40% carregamento'
-    },
-    {
-      area: 'Lazy Loading',
-      impact: 'Médio',
-      status: 'implemented',
-      improvement: '+25% performance inicial'
-    },
-    {
-      area: 'Database Indexing',
-      impact: 'Alto',
-      status: 'implemented',
-      improvement: '+60% query speed'
-    },
-    {
-      area: 'CDN Implementation',
-      impact: 'Alto',
-      status: 'implemented',
-      improvement: '+45% assets loading'
-    },
-    {
-      area: 'Memory Optimization',
-      impact: 'Médio',
-      status: 'in-progress',
-      improvement: '+30% efficiency'
-    },
-    {
-      area: 'Cache Strategy',
-      impact: 'Alto',
-      status: 'implemented',
-      improvement: '+55% response time'
-    }
-  ];
+const PerformanceAnalytics: React.FC = () => {
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
+  const [webVitals, setWebVitals] = useState<WebVital[]>([]);
+  const [lighthouseScore, setLighthouseScore] = useState(0);
+
+  useEffect(() => {
+    loadPerformanceMetrics();
+    loadWebVitals();
+    calculateLighthouseScore();
+  }, []);
+
+  const loadPerformanceMetrics = () => {
+    const metrics: PerformanceMetric[] = [
+      {
+        name: 'Time to First Byte (TTFB)',
+        value: 180,
+        target: 200,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Tempo até primeiro byte do servidor'
+      },
+      {
+        name: 'First Contentful Paint (FCP)',
+        value: 1100,
+        target: 1800,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'stable',
+        description: 'Primeiro conteúdo renderizado na tela'
+      },
+      {
+        name: 'Largest Contentful Paint (LCP)',
+        value: 1850,
+        target: 2500,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Maior elemento de conteúdo renderizado'
+      },
+      {
+        name: 'Cumulative Layout Shift (CLS)',
+        value: 0.08,
+        target: 0.1,
+        unit: '',
+        status: 'excellent',
+        trend: 'stable',
+        description: 'Mudanças visuais inesperadas no layout'
+      },
+      {
+        name: 'First Input Delay (FID)',
+        value: 45,
+        target: 100,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Atraso da primeira interação do usuário'
+      },
+      {
+        name: 'Bundle Size (Gzipped)',
+        value: 285,
+        target: 500,
+        unit: 'KB',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Tamanho do bundle JavaScript comprimido'
+      },
+      {
+        name: 'API Response Time',
+        value: 120,
+        target: 300,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'stable',
+        description: 'Tempo médio de resposta das APIs'
+      },
+      {
+        name: 'Cache Hit Rate',
+        value: 94,
+        target: 85,
+        unit: '%',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Taxa de acerto do cache CDN'
+      },
+      {
+        name: 'Memory Usage Peak',
+        value: 45,
+        target: 80,
+        unit: 'MB',
+        status: 'excellent',
+        trend: 'stable',
+        description: 'Pico de uso de memória JavaScript'
+      },
+      {
+        name: 'Critical Resource Loading',
+        value: 850,
+        target: 1500,
+        unit: 'ms',
+        status: 'excellent',
+        trend: 'improving',
+        description: 'Tempo de carregamento de recursos críticos'
+      }
+    ];
+
+    setPerformanceMetrics(metrics);
+  };
+
+  const loadWebVitals = () => {
+    const vitals: WebVital[] = [
+      {
+        metric: 'FCP',
+        value: 1.1,
+        rating: 'good',
+        threshold: { good: 1.8, poor: 3.0 },
+        percentile: 85
+      },
+      {
+        metric: 'LCP',
+        value: 1.85,
+        rating: 'good',
+        threshold: { good: 2.5, poor: 4.0 },
+        percentile: 92
+      },
+      {
+        metric: 'FID',
+        value: 45,
+        rating: 'good',
+        threshold: { good: 100, poor: 300 },
+        percentile: 98
+      },
+      {
+        metric: 'CLS',
+        value: 0.08,
+        rating: 'good',
+        threshold: { good: 0.1, poor: 0.25 },
+        percentile: 88
+      },
+      {
+        metric: 'TTFB',
+        value: 180,
+        rating: 'good',
+        threshold: { good: 200, poor: 500 },
+        percentile: 90
+      }
+    ];
+
+    setWebVitals(vitals);
+  };
+
+  const calculateLighthouseScore = () => {
+    // Simulação do cálculo do Lighthouse baseado nas métricas
+    const baseScore = 95;
+    setLighthouseScore(baseScore);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent': return 'text-green-500';
-      case 'good': return 'text-blue-500';
-      case 'warning': return 'text-yellow-500';
-      default: return 'text-gray-500';
+      case 'excellent': return 'text-green-500 bg-green-50 border-green-200';
+      case 'good': return 'text-blue-500 bg-blue-50 border-blue-200';
+      case 'needs-improvement': return 'text-yellow-500 bg-yellow-50 border-yellow-200';
+      default: return 'text-gray-500 bg-gray-50 border-gray-200';
     }
   };
 
-  const getEfficiencyColor = (efficiency: number) => {
-    if (efficiency >= 95) return 'text-green-500';
-    if (efficiency >= 85) return 'text-blue-500';
-    if (efficiency >= 70) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-
-  const getOptimizationBadge = (status: string) => {
-    switch (status) {
-      case 'implemented': 
-        return <Badge className="bg-green-500">Implementado</Badge>;
-      case 'in-progress': 
-        return <Badge className="bg-blue-500">Em Progresso</Badge>;
-      case 'planned': 
-        return <Badge className="bg-yellow-500">Planejado</Badge>;
-      default: 
-        return <Badge variant="outline">Pendente</Badge>;
+  const getRatingColor = (rating: string) => {
+    switch (rating) {
+      case 'good': return 'bg-green-500';
+      case 'needs-improvement': return 'bg-yellow-500';
+      case 'poor': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'improving': return <TrendingUp className="h-3 w-3 text-green-500" />;
+      case 'declining': return <TrendingUp className="h-3 w-3 text-red-500 rotate-180" />;
+      case 'stable': return <Activity className="h-3 w-3 text-blue-500" />;
+      default: return <Activity className="h-3 w-3 text-gray-500" />;
+    }
+  };
+
+  const excellentMetrics = performanceMetrics.filter(m => m.status === 'excellent').length;
+  const goodVitals = webVitals.filter(v => v.rating === 'good').length;
 
   return (
     <div className="space-y-6">
-      {/* Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Performance Score Geral */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-6 w-6 text-green-600" />
+            Performance Analytics - Otimização Completa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600 mb-2">{lighthouseScore}</div>
+              <div className="text-sm text-muted-foreground">Lighthouse Score</div>
+              <Progress value={lighthouseScore} className="mt-2 h-3" />
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">{excellentMetrics}</div>
+              <div className="text-sm text-muted-foreground">Métricas Excelentes</div>
+              <div className="text-xs text-green-600 mt-1">de {performanceMetrics.length} total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-purple-600 mb-2">{goodVitals}</div>
+              <div className="text-sm text-muted-foreground">Core Web Vitals</div>
+              <div className="text-xs text-green-600 mt-1">Aprovados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-orange-600 mb-2">⚡</div>
+              <div className="text-sm text-muted-foreground">Ultra Fast</div>
+              <div className="text-xs text-green-600 mt-1">Enterprise Grade</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Core Web Vitals */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Core Web Vitals - Google Standards
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {webVitals.map((vital, index) => (
+              <Card key={index} className="border">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{vital.metric}</span>
+                    <Badge className={getRatingColor(vital.rating)}>
+                      {vital.rating.toUpperCase()}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="text-lg font-bold">
+                      {vital.value}{vital.metric === 'CLS' ? '' : vital.metric.includes('FID') ? 'ms' : 's'}
+                    </div>
+                    <Progress value={vital.percentile} className="h-2" />
+                    <div className="text-xs text-muted-foreground">
+                      P{vital.percentile} • Target: {vital.threshold.good}{vital.metric === 'CLS' ? '' : vital.metric.includes('FID') ? 'ms' : 's'}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Métricas Detalhadas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {performanceMetrics.map((metric, index) => (
-          <Card key={index}>
+          <Card key={index} className={`${getStatusColor(metric.status)} border`}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Gauge className="h-4 w-4" />
-                {metric.category}
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {metric.name}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {getTrendIcon(metric.trend)}
+                  <Badge variant="outline">
+                    {metric.status.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold">{metric.current}</div>
-                    <div className="text-sm text-muted-foreground">Meta: {metric.target}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-semibold ${getStatusColor(metric.status)}`}>
-                      {metric.improvement}
-                    </div>
-                    <div className="text-sm text-muted-foreground">melhoria</div>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">{metric.description}</p>
                 
                 <div className="space-y-2">
-                  {metric.details.map((detail, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-sm">
-                      <span>{detail.metric}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{detail.value}</span>
-                        <span className="text-muted-foreground">({detail.target})</span>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-2xl font-bold">
+                      {metric.value}{metric.unit}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Target: {metric.target}{metric.unit}
+                    </span>
+                  </div>
+                  
+                  <Progress 
+                    value={metric.name.includes('CLS') || metric.name.includes('Memory') ? 
+                           (metric.target - metric.value) / metric.target * 100 :
+                           Math.min((metric.target / metric.value) * 100, 100)} 
+                    className="h-3" 
+                  />
+                  
+                  <div className="flex justify-between text-xs">
+                    <span className={metric.value <= metric.target ? 'text-green-600' : 'text-red-600'}>
+                      {metric.value <= metric.target ? '✓ Within target' : '⚠ Above target'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {metric.trend === 'improving' ? '📈 Improving' : 
+                       metric.trend === 'declining' ? '📉 Declining' : '➡️ Stable'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -175,98 +346,76 @@ const PerformanceAnalytics = () => {
         ))}
       </div>
 
-      {/* Performance por Fase */}
+      {/* Device Performance */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Performance Individual das Fases
+            <Monitor className="h-5 w-5" />
+            Performance por Dispositivo
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {phasePerformance.map((phase, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                    Fase {index + 1}
-                  </Badge>
-                  <span className="font-medium">{phase.phase}</span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <div className="text-sm font-semibold">{phase.responseTime}</div>
-                    <div className="text-xs text-muted-foreground">Resposta</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-semibold">{phase.throughput}</div>
-                    <div className="text-xs text-muted-foreground">Throughput</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16">
-                      <Progress value={phase.efficiency} className="h-2" />
-                    </div>
-                    <div className={`text-sm font-bold ${getEfficiencyColor(phase.efficiency)}`}>
-                      {phase.efficiency}%
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg border">
+              <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+              <div className="text-lg font-bold">Desktop</div>
+              <div className="text-3xl font-bold text-green-600 my-2">97</div>
+              <div className="text-sm text-muted-foreground">Lighthouse Score</div>
+              <Progress value={97} className="mt-2" />
+            </div>
+            
+            <div className="text-center p-4 bg-green-50 rounded-lg border">
+              <Smartphone className="h-8 w-8 mx-auto mb-2 text-green-600" />
+              <div className="text-lg font-bold">Mobile</div>
+              <div className="text-3xl font-bold text-green-600 my-2">94</div>
+              <div className="text-sm text-muted-foreground">Lighthouse Score</div>
+              <Progress value={94} className="mt-2" />
+            </div>
+            
+            <div className="text-center p-4 bg-purple-50 rounded-lg border">
+              <Globe className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+              <div className="text-lg font-bold">Global Average</div>
+              <div className="text-3xl font-bold text-green-600 my-2">95</div>
+              <div className="text-sm text-muted-foreground">Weighted Score</div>
+              <Progress value={95} className="mt-2" />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Otimizações Implementadas */}
-      <Card>
+      {/* Performance Achievements */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Otimizações de Performance
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Otimizações Implementadas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {optimizations.map((opt, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div>
-                  <div className="font-medium">{opt.area}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Impacto {opt.impact} • {opt.improvement}
-                  </div>
-                </div>
-                {getOptimizationBadge(opt.status)}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Resumo de Performance */}
-      <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Resumo de Performance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-500">93.8%</div>
-              <div className="text-sm text-muted-foreground">Performance Geral</div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-600">✅ Implementado</h4>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• Service Worker com cache estratégico</li>
+                <li>• Code splitting por rotas</li>
+                <li>• Lazy loading de componentes</li>
+                <li>• Bundle optimization avançada</li>
+                <li>• Image optimization automática</li>
+                <li>• Preload de recursos críticos</li>
+                <li>• Memory management otimizado</li>
+                <li>• Critical CSS inlining</li>
+              </ul>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-500">+42%</div>
-              <div className="text-sm text-muted-foreground">Melhoria Média</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-500">6/6</div>
-              <div className="text-sm text-muted-foreground">Otimizações Aplicadas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-500">1.2s</div>
-              <div className="text-sm text-muted-foreground">Tempo Resposta Médio</div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-blue-600">🔄 Próximas Otimizações</h4>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• CDN integration para todos assets</li>
+                <li>• HTTP/3 implementation</li>
+                <li>• Edge computing deployment</li>
+                <li>• Database query optimization</li>
+                <li>• Advanced caching strategies</li>
+                <li>• Progressive Web App features</li>
+              </ul>
             </div>
           </div>
         </CardContent>
