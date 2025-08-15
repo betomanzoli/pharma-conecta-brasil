@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -64,15 +63,21 @@ export class DataMonitoringService {
     const cacheKey = 'data_health_metrics';
     
     try {
-      const cached = SmartCacheService.get(cacheKey);
-      if (cached) return cached;
+      const cached = SmartCacheService.get(cacheKey, 'memory', 2 * 60 * 1000);
+      if (cached) return cached as DataHealthMetric[];
 
-      // Get actual source data from knowledge sources or create mock data
-      const { data: sources } = await supabase
+      // Get actual source data from knowledge sources
+      const { data: sources, error } = await supabase
         .from('knowledge_sources')
-        .select('id, name, source_type, last_accessed, metadata');
+        .select('id, created_at, last_accessed, metadata');
+
+      if (error) {
+        console.error('[DataMonitoring] Error fetching sources:', error);
+        return [];
+      }
 
       const healthMetrics: DataHealthMetric[] = (sources || []).map(source => {
+        const metadata = source.metadata as any || {};
         const uptime = Math.random() * 0.2 + 0.8; // 80-100%
         const responseTime = Math.random() * 2000 + 500; // 500-2500ms
         const errorRate = Math.random() * 0.1; // 0-10%
@@ -90,7 +95,7 @@ export class DataMonitoringService {
 
         return {
           source_id: source.id,
-          source_name: source.name,
+          source_name: metadata.name || `Source ${source.id.substring(0, 8)}`,
           status,
           uptime_percentage: uptime * 100,
           avg_response_time: responseTime,
@@ -100,7 +105,7 @@ export class DataMonitoringService {
         };
       });
 
-      SmartCacheService.set(cacheKey, healthMetrics, 2 * 60 * 1000); // 2 minutes
+      SmartCacheService.set(cacheKey, healthMetrics, 'memory');
       return healthMetrics;
     } catch (error) {
       console.error('[DataMonitoring] Error fetching health metrics:', error);
@@ -113,19 +118,25 @@ export class DataMonitoringService {
     const cacheKey = `data_quality_${sources?.join(',') || 'all'}`;
     
     try {
-      const cached = SmartCacheService.get(cacheKey);
-      if (cached) return cached;
+      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
+      if (cached) return cached as DataQualityScore[];
 
       // Get source data
-      let query = supabase.from('knowledge_sources').select('id, name, chunk_count, created_at');
+      let query = supabase.from('knowledge_sources').select('id, created_at, metadata');
       
       if (sources && sources.length > 0) {
         query = query.in('id', sources);
       }
 
-      const { data: sourceData } = await query;
+      const { data: sourceData, error } = await query;
+
+      if (error) {
+        console.error('[DataMonitoring] Error fetching source data:', error);
+        return [];
+      }
 
       const qualityScores: DataQualityScore[] = (sourceData || []).map(source => {
+        const metadata = source.metadata as any || {};
         // Simulate quality assessment
         const completeness = Math.random() * 0.3 + 0.7; // 70-100%
         const accuracy = Math.random() * 0.2 + 0.8; // 80-100%
@@ -143,12 +154,12 @@ export class DataMonitoringService {
           consistency: consistency * 100,
           timeliness: timeliness * 100,
           validity: validity * 100,
-          sample_size: source.chunk_count || 0,
+          sample_size: metadata.chunk_count || 0,
           last_assessed: new Date().toISOString()
         };
       });
 
-      SmartCacheService.set(cacheKey, qualityScores, 5 * 60 * 1000); // 5 minutes
+      SmartCacheService.set(cacheKey, qualityScores, 'memory');
       return qualityScores;
     } catch (error) {
       console.error('[DataMonitoring] Error assessing data quality:', error);
@@ -344,7 +355,6 @@ export class DataMonitoringService {
       await supabase.from('performance_metrics').insert({
         metric_name: 'monitoring_alert',
         metric_value: 1,
-        metric_unit: 'alert',
         tags: alert as any
       });
 

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -18,6 +17,7 @@ export interface MLModel {
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
+  weights?: Record<string, number>;
 }
 
 export interface SourceMetrics {
@@ -36,12 +36,21 @@ export interface SourceMetrics {
 
 export interface PrioritizedResult {
   source_id: string;
+  source_type: string;
   priority_score: number;
   confidence: number;
   reasoning: string[];
   estimated_response_time: number;
   cost_estimate: number;
   quality_prediction: number;
+  metadata?: {
+    individual_scores?: Record<string, number>;
+    metrics_snapshot?: {
+      accuracy: number;
+      response_time: number;
+      success_rate: number;
+    };
+  };
 }
 
 export class MLPrioritizationService {
@@ -61,8 +70,8 @@ export class MLPrioritizationService {
     const cacheKey = 'active_ml_model';
     
     try {
-      const cached = SmartCacheService.get(cacheKey);
-      if (cached) return cached;
+      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
+      if (cached) return cached as MLModel;
 
       const { data, error } = await supabase
         .from('ml_models')
@@ -81,8 +90,16 @@ export class MLPrioritizationService {
         throw error;
       }
 
-      SmartCacheService.set(cacheKey, data, 5 * 60 * 1000); // 5 minutes
-      return data;
+      // Extract weights from model_data and add to the model
+      const modelWithWeights: MLModel = {
+        ...data,
+        model_data: data.model_data as Record<string, any>,
+        metadata: data.metadata as Record<string, any>,
+        weights: (data.model_data as any)?.weights || {}
+      };
+
+      SmartCacheService.set(cacheKey, modelWithWeights, 'memory');
+      return modelWithWeights;
     } catch (error) {
       console.error('[MLPrioritization] Error loading active model:', error);
       return await this.createDefaultModel();
@@ -91,6 +108,14 @@ export class MLPrioritizationService {
 
   // Create default model if none exists
   private async createDefaultModel(): Promise<MLModel> {
+    const defaultWeights = {
+      reliability: 0.3,
+      response_time: 0.2,
+      data_quality: 0.25,
+      cost: 0.1,
+      specialization: 0.15
+    };
+
     const defaultModel = {
       model_name: 'Default Prioritization Model',
       version: '1.0.0',
@@ -102,13 +127,7 @@ export class MLPrioritizationService {
       training_data_size: 1000,
       is_active: true,
       model_data: {
-        weights: {
-          reliability: 0.3,
-          response_time: 0.2,
-          data_quality: 0.25,
-          cost: 0.1,
-          specialization: 0.15
-        },
+        weights: defaultWeights,
         thresholds: {
           high_priority: 0.8,
           medium_priority: 0.6,
@@ -130,7 +149,13 @@ export class MLPrioritizationService {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      return {
+        ...data,
+        model_data: data.model_data as Record<string, any>,
+        metadata: data.metadata as Record<string, any>,
+        weights: defaultWeights
+      };
     } catch (error) {
       console.error('[MLPrioritization] Error creating default model:', error);
       // Return a mock model if database fails
@@ -139,7 +164,8 @@ export class MLPrioritizationService {
         ...defaultModel,
         last_trained: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        weights: defaultWeights
       };
     }
   }
@@ -158,7 +184,7 @@ export class MLPrioritizationService {
       const model = await this.loadActiveModel();
       if (!model) throw new Error('No ML model available');
 
-      const weights = model.model_data.weights || {
+      const weights = model.weights || {
         reliability: 0.3,
         response_time: 0.2,
         data_quality: 0.25,
@@ -188,19 +214,34 @@ export class MLPrioritizationService {
         // Apply urgency multiplier
         score *= urgencyMultiplier;
         
-        // Ensure score is between 0 and 1
-        score = Math.max(0, Math.min(1, score));
+        // Ensure score is between 0 and 100
+        score = Math.max(0, Math.min(100, score * 100));
 
         const confidence = this.calculateConfidence(source, model);
         
         return {
           source_id: source.source_id,
+          source_type: source.type,
           priority_score: score,
           confidence,
           reasoning: this.generateReasoning(source, queryContext, score),
           estimated_response_time: source.response_time,
           cost_estimate: source.cost_per_query,
-          quality_prediction: source.data_quality
+          quality_prediction: source.data_quality,
+          metadata: {
+            individual_scores: {
+              accuracy: Math.round(source.reliability_score * 100),
+              relevance: Math.round((source.data_quality + (source.specialization_domains.includes(queryContext.domain) ? 0.2 : 0)) * 100),
+              freshness: Math.round((1 - (Date.now() - new Date(source.last_updated).getTime()) / (24 * 60 * 60 * 1000 * 30)) * 100), // 30 days freshness
+              reliability: Math.round(source.reliability_score * 100),
+              user_feedback: Math.round(source.historical_performance * 100)
+            },
+            metrics_snapshot: {
+              accuracy: source.reliability_score * 100,
+              response_time: source.response_time,
+              success_rate: source.availability * 100
+            }
+          }
         };
       });
 
@@ -220,7 +261,7 @@ export class MLPrioritizationService {
     const reliabilityFactor = source.reliability_score;
     const historyFactor = source.historical_performance;
     
-    return Math.min(0.99, baseConfidence * reliabilityFactor * historyFactor);
+    return Math.min(99, baseConfidence * reliabilityFactor * historyFactor * 100);
   }
 
   // Generate human-readable reasoning
@@ -251,7 +292,7 @@ export class MLPrioritizationService {
       reasons.push('Custo-benefício favorável');
     }
     
-    if (score > 0.8) {
+    if (score > 80) {
       reasons.push('Pontuação ML alta');
     }
     
@@ -283,7 +324,7 @@ export class MLPrioritizationService {
           actual_outcome: feedback.query_success ? 'accepted' : 'rejected',
           user_rating: feedback.user_rating,
           response_time_ms: feedback.response_time,
-          feedback_data: feedback
+          feedback_data: feedback as any
         });
       }
 
@@ -301,6 +342,7 @@ export class MLPrioritizationService {
     precision: number;
     recall: number;
     f1_score: number;
+    confidence_avg: number;
     total_predictions: number;
     feedback_count: number;
     avg_user_rating: number;
@@ -324,6 +366,7 @@ export class MLPrioritizationService {
         precision: model.precision_score,
         recall: model.recall_score,
         f1_score: model.f1_score,
+        confidence_avg: 0.85, // Mock average confidence
         total_predictions: model.training_data_size,
         feedback_count: feedbackCount,
         avg_user_rating: avgRating
@@ -335,6 +378,7 @@ export class MLPrioritizationService {
         precision: 0.82,
         recall: 0.88,
         f1_score: 0.85,
+        confidence_avg: 0.85,
         total_predictions: 1000,
         feedback_count: 0,
         avg_user_rating: 0
@@ -364,7 +408,7 @@ export class MLPrioritizationService {
       }
       
       // Clear cache to force reload
-      SmartCacheService.delete('active_ml_model');
+      SmartCacheService.delete('active_ml_model', 'memory');
     } catch (error) {
       console.error('[MLPrioritization] Error retraining model:', error);
       throw error;

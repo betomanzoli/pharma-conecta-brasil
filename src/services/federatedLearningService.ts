@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -51,10 +50,10 @@ export class FederatedLearningService {
     const cacheKey = 'federated_nodes_active';
     
     try {
-      const cached = SmartCacheService.get(cacheKey);
-      if (cached) return cached;
+      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
+      if (cached) return cached as FederatedNode[];
 
-      // Since we don't have the actual RPC function, simulate federated nodes
+      // Since we don't have the actual federated system, simulate federated nodes
       const mockRegions = ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Belo Horizonte', 'Porto Alegre', 'Salvador'];
       
       const nodes: FederatedNode[] = mockRegions.map((region, index) => ({
@@ -68,7 +67,7 @@ export class FederatedLearningService {
         contribution_score: Math.random() * 0.3 + 0.7 // 0.7-1.0
       }));
 
-      SmartCacheService.set(cacheKey, nodes);
+      SmartCacheService.set(cacheKey, nodes, 'memory');
       return nodes;
     } catch (error) {
       console.error('[FederatedLearning] Error fetching active nodes:', error);
@@ -81,8 +80,8 @@ export class FederatedLearningService {
     const cacheKey = 'federated_models';
     
     try {
-      const cached = SmartCacheService.get(cacheKey);
-      if (cached) return cached;
+      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
+      if (cached) return cached as FederatedModel[];
 
       // Get models from ml_models table
       const { data: models, error } = await supabase
@@ -113,7 +112,7 @@ export class FederatedLearningService {
         return this.getMockModels();
       }
 
-      SmartCacheService.set(cacheKey, federatedModels);
+      SmartCacheService.set(cacheKey, federatedModels, 'memory');
       return federatedModels;
     } catch (error) {
       console.error('[FederatedLearning] Error fetching federated models:', error);

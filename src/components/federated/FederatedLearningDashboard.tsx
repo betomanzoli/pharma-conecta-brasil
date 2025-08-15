@@ -1,26 +1,26 @@
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Play, 
-  Pause, 
-  RefreshCw, 
-  Shield, 
-  Network, 
-  Activity,
-  Users,
-  Brain,
-  Lock,
-  TrendingUp
-} from 'lucide-react';
 import { useFederatedLearning } from '@/hooks/useFederatedLearning';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { 
+  Brain, 
+  Network, 
+  Shield, 
+  TrendingUp, 
+  Globe, 
+  RefreshCw,
+  Settings,
+  Activity,
+  Lock,
+  Users,
+  BarChart3
+} from 'lucide-react';
 
-const FederatedLearningDashboard: React.FC = () => {
+const FederatedLearningDashboard = () => {
   const {
     nodes,
     models,
@@ -28,392 +28,398 @@ const FederatedLearningDashboard: React.FC = () => {
     isTraining,
     isSyncing,
     isLoading,
+    error,
     privacyAudit,
     nodeContributions,
     startTraining,
     synchronizeModels,
+    refreshData,
     performPrivacyAudit
   } = useFederatedLearning();
 
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const getStatusColor = (status: string) => {
+  const getNodeStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-500';
       case 'syncing': return 'bg-blue-500';
       case 'inactive': return 'bg-gray-500';
-      default: return 'bg-yellow-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const activeNodes = nodes.filter(node => node.status === 'active').length;
-  const totalDataSamples = nodes.reduce((sum, node) => sum + node.data_samples, 0);
-  const avgContribution = nodeContributions.reduce((sum, contrib) => sum + contrib.contribution_score, 0) / nodeContributions.length || 0;
+  const activeNodes = nodes.filter(node => node.status === 'active');
+  const globalAccuracy = models.length > 0 ? 
+    models.reduce((acc, model) => acc + model.global_accuracy, 0) / models.length : 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Federated Learning</h1>
-          <p className="text-muted-foreground">Sistema distribuído de aprendizado colaborativo</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => selectedModel && startTraining(selectedModel)} 
-            disabled={isTraining || !selectedModel}
-            className="gap-2"
-          >
-            {isTraining ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isTraining ? 'Treinando...' : 'Iniciar Treinamento'}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => selectedModel && synchronizeModels(selectedModel)}
-            disabled={isSyncing || !selectedModel}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            Sincronizar
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={performPrivacyAudit}
-            className="gap-2"
-          >
+      <Card className="border-l-4 border-l-green-500">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <Network className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <span className="text-2xl">Sistema de Aprendizado Federado</span>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge className="bg-green-500 text-white">
+                  <Activity className="h-3 w-3 mr-1" />
+                  {activeNodes.length}/{nodes.length} Nós Ativos
+                </Badge>
+                {isTraining && (
+                  <Badge className="bg-blue-500 text-white">
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    Treinando
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">
+                {activeNodes.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Nós Ativos</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">
+                {models.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Modelos Federados</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600">
+                {Math.round(globalAccuracy)}%
+              </div>
+              <div className="text-sm text-muted-foreground">Precisão Global</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600">
+                {privacyAudit?.privacy_score || 95}
+              </div>
+              <div className="text-sm text-muted-foreground">Score Privacidade</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="overview" className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="nodes" className="flex items-center space-x-2">
+            <Globe className="h-4 w-4" />
+            <span>Nós</span>
+          </TabsTrigger>
+          <TabsTrigger value="training" className="flex items-center space-x-2">
+            <Brain className="h-4 w-4" />
+            <span>Treinamento</span>
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="flex items-center space-x-2">
             <Shield className="h-4 w-4" />
-            Auditoria
-          </Button>
-        </div>
-      </div>
-
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Network className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm font-medium">Nós Ativos</p>
-                <p className="text-2xl font-bold">{activeNodes}/{nodes.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Brain className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-sm font-medium">Modelos Federados</p>
-                <p className="text-2xl font-bold">{models.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm font-medium">Dados Totais</p>
-                <p className="text-2xl font-bold">{totalDataSamples.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Lock className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm font-medium">Score Privacidade</p>
-                <p className="text-2xl font-bold">{privacyAudit?.privacy_score || 100}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="nodes" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="nodes">Nós da Rede</TabsTrigger>
-          <TabsTrigger value="models">Modelos</TabsTrigger>
-          <TabsTrigger value="training">Treinamento</TabsTrigger>
-          <TabsTrigger value="privacy">Privacidade</TabsTrigger>
+            <span>Privacidade</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="nodes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Network className="h-5 w-5" />
-                Nós Participantes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nodes.map((node) => (
-                  <Card key={node.node_id} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">{node.name}</h4>
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(node.status)}`} />
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Localização:</span>
-                        <span>{node.location}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Dados:</span>
-                        <span>{node.data_samples.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Contribuição:</span>
-                        <span>{(node.contribution_score * 100).toFixed(1)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Versão:</span>
-                        <Badge variant="outline">{node.model_version}</Badge>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="models" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Modelos Federados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {models.map((model) => (
-                  <Card 
-                    key={model.id} 
-                    className={`p-4 cursor-pointer transition-colors ${
-                      selectedModel === model.id ? 'border-blue-500 bg-blue-50' : ''
-                    }`}
-                    onClick={() => setSelectedModel(model.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold">{model.model_name}</h4>
-                        <p className="text-sm text-muted-foreground">Versão {model.version}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                          {(model.global_accuracy).toFixed(1)}%
-                        </div>
-                        <p className="text-xs text-muted-foreground">Precisão Global</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Nós:</span>
-                        <span className="ml-2 font-medium">{model.participating_nodes}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Rodadas:</span>
-                        <span className="ml-2 font-medium">{model.sync_rounds}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Atualizado:</span>
-                        <span className="ml-2 font-medium">
-                          {new Date(model.last_updated).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="training" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Status do Treinamento
-                </CardTitle>
+                <CardTitle>Status da Rede</CardTitle>
               </CardHeader>
-              <CardContent>
-                {currentRound ? (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Rodada #{currentRound.round_number}</span>
-                      <Badge variant={currentRound.status === 'completed' ? 'default' : 'secondary'}>
-                        {currentRound.status === 'in_progress' ? 'Em Progresso' : 
-                         currentRound.status === 'completed' ? 'Concluída' : 'Pendente'}
-                      </Badge>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Progresso</span>
-                        <span>{currentRound.status === 'completed' ? '100' : '65'}%</span>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Conectividade</span>
+                  <Badge variant="outline" className="text-green-600">
+                    Estável
+                  </Badge>
+                </div>
+                
+                <div className="space-y-3">
+                  {nodes.slice(0, 3).map((node) => (
+                    <div key={node.node_id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${getNodeStatusColor(node.status)}`} />
+                        <span className="text-sm">{node.name}</span>
                       </div>
-                      <Progress value={currentRound.status === 'completed' ? 100 : 65} />
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(node.contribution_score * 100)}%
+                      </span>
                     </div>
-                    
-                    <div className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Nós Participantes:</span>
-                        <span>{currentRound.participating_nodes.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Iniciado:</span>
-                        <span>{new Date(currentRound.start_time).toLocaleTimeString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Nenhum treinamento ativo</p>
-                    <p className="text-sm text-muted-foreground">Selecione um modelo e inicie o treinamento</p>
-                  </div>
-                )}
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Contribuições dos Nós
-                </CardTitle>
+                <CardTitle>Modelos Ativos</CardTitle>
               </CardHeader>
-              <CardContent>
-                {nodeContributions.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={nodeContributions.slice(0, 6)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="node_id" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="contribution_score" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-muted-foreground">Carregando dados de contribuição...</p>
+              <CardContent className="space-y-4">
+                {models.slice(0, 2).map((model) => (
+                  <div key={model.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{model.model_name}</span>
+                      <Badge variant="outline">{model.version}</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Precisão</span>
+                        <span>{Math.round(model.global_accuracy)}%</span>
+                      </div>
+                      <Progress value={model.global_accuracy} className="h-1" />
+                    </div>
                   </div>
-                )}
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Controles de Treinamento</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={() => startTraining('model_1', true)} 
+                  disabled={isTraining || isLoading}
+                  className="w-full"
+                >
+                  {isTraining ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Brain className="h-4 w-4 mr-2" />
+                  )}
+                  Iniciar Treinamento
+                </Button>
+
+                <Button 
+                  onClick={() => synchronizeModels('model_1')} 
+                  disabled={isSyncing || isLoading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isSyncing ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Network className="h-4 w-4 mr-2" />
+                  )}
+                  Sincronizar Modelos
+                </Button>
+
+                <Button 
+                  onClick={refreshData} 
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Atualizar Dados
+                </Button>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="privacy" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Nodes Tab */}
+        <TabsContent value="nodes" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Nós da Rede Federada</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {nodes.map((node) => (
+                  <Card key={node.node_id} className="relative">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-sm">{node.name}</h4>
+                        <div className={`w-3 h-3 rounded-full ${getNodeStatusColor(node.status)}`} />
+                      </div>
+                      
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Localização:</span>
+                          <span>{node.location}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Amostras:</span>
+                          <span>{node.data_samples.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Contribuição:</span>
+                          <span>{Math.round(node.contribution_score * 100)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Versão:</span>
+                          <span>{node.model_version}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3">
+                        <Progress 
+                          value={node.contribution_score * 100} 
+                          className="h-1"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Training Tab */}
+        <TabsContent value="training" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Progresso do Treinamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {currentRound ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Rodada #{currentRound.round_number}</span>
+                    <Badge 
+                      variant={currentRound.status === 'completed' ? 'default' : 'secondary'}
+                    >
+                      {currentRound.status === 'in_progress' ? 'Em Andamento' : 
+                       currentRound.status === 'completed' ? 'Concluída' : 'Pendente'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Nós Participantes:</span>
+                      <span>{currentRound.participating_nodes.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Iniciado em:</span>
+                      <span>{new Date(currentRound.start_time).toLocaleString()}</span>
+                    </div>
+                    {currentRound.end_time && (
+                      <div className="flex justify-between text-sm">
+                        <span>Concluído em:</span>
+                        <span>{new Date(currentRound.end_time).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Nenhuma rodada de treinamento ativa</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {nodeContributions.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Auditoria de Privacidade
-                </CardTitle>
+                <CardTitle>Contribuições dos Nós</CardTitle>
               </CardHeader>
               <CardContent>
-                {privacyAudit ? (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-green-600 mb-2">
-                        {privacyAudit.privacy_score}/100
+                <div className="space-y-4">
+                  {nodeContributions.slice(0, 5).map((contribution) => {
+                    const node = nodes.find(n => n.node_id === contribution.node_id);
+                    return (
+                      <div key={contribution.node_id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <h4 className="font-medium">{node?.name || contribution.node_id}</h4>
+                          <div className="flex space-x-4 text-xs text-muted-foreground">
+                            <span>Qualidade: {Math.round(contribution.data_quality * 100)}%</span>
+                            <span>Melhoria: {Math.round(contribution.model_improvement * 100)}%</span>
+                            <span>Confiabilidade: {Math.round(contribution.reliability * 100)}%</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold">
+                            {Math.round(contribution.contribution_score * 100)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Score</div>
+                        </div>
                       </div>
-                      <p className="text-muted-foreground">Score de Privacidade</p>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Privacy Tab */}
+        <TabsContent value="privacy" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Auditoria de Privacidade</span>
+                <Button onClick={performPrivacyAudit} variant="outline" size="sm">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Executar Auditoria
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {privacyAudit ? (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      {privacyAudit.privacy_score}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-semibold">Conformidade:</h4>
+                    <div className="text-muted-foreground">Score de Privacidade</div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Conformidade</h4>
+                    <div className="grid grid-cols-2 gap-3">
                       {Object.entries(privacyAudit.compliance).map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-center">
-                          <span className="capitalize">{key.replace('_', ' ')}</span>
-                          <Badge variant={value ? 'default' : 'destructive'}>
+                        <div key={key} className="flex items-center justify-between p-2 border rounded">
+                          <span className="text-sm capitalize">
+                            {key.replace('_', ' ')}
+                          </span>
+                          <Badge variant={value ? "default" : "destructive"}>
                             {value ? 'Conforme' : 'Não Conforme'}
                           </Badge>
                         </div>
                       ))}
                     </div>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-2">Recomendações:</h4>
-                      <ul className="text-sm space-y-1">
-                        {privacyAudit.recommendations?.map((rec, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="text-blue-500">•</span>
-                            <span>{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Execute uma auditoria de privacidade</p>
-                    <Button onClick={performPrivacyAudit} className="mt-4">
-                      Iniciar Auditoria
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Métricas de Segurança</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Criptografia End-to-End</span>
-                      <span className="text-green-600">100%</span>
+                  {privacyAudit.recommendations.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold">Recomendações</h4>
+                      <div className="space-y-2">
+                        {privacyAudit.recommendations.map((rec, index) => (
+                          <div key={index} className="flex items-center space-x-2 p-2 bg-blue-50 rounded">
+                            <Lock className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <Progress value={100} className="h-2" />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Privacidade Diferencial</span>
-                      <span className="text-green-600">95%</span>
-                    </div>
-                    <Progress value={95} className="h-2" />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Agregação Segura</span>
-                      <span className="text-green-600">98%</span>
-                    </div>
-                    <Progress value={98} className="h-2" />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Auditabilidade</span>
-                      <span className="text-yellow-600">85%</span>
-                    </div>
-                    <Progress value={85} className="h-2" />
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Shield className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Execute uma auditoria para ver os resultados de privacidade</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
