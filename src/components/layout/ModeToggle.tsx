@@ -29,7 +29,8 @@ const ModeToggle: React.FC<ModeToggleProps> = ({
     return (
       <Badge 
         variant={isDemo ? 'destructive' : 'default'}
-        className={`${className} ${isDemo ? 'bg-orange-500' : 'bg-green-500'}`}
+        className={`${className} ${isDemo ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'} cursor-pointer`}
+        onClick={toggleDemoMode}
       >
         {isDemo ? (
           <>
@@ -57,12 +58,12 @@ const ModeToggle: React.FC<ModeToggleProps> = ({
         {isDemo ? (
           <>
             <TestTube className="h-4 w-4 mr-2" />
-            Modo Demo
+            {showLabel && 'Modo Demo'}
           </>
         ) : (
           <>
             <Building2 className="h-4 w-4 mr-2" />
-            Modo Real
+            {showLabel && 'Modo Real'}
           </>
         )}
       </Button>
