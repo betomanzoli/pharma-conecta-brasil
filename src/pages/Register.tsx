@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,9 @@ const Register = () => {
     
     try {
       console.log('Attempting registration for:', email);
-      const result = await signUp(email, password);
+      const result = await signUp(email, password, {
+        user_type: 'individual'
+      });
       
       if (result.error) {
         console.error('Registration failed:', result.error);
