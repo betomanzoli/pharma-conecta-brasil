@@ -13,6 +13,10 @@ import StrategicPlan from '@/pages/StrategicPlan';
 import AutomationPage from '@/pages/AutomationPage';
 import GenerativeAIPage from '@/pages/GenerativeAIPage';
 import ConsolidationPage from '@/pages/ConsolidationPage';
+import AIAssistantPage from '@/pages/AIAssistantPage';
+import MasterChatPage from '@/pages/MasterChatPage';
+import EnhancedChat from '@/pages/EnhancedChat';
+import OptimizationPage from '@/pages/OptimizationPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -45,11 +49,15 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat/:recipientId?" element={<ChatPage />} />
+              <Route path="/enhanced-chat" element={<EnhancedChat />} />
+              <Route path="/master-chat" element={<MasterChatPage />} />
+              <Route path="/ai-assistant" element={<AIAssistantPage />} />
               <Route path="/performance" element={<PerformancePage />} />
               <Route path="/strategic-plan" element={<StrategicPlan />} />
               <Route path="/automation" element={<AutomationPage />} />
               <Route path="/generative-ai" element={<GenerativeAIPage />} />
               <Route path="/consolidation" element={<ConsolidationPage />} />
+              <Route path="/optimization" element={<OptimizationPage />} />
             </Routes>
             <Toaster />
           </div>

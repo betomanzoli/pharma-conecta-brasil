@@ -12,7 +12,10 @@ import {
   Sparkles,
   Shield,
   LogOut,
-  User
+  User,
+  Bot,
+  Activity,
+  Zap
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -20,13 +23,16 @@ const Navigation = () => {
   const location = useLocation();
 
   const navigationItems = [
-    { path: '/', label: 'Dashboard', icon: Home },
+    { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/chat', label: 'Chat', icon: MessageSquare },
+    { path: '/ai-assistant', label: 'AI Assistant', icon: Bot },
+    { path: '/master-chat', label: 'Master AI', icon: Sparkles },
     { path: '/performance', label: 'Performance', icon: BarChart3 },
     { path: '/strategic-plan', label: 'Plano Estratégico', icon: Target },
     { path: '/consolidation', label: 'Consolidação', icon: Shield },
     { path: '/automation', label: 'Automação', icon: Settings },
-    { path: '/generative-ai', label: 'IA Generativa', icon: Sparkles }
+    { path: '/generative-ai', label: 'IA Generativa', icon: Zap },
+    { path: '/optimization', label: 'Otimização', icon: Activity }
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -36,7 +42,7 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link to="/dashboard" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">PC</span>
               </div>
