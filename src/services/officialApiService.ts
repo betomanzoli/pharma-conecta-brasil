@@ -38,6 +38,7 @@ export class OfficialApiService {
   ): Promise<OfficialDataResult[]> {
     const cacheKey = `official_search_${query}_${sources.join(',')}_${limit}`;
     
+    // Fix: Remove the extra TTL parameter - SmartCacheService.get only takes 3 arguments
     return SmartCacheService.get(
       cacheKey,
       'official:search',
@@ -58,8 +59,7 @@ export class OfficialApiService {
         });
         
         return this.prioritizeResults(allResults, limit);
-      },
-      this.CACHE_TTL
+      }
     );
   }
 
@@ -208,6 +208,7 @@ export class OfficialApiService {
   }
 
   static async getAvailableSources(): Promise<ApiSource[]> {
+    // Fix: Remove the extra TTL parameter
     return SmartCacheService.get(
       'api_sources_status',
       'official:status',
@@ -237,8 +238,7 @@ export class OfficialApiService {
         ];
 
         return sources;
-      },
-      300 // 5 minutes cache
+      }
     );
   }
 
