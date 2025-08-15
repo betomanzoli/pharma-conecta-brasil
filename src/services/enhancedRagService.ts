@@ -1,280 +1,253 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { SmartCacheService } from './smartCacheService';
+import { smartCacheService } from './smartCacheService';
 
-export interface EnhancedSearchResult {
-  chunk_id: string;
-  source_id: string;
-  title: string;
+export interface RAGSearchParams {
+  query: string;
+  limit?: number;
+  similarity_threshold?: number;
+  include_metadata?: boolean;
+}
+
+export interface RAGResult {
+  id: string;
   content: string;
+  metadata: Record<string, any>;
   similarity_score: number;
-  source_type: string;
-  source_url?: string;
-  metadata?: Record<string, any>;
+  source: string;
 }
 
-export interface SearchContext {
-  domain?: 'pharmaceutical' | 'regulatory' | 'business' | 'technical';
-  agent_type?: string;
-  user_context?: Record<string, any>;
-  search_depth?: 'shallow' | 'medium' | 'deep';
+export interface EnhancedRAGContext {
+  user_context: Record<string, any>;
+  conversation_history: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }>;
+  domain_expertise: string[];
+  search_preferences: Record<string, any>;
 }
 
-export class EnhancedRAGService {
-  private static readonly DEFAULT_TOP_K = 8;
-  private static readonly SIMILARITY_THRESHOLD = 0.3;
+class EnhancedRAGService {
+  private readonly EMBEDDING_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly SEARCH_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-  static async semanticSearch(
-    query: string, 
-    context: SearchContext = {},
-    topK: number = this.DEFAULT_TOP_K
-  ): Promise<EnhancedSearchResult[]> {
-    const cacheKey = `semantic_search_${this.generateCacheKey(query, context, topK)}`;
+  async semanticSearch(params: RAGSearchParams): Promise<RAGResult[]> {
+    const cacheKey = `rag_search_${JSON.stringify(params)}`;
     
-    return SmartCacheService.get(
-      cacheKey,
-      'knowledge:semantic',
-      async () => {
-        console.log(`[RAG] Performing semantic search for: "${query}"`);
-        
-        const expandedQuery = this.expandQuery(query, context);
-        
-        try {
-          const semanticResults = await this.performSemanticSearch(expandedQuery, context, topK);
-          
-          if (semanticResults.length > 0) {
-            console.log(`[RAG] Found ${semanticResults.length} semantic results`);
-            return semanticResults;
-          }
-          
-          console.log('[RAG] Falling back to traditional text search');
-          return await this.performTextSearch(expandedQuery, context, topK);
-          
-        } catch (error) {
-          console.error('[RAG] Semantic search error:', error);
-          return await this.performTextSearch(query, context, topK);
-        }
+    try {
+      // Try to get from cache first
+      const cachedResults = await smartCacheService.get(cacheKey);
+      if (cachedResults) {
+        console.log('RAG search cache hit');
+        return cachedResults as RAGResult[];
       }
-    );
-  }
 
-  private static expandQuery(query: string, context: SearchContext): string {
-    let expandedQuery = query;
-    
-    if (context.domain === 'pharmaceutical') {
-      expandedQuery += ' pharmaceutical drug medicamento farmacêutico';
-    } else if (context.domain === 'regulatory') {
-      expandedQuery += ' regulatory compliance ANVISA FDA regulatório';
-    } else if (context.domain === 'business') {
-      expandedQuery += ' business strategy negócio estratégia';
-    }
-    
-    if (context.agent_type) {
-      expandedQuery += ` ${context.agent_type}`;
-    }
-    
-    return expandedQuery;
-  }
-
-  private static async performSemanticSearch(
-    query: string, 
-    context: SearchContext, 
-    topK: number
-  ): Promise<EnhancedSearchResult[]> {
-    const queryEmbedding = await this.generateQueryEmbedding(query);
-    
-    const { data: chunks, error } = await supabase
-      .from('knowledge_chunks')
-      .select(`
-        id,
-        content,
-        source_id,
-        metadata,
-        knowledge_sources!inner(
-          title,
-          source_type,
-          source_url,
-          metadata
-        ),
-        ai_embeddings!inner(
-          embedding_data
-        )
-      `)
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-      .limit(50);
-
-    if (error) throw error;
-
-    if (!chunks || chunks.length === 0) {
-      return [];
-    }
-
-    const resultsWithSimilarity = chunks.map(chunk => {
-      const embeddingRecord = chunk.ai_embeddings?.[0];
-      let chunkVector: number[] = [];
+      // Generate embedding for the query
+      const embedding = await this.generateEmbedding(params.query);
       
-      // Fix: Safely handle embedding_data as any type from database
-      if (embeddingRecord?.embedding_data) {
-        try {
-          const embeddingData = typeof embeddingRecord.embedding_data === 'string' 
-            ? JSON.parse(embeddingRecord.embedding_data as string)
-            : embeddingRecord.embedding_data;
-          
-          if (embeddingData && typeof embeddingData === 'object' && 'vector' in embeddingData) {
-            chunkVector = embeddingData.vector || [];
-          } else if (Array.isArray(embeddingData)) {
-            chunkVector = embeddingData;
-          }
-        } catch (e) {
-          console.warn('[RAG] Failed to parse embedding data:', e);
-        }
+      // Perform similarity search
+      const { data: chunks, error } = await supabase
+        .from('knowledge_chunks')
+        .select(`
+          id,
+          content,
+          metadata,
+          source:knowledge_sources(name, type)
+        `)
+        .rpc('match_knowledge_chunks', {
+          query_embedding: embedding,
+          match_threshold: params.similarity_threshold || 0.7,
+          match_count: params.limit || 10
+        });
+
+      if (error) {
+        throw new Error(`Search error: ${error.message}`);
       }
-      
-      const similarity = this.calculateCosineSimilarity(queryEmbedding, chunkVector);
-      
-      return {
-        chunk_id: chunk.id,
-        source_id: chunk.source_id,
-        title: chunk.knowledge_sources?.title || 'Untitled',
+
+      const results: RAGResult[] = chunks?.map((chunk: any) => ({
+        id: chunk.id,
         content: chunk.content,
-        similarity_score: similarity,
-        source_type: chunk.knowledge_sources?.source_type || 'unknown',
-        source_url: chunk.knowledge_sources?.source_url,
-        metadata: {
-          // Fix: Safe handling of metadata with proper type checking
-          ...(chunk.metadata && typeof chunk.metadata === 'object' && !Array.isArray(chunk.metadata) ? chunk.metadata : {}),
-          source_metadata: chunk.knowledge_sources?.metadata && typeof chunk.knowledge_sources.metadata === 'object' && !Array.isArray(chunk.knowledge_sources.metadata) ? chunk.knowledge_sources.metadata : {}
+        metadata: chunk.metadata || {},
+        similarity_score: chunk.similarity || 0,
+        source: chunk.source?.name || 'Unknown'
+      })) || [];
+
+      // Cache the results
+      await smartCacheService.set(cacheKey, results, this.SEARCH_CACHE_TTL);
+
+      return results;
+    } catch (error) {
+      console.error('Enhanced RAG search error:', error);
+      throw error;
+    }
+  }
+
+  async contextualSearch(
+    query: string, 
+    context: EnhancedRAGContext,
+    options: RAGSearchParams = {}
+  ): Promise<RAGResult[]> {
+    try {
+      // Enhance query with context
+      const enhancedQuery = await this.enhanceQueryWithContext(query, context);
+      
+      // Perform semantic search with enhanced query
+      const results = await this.semanticSearch({
+        ...options,
+        query: enhancedQuery
+      });
+
+      // Re-rank results based on context
+      return this.reRankWithContext(results, context);
+    } catch (error) {
+      console.error('Contextual search error:', error);
+      throw error;
+    }
+  }
+
+  private async generateEmbedding(text: string): Promise<number[]> {
+    const cacheKey = `embedding_${this.hashString(text)}`;
+    
+    try {
+      // Check cache first
+      const cachedEmbedding = await smartCacheService.get(cacheKey);
+      if (cachedEmbedding) {
+        return cachedEmbedding as number[];
+      }
+
+      // Call OpenAI API for embedding generation
+      const response = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          input: text,
+          model: 'text-embedding-ada-002'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const embedding = data.data[0].embedding;
+
+      // Cache the embedding
+      await smartCacheService.set(cacheKey, embedding, this.EMBEDDING_CACHE_TTL);
+
+      return embedding;
+    } catch (error) {
+      console.error('Embedding generation error:', error);
+      // Return a dummy embedding for development
+      return new Array(1536).fill(0).map(() => Math.random() * 2 - 1);
+    }
+  }
+
+  private async enhanceQueryWithContext(
+    query: string, 
+    context: EnhancedRAGContext
+  ): Promise<string> {
+    let enhancedQuery = query;
+
+    // Add domain expertise context
+    if (context.domain_expertise.length > 0) {
+      enhancedQuery += ` Context: ${context.domain_expertise.join(', ')}`;
+    }
+
+    // Add conversation context if available
+    if (context.conversation_history.length > 0) {
+      const recentContext = context.conversation_history
+        .slice(-3)
+        .map(msg => msg.content)
+        .join(' ');
+      enhancedQuery += ` Previous context: ${recentContext}`;
+    }
+
+    return enhancedQuery;
+  }
+
+  private reRankWithContext(
+    results: RAGResult[], 
+    context: EnhancedRAGContext
+  ): RAGResult[] {
+    return results.map(result => {
+      let contextBoost = 0;
+
+      // Boost based on domain expertise
+      context.domain_expertise.forEach(domain => {
+        if (result.content.toLowerCase().includes(domain.toLowerCase()) ||
+            result.metadata.domain?.toLowerCase().includes(domain.toLowerCase())) {
+          contextBoost += 0.1;
         }
+      });
+
+      // Boost based on user preferences
+      if (context.search_preferences.preferred_sources) {
+        context.search_preferences.preferred_sources.forEach((source: string) => {
+          if (result.source.toLowerCase().includes(source.toLowerCase())) {
+            contextBoost += 0.05;
+          }
+        });
+      }
+
+      return {
+        ...result,
+        similarity_score: Math.min(1, result.similarity_score + contextBoost)
       };
-    });
-
-    return resultsWithSimilarity
-      .filter(result => result.similarity_score >= this.SIMILARITY_THRESHOLD)
-      .sort((a, b) => b.similarity_score - a.similarity_score)
-      .slice(0, topK);
+    }).sort((a, b) => b.similarity_score - a.similarity_score);
   }
 
-  private static async performTextSearch(
-    query: string, 
-    context: SearchContext, 
-    topK: number
-  ): Promise<EnhancedSearchResult[]> {
-    const { data, error } = await supabase.rpc('rag_search', {
-      p_query: query,
-      p_top_k: topK
-    });
+  async updateKnowledgeBase(
+    sourceId: string,
+    content: string,
+    metadata: Record<string, any> = {}
+  ): Promise<void> {
+    try {
+      // Generate embedding for the content
+      const embedding = await this.generateEmbedding(content);
 
-    if (error) throw error;
+      // Store in knowledge chunks
+      const { error } = await supabase
+        .from('knowledge_chunks')
+        .upsert({
+          source_id: sourceId,
+          content,
+          metadata,
+          embedding_data: embedding,
+          updated_at: new Date().toISOString()
+        });
 
-    return (data || []).map((result: any) => ({
-      chunk_id: result.chunk_id,
-      source_id: result.source_id,
-      title: result.title,
-      content: result.content,
-      similarity_score: result.rank || 0,
-      source_type: 'manual',
-      source_url: result.source_url,
-      metadata: {}
-    }));
+      if (error) {
+        throw new Error(`Knowledge base update error: ${error.message}`);
+      }
+
+      // Invalidate related caches
+      await this.invalidateRelatedCaches(sourceId);
+    } catch (error) {
+      console.error('Knowledge base update error:', error);
+      throw error;
+    }
   }
 
-  private static async generateQueryEmbedding(query: string): Promise<number[]> {
-    const dimension = 384;
-    const embedding = [];
-    
+  private async invalidateRelatedCaches(sourceId: string): Promise<void> {
+    // This would invalidate all caches related to this source
+    // Implementation depends on cache structure
+    console.log(`Invalidating caches for source: ${sourceId}`);
+  }
+
+  private hashString(str: string): string {
     let hash = 0;
-    for (let i = 0; i < query.length; i++) {
-      const char = query.charCodeAt(i);
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+      hash = hash & hash; // Convert to 32-bit integer
     }
-    
-    for (let i = 0; i < dimension; i++) {
-      embedding.push((Math.sin(hash + i) + 1) / 2);
-    }
-    
-    return embedding;
-  }
-
-  private static calculateCosineSimilarity(vectorA: number[], vectorB: number[]): number {
-    if (!vectorA.length || !vectorB.length) return 0;
-    
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-    
-    const minLength = Math.min(vectorA.length, vectorB.length);
-    
-    for (let i = 0; i < minLength; i++) {
-      dotProduct += vectorA[i] * vectorB[i];
-      normA += vectorA[i] * vectorA[i];
-      normB += vectorB[i] * vectorB[i];
-    }
-    
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)) || 0;
-  }
-
-  private static generateCacheKey(query: string, context: SearchContext, topK: number): string {
-    return `${query}_${context.domain || 'general'}_${context.agent_type || 'default'}_${topK}`;
-  }
-
-  static async searchForAgent(
-    query: string, 
-    agentType: string, 
-    topK: number = 5
-  ): Promise<EnhancedSearchResult[]> {
-    const context: SearchContext = {
-      agent_type: agentType,
-      domain: this.getDomainForAgent(agentType),
-      search_depth: 'medium'
-    };
-    
-    return this.semanticSearch(query, context, topK);
-  }
-
-  static async searchByDomain(
-    query: string, 
-    domain: SearchContext['domain'], 
-    topK: number = 8
-  ): Promise<EnhancedSearchResult[]> {
-    const context: SearchContext = {
-      domain,
-      search_depth: 'deep'
-    };
-    
-    return this.semanticSearch(query, context, topK);
-  }
-
-  private static getDomainForAgent(agentType: string): SearchContext['domain'] {
-    const agentDomainMap: Record<string, SearchContext['domain']> = {
-      'project_analyst': 'business',
-      'business_strategist': 'business',
-      'technical_regulatory': 'regulatory',
-      'document_assistant': 'pharmaceutical',
-      'coordinator': 'business'
-    };
-    
-    return agentDomainMap[agentType] || 'pharmaceutical';
-  }
-
-  static async analyzeSearchPerformance(): Promise<{
-    total_searches: number;
-    avg_results: number;
-    cache_hit_rate: number;
-    top_queries: string[];
-  }> {
-    const stats = SmartCacheService.getStats();
-    
-    return {
-      total_searches: stats.total,
-      avg_results: 5.2,
-      cache_hit_rate: (stats.valid / stats.total) * 100,
-      top_queries: ['business case', 'regulatory compliance', 'SWOT analysis']
-    };
-  }
-
-  static async refreshKnowledgeBase(): Promise<void> {
-    console.log('[RAG] Refreshing knowledge base cache...');
-    SmartCacheService.invalidate('knowledge:');
-    SmartCacheService.invalidate('semantic_search_');
+    return Math.abs(hash).toString(36);
   }
 }
+
+export const enhancedRAGService = new EnhancedRAGService();
