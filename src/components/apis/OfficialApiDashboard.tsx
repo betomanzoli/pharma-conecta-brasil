@@ -115,9 +115,9 @@ const OfficialApiDashboard = () => {
                       >
                         {getSourceIcon(source.available)}
                         <span>{source.name}</span>
-                        {source.records && (
+                        {source.total_records && (
                           <Badge variant="outline" className="ml-1">
-                            {source.records.toLocaleString()}
+                            {source.total_records.toLocaleString()}
                           </Badge>
                         )}
                       </label>
@@ -151,7 +151,7 @@ const OfficialApiDashboard = () => {
                         <div>
                           <h3 className="font-semibold">{source.name}</h3>
                           <p className="text-sm text-muted-foreground">
-                            Prioridade: {source.priority} | Registros: {source.records?.toLocaleString() || 0}
+                            Prioridade: {source.priority} | Registros: {source.total_records?.toLocaleString() || 0}
                           </p>
                         </div>
                       </div>
@@ -159,10 +159,10 @@ const OfficialApiDashboard = () => {
                         <Badge variant={source.available ? 'default' : 'destructive'}>
                           {source.available ? 'Ativa' : 'Inativa'}
                         </Badge>
-                        {source.lastSync && (
+                        {source.last_sync && (
                           <p className="text-xs text-muted-foreground mt-1 flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            {new Date(source.lastSync).toLocaleString()}
+                            {new Date(source.last_sync).toLocaleString()}
                           </p>
                         )}
                       </div>
@@ -191,7 +191,7 @@ const OfficialApiDashboard = () => {
                         {result.source.toUpperCase()}
                       </Badge>
                       <Badge variant="outline">
-                        {(result.relevanceScore * 100).toFixed(0)}% relevância
+                        {(result.relevance_score * 100).toFixed(0)}% relevância
                       </Badge>
                     </div>
                   </div>

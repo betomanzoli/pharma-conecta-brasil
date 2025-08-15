@@ -29,6 +29,7 @@ export interface OfficialDataResult {
   url: string;
   relevance_score: number;
   timestamp: string;
+  publishedAt: string;
   metadata: Record<string, any>;
 }
 
@@ -40,6 +41,9 @@ export interface ApiSource {
   last_sync: string;
   status: 'active' | 'inactive' | 'error';
   total_records: number;
+  records: number;
+  priority: number;
+  lastSync: string;
 }
 
 export class OfficialApiService {
@@ -144,6 +148,7 @@ export class OfficialApiService {
         url: `https://${sources[i % sources.length]}.gov/doc-${i}`,
         relevance_score: Math.random() * 0.5 + 0.5,
         timestamp: new Date().toISOString(),
+        publishedAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
         metadata: {
           document_type: 'regulation',
           classification: 'public',
@@ -173,8 +178,11 @@ export class OfficialApiService {
           description: 'Agência Nacional de Vigilância Sanitária',
           available: true,
           last_sync: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          lastSync: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
           status: 'active',
-          total_records: 15000
+          total_records: 15000,
+          records: 15000,
+          priority: 1
         },
         {
           id: 'fda',
@@ -182,8 +190,11 @@ export class OfficialApiService {
           description: 'Food and Drug Administration',
           available: true,
           last_sync: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+          lastSync: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
           status: 'active',
-          total_records: 25000
+          total_records: 25000,
+          records: 25000,
+          priority: 2
         },
         {
           id: 'pubmed',
@@ -191,8 +202,11 @@ export class OfficialApiService {
           description: 'Medical Literature Database',
           available: true,
           last_sync: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          lastSync: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
           status: 'active',
-          total_records: 50000
+          total_records: 50000,
+          records: 50000,
+          priority: 3
         }
       ];
 
