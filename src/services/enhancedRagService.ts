@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -37,11 +36,9 @@ export class EnhancedRAGService {
       async () => {
         console.log(`[RAG] Performing semantic search for: "${query}"`);
         
-        // Expandir query baseado no contexto
         const expandedQuery = this.expandQuery(query, context);
         
         try {
-          // Tentar busca semântica com embeddings primeiro
           const semanticResults = await this.performSemanticSearch(expandedQuery, context, topK);
           
           if (semanticResults.length > 0) {
@@ -49,13 +46,11 @@ export class EnhancedRAGService {
             return semanticResults;
           }
           
-          // Fallback para busca textual tradicional
           console.log('[RAG] Falling back to traditional text search');
           return await this.performTextSearch(expandedQuery, context, topK);
           
         } catch (error) {
           console.error('[RAG] Semantic search error:', error);
-          // Fallback garantido
           return await this.performTextSearch(query, context, topK);
         }
       }
@@ -65,7 +60,6 @@ export class EnhancedRAGService {
   private static expandQuery(query: string, context: SearchContext): string {
     let expandedQuery = query;
     
-    // Adicionar termos baseados no domínio
     if (context.domain === 'pharmaceutical') {
       expandedQuery += ' pharmaceutical drug medicamento farmacêutico';
     } else if (context.domain === 'regulatory') {
@@ -74,7 +68,6 @@ export class EnhancedRAGService {
       expandedQuery += ' business strategy negócio estratégia';
     }
     
-    // Adicionar contexto do agente
     if (context.agent_type) {
       expandedQuery += ` ${context.agent_type}`;
     }
@@ -87,10 +80,8 @@ export class EnhancedRAGService {
     context: SearchContext, 
     topK: number
   ): Promise<EnhancedSearchResult[]> {
-    // Gerar embedding para a query
     const queryEmbedding = await this.generateQueryEmbedding(query);
     
-    // Buscar chunks com similaridade semântica
     const { data: chunks, error } = await supabase
       .from('knowledge_chunks')
       .select(`
@@ -109,7 +100,7 @@ export class EnhancedRAGService {
         )
       `)
       .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-      .limit(50); // Buscar mais para calcular similaridade
+      .limit(50);
 
     if (error) throw error;
 
@@ -117,10 +108,13 @@ export class EnhancedRAGService {
       return [];
     }
 
-    // Calcular similaridade semântica
     const resultsWithSimilarity = chunks.map(chunk => {
-      const embeddingData = chunk.ai_embeddings?.[0]?.embedding_data as any;
-      const chunkVector = embeddingData?.vector || [];
+      const embeddingData = chunk.ai_embeddings?.[0]?.embedding_data;
+      let chunkVector: number[] = [];
+      
+      if (embeddingData && typeof embeddingData === 'object' && 'vector' in embeddingData) {
+        chunkVector = (embeddingData as any).vector || [];
+      }
       
       const similarity = this.calculateCosineSimilarity(queryEmbedding, chunkVector);
       
@@ -133,13 +127,12 @@ export class EnhancedRAGService {
         source_type: chunk.knowledge_sources?.source_type || 'unknown',
         source_url: chunk.knowledge_sources?.source_url,
         metadata: {
-          ...chunk.metadata,
-          source_metadata: chunk.knowledge_sources?.metadata
+          ...(chunk.metadata || {}),
+          source_metadata: chunk.knowledge_sources?.metadata || {}
         }
       };
     });
 
-    // Filtrar por threshold e ordenar por similaridade
     return resultsWithSimilarity
       .filter(result => result.similarity_score >= this.SIMILARITY_THRESHOLD)
       .sort((a, b) => b.similarity_score - a.similarity_score)
@@ -171,7 +164,6 @@ export class EnhancedRAGService {
   }
 
   private static async generateQueryEmbedding(query: string): Promise<number[]> {
-    // Implementação simplificada - em produção usar API de embeddings real
     const dimension = 384;
     const embedding = [];
     
@@ -211,7 +203,6 @@ export class EnhancedRAGService {
     return `${query}_${context.domain || 'general'}_${context.agent_type || 'default'}_${topK}`;
   }
 
-  // Métodos para diferentes tipos de busca especializada
   static async searchForAgent(
     query: string, 
     agentType: string, 
@@ -251,7 +242,6 @@ export class EnhancedRAGService {
     return agentDomainMap[agentType] || 'pharmaceutical';
   }
 
-  // Métodos de análise e otimização
   static async analyzeSearchPerformance(): Promise<{
     total_searches: number;
     avg_results: number;
@@ -262,9 +252,9 @@ export class EnhancedRAGService {
     
     return {
       total_searches: stats.total,
-      avg_results: 5.2, // Mock - em produção calcular
+      avg_results: 5.2,
       cache_hit_rate: (stats.valid / stats.total) * 100,
-      top_queries: ['business case', 'regulatory compliance', 'SWOT analysis'] // Mock
+      top_queries: ['business case', 'regulatory compliance', 'SWOT analysis']
     };
   }
 
