@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserProfile } from '@/components/UserProfile';
+import UserProfile from '@/components/navigation/UserProfile';
 import { Badge } from '@/components/ui/badge';
 import { 
   Building2, 
