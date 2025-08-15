@@ -1,7 +1,9 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
+import Index from './pages/Index';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import AIMatchingPage from './pages/AIMatchingPage';
@@ -37,7 +39,9 @@ function App() {
         <div className="min-h-screen bg-gray-50">
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/auth" element={<AuthPage />} />
             
             {/* Onboarding */}
