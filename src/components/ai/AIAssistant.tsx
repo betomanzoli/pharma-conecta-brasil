@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Bot, Brain, FileText, Search, MessageCircle, Zap, CheckCircle, AlertCircle } from 'lucide-react';
-import { isDemoMode, demoData } from '@/utils/demoMode';
+import { isDemoMode } from '@/utils/demoMode'; // removido demoData
 
 const AIAssistant = () => {
   const [activeAgent, setActiveAgent] = useState('regulatory');
@@ -172,7 +172,7 @@ Coordenação solicitada: "${prompt}"
       } else {
         throw new Error('Resposta inválida do servidor');
       }
-    ) catch (error: any) {
+    } catch (error: any) { // corrigido: era ") catch", agora "} catch"
       console.error('AI Assistant error:', error);
       toast({
         title: "Erro no agente IA",
