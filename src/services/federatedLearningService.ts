@@ -1,15 +1,19 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
 export interface FederatedNode {
+  id: string;
   node_id: string;
-  name: string;
-  location: string;
   status: 'active' | 'inactive' | 'syncing';
   last_sync: string;
-  model_version: string;
   data_samples: number;
-  contribution_score: number;
+  model_version: string;
+  performance_metrics: {
+    accuracy: number;
+    loss: number;
+    training_time: number;
+  };
 }
 
 export interface FederatedModel {
@@ -17,326 +21,172 @@ export interface FederatedModel {
   model_name: string;
   version: string;
   global_accuracy: number;
-  participating_nodes: number;
-  sync_rounds: number;
-  last_updated: string;
-  weights_hash: string;
+  participants: number;
+  last_update: string;
+  sync_status: 'pending' | 'in_progress' | 'completed' | 'failed';
 }
 
 export interface SyncRound {
+  id: string;
   round_number: number;
-  participating_nodes: string[];
+  participants: string[];
   start_time: string;
   end_time?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
-  accuracy_improvement: number;
-  convergence_metrics: Record<string, number>;
+  global_model_hash: string;
+  convergence_score: number;
+  status: 'active' | 'completed' | 'failed';
 }
 
 export class FederatedLearningService {
-  private static instance: FederatedLearningService;
+  private static readonly CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-  constructor() {}
-
-  static getInstance(): FederatedLearningService {
-    if (!this.instance) {
-      this.instance = new FederatedLearningService();
-    }
-    return this.instance;
-  }
-
-  // Get all active federated nodes
-  async getActiveNodes(): Promise<FederatedNode[]> {
-    const cacheKey = 'federated_nodes_active';
-    
+  static async getNodes(): Promise<FederatedNode[]> {
     try {
-      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
-      if (cached) return cached as FederatedNode[];
+      const cached = await SmartCacheService.get<FederatedNode[]>('federated_nodes');
+      if (cached) {
+        return cached;
+      }
 
-      // Since we don't have the actual federated system, simulate federated nodes
-      const mockRegions = ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Belo Horizonte', 'Porto Alegre', 'Salvador'];
-      
-      const nodes: FederatedNode[] = mockRegions.map((region, index) => ({
-        node_id: `node_${region.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${index}`,
-        name: `Nó ${region}`,
-        location: region,
-        status: Math.random() > 0.1 ? 'active' : 'inactive' as 'active' | 'inactive',
-        last_sync: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-        model_version: `v${Math.floor(Math.random() * 10) + 1}.${Math.floor(Math.random() * 10)}`,
-        data_samples: Math.floor(Math.random() * 1000) + 100,
-        contribution_score: Math.random() * 0.3 + 0.7 // 0.7-1.0
-      }));
+      // Simulate federated nodes data
+      const mockNodes: FederatedNode[] = [
+        {
+          id: '1',
+          node_id: 'node-pharma-1',
+          status: 'active',
+          last_sync: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+          data_samples: 1500,
+          model_version: 'v1.2.0',
+          performance_metrics: {
+            accuracy: 0.92,
+            loss: 0.08,
+            training_time: 120
+          }
+        },
+        {
+          id: '2',
+          node_id: 'node-lab-2',
+          status: 'syncing',
+          last_sync: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          data_samples: 800,
+          model_version: 'v1.1.9',
+          performance_metrics: {
+            accuracy: 0.88,
+            loss: 0.12,
+            training_time: 95
+          }
+        }
+      ];
 
-      SmartCacheService.set(cacheKey, nodes, 'memory');
-      return nodes;
+      await SmartCacheService.set('federated_nodes', mockNodes, this.CACHE_TTL);
+      return mockNodes;
     } catch (error) {
-      console.error('[FederatedLearning] Error fetching active nodes:', error);
+      console.error('Error fetching federated nodes:', error);
       return [];
     }
   }
 
-  // Get federated models
-  async getFederatedModels(): Promise<FederatedModel[]> {
-    const cacheKey = 'federated_models';
-    
+  static async getModels(): Promise<FederatedModel[]> {
     try {
-      const cached = SmartCacheService.get(cacheKey, 'memory', 5 * 60 * 1000);
-      if (cached) return cached as FederatedModel[];
-
-      // Get models from ml_models table
-      const { data: models, error } = await supabase
-        .from('ml_models')
-        .select('*')
-        .eq('model_type', 'federated')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[FederatedLearning] Error fetching models:', error);
-        // Return mock models if database fails
-        return this.getMockModels();
+      const cached = await SmartCacheService.get<FederatedModel[]>('federated_models');
+      if (cached) {
+        return cached;
       }
 
-      const federatedModels: FederatedModel[] = (models || []).map(model => ({
-        id: model.id,
-        model_name: model.model_name,
-        version: model.version,
-        global_accuracy: model.accuracy * 100,
-        participating_nodes: Math.floor(Math.random() * 5) + 3,
-        sync_rounds: Math.floor(Math.random() * 50) + 10,
-        last_updated: model.updated_at,
-        weights_hash: `sha256_${Math.random().toString(36).substring(7)}`
-      }));
+      // Simulate federated models data
+      const mockModels: FederatedModel[] = [
+        {
+          id: '1',
+          model_name: 'PharmaMatch-Federal',
+          version: 'v1.2.0',
+          global_accuracy: 0.89,
+          participants: 5,
+          last_update: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          sync_status: 'completed'
+        },
+        {
+          id: '2',
+          model_name: 'RegCompliance-Federal',
+          version: 'v1.1.5',
+          global_accuracy: 0.85,
+          participants: 3,
+          last_update: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          sync_status: 'in_progress'
+        }
+      ];
 
-      // If no federated models exist, create some mock ones
-      if (federatedModels.length === 0) {
-        return this.getMockModels();
-      }
-
-      SmartCacheService.set(cacheKey, federatedModels, 'memory');
-      return federatedModels;
+      await SmartCacheService.set('federated_models', mockModels, this.CACHE_TTL);
+      return mockModels;
     } catch (error) {
-      console.error('[FederatedLearning] Error fetching federated models:', error);
-      return this.getMockModels();
+      console.error('Error fetching federated models:', error);
+      return [];
     }
   }
 
-  private getMockModels(): FederatedModel[] {
-    return [
-      {
-        id: 'federated_model_1',
-        model_name: 'Pharmaceutical Knowledge Model',
-        version: '2.1.0',
-        global_accuracy: 92.5,
-        participating_nodes: 6,
-        sync_rounds: 45,
-        last_updated: new Date().toISOString(),
-        weights_hash: 'sha256_abc123def456'
-      },
-      {
-        id: 'federated_model_2',
-        model_name: 'Regulatory Compliance Model',
-        version: '1.8.3',
-        global_accuracy: 88.7,
-        participating_nodes: 4,
-        sync_rounds: 32,
-        last_updated: new Date(Date.now() - 86400000).toISOString(),
-        weights_hash: 'sha256_def456ghi789'
-      }
-    ];
-  }
-
-  // Start federated training round
-  async startTrainingRound(modelId: string, privacyPreserving: boolean = true): Promise<SyncRound> {
+  static async startSyncRound(modelId: string): Promise<SyncRound> {
     try {
-      const round: SyncRound = {
+      const syncRound: SyncRound = {
+        id: `sync-${Date.now()}`,
         round_number: Math.floor(Math.random() * 100) + 1,
-        participating_nodes: await this.getParticipatingNodeIds(),
+        participants: ['node-pharma-1', 'node-lab-2', 'node-consultant-3'],
         start_time: new Date().toISOString(),
-        status: 'in_progress',
-        accuracy_improvement: 0,
-        convergence_metrics: {
-          loss_reduction: 0,
-          gradient_norm: 0,
-          weight_divergence: 0
-        }
+        global_model_hash: `hash-${Date.now()}`,
+        convergence_score: 0,
+        status: 'active'
       };
 
-      // Store training round in metrics
-      await supabase.from('federated_learning_metrics').insert({
-        node_id: 'coordinator',
-        model_version: `v${Date.now()}`,
-        round_number: round.round_number,
-        sync_status: 'syncing',
-        metadata: {
-          training_round: round,
-          privacy_preserving: privacyPreserving
-        } as any
-      });
+      // Store sync round information
+      const { error } = await supabase
+        .from('federated_training_rounds')
+        .insert({
+          model_version: `v1.${syncRound.round_number}.0`,
+          node_id: 'coordinator',
+          round_number: syncRound.round_number,
+          metadata: JSON.stringify({
+            training_round: syncRound,
+            privacy_preserving: true
+          })
+        });
 
-      return round;
+      if (error) {
+        console.warn('Could not store sync round:', error);
+      }
+
+      return syncRound;
     } catch (error) {
-      console.error('[FederatedLearning] Error starting training round:', error);
+      console.error('Error starting sync round:', error);
       throw error;
     }
   }
 
-  // Synchronize models across nodes
-  async synchronizeModels(modelId: string): Promise<{
-    success: boolean;
-    sync_id: string;
-    nodes_synced: number;
-    consensus_reached: boolean;
-  }> {
+  static async getSyncRounds(): Promise<SyncRound[]> {
     try {
-      // Simulate successful synchronization
-      const nodes = await this.getActiveNodes();
-      const activeNodes = nodes.filter(n => n.status === 'active');
-      
-      return {
-        success: true,
-        sync_id: `sync_${Date.now()}`,
-        nodes_synced: activeNodes.length,
-        consensus_reached: Math.random() > 0.2 // 80% chance of consensus
-      };
-    } catch (error) {
-      console.error('[FederatedLearning] Error synchronizing models:', error);
-      return {
-        success: false,
-        sync_id: '',
-        nodes_synced: 0,
-        consensus_reached: false
-      };
-    }
-  }
-
-  // Get training metrics for a specific round
-  async getTrainingMetrics(roundNumber: number): Promise<{
-    accuracy_progression: Array<{ node_id: string; accuracy: number; timestamp: string }>;
-    convergence_data: Array<{ iteration: number; loss: number; accuracy: number }>;
-    privacy_metrics: {
-      differential_privacy_epsilon: number;
-      noise_level: number;
-      privacy_budget_used: number;
-    };
-  }> {
-    try {
-      const { data } = await supabase
-        .from('federated_learning_metrics')
-        .select('*')
-        .eq('round_number', roundNumber)
-        .order('created_at');
-
-      const accuracy_progression = (data || []).map(metric => ({
-        node_id: metric.node_id,
-        accuracy: metric.local_accuracy || 0,
-        timestamp: metric.created_at
-      }));
-
-      const convergence_data = Array.from({ length: 20 }, (_, i) => ({
-        iteration: i + 1,
-        loss: Math.max(0.1, 2.0 * Math.exp(-i * 0.1) + Math.random() * 0.1),
-        accuracy: Math.min(0.95, 0.5 + (i * 0.02) + Math.random() * 0.05)
-      }));
-
-      return {
-        accuracy_progression,
-        convergence_data,
-        privacy_metrics: {
-          differential_privacy_epsilon: 0.1,
-          noise_level: 0.05,
-          privacy_budget_used: Math.random() * 0.3 + 0.1
+      // Simulate sync rounds data
+      const mockRounds: SyncRound[] = [
+        {
+          id: '1',
+          round_number: 15,
+          participants: ['node-pharma-1', 'node-lab-2'],
+          start_time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          end_time: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+          global_model_hash: 'hash-abc123',
+          convergence_score: 0.95,
+          status: 'completed'
+        },
+        {
+          id: '2',
+          round_number: 16,
+          participants: ['node-pharma-1', 'node-lab-2', 'node-consultant-3'],
+          start_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          global_model_hash: 'hash-def456',
+          convergence_score: 0.78,
+          status: 'active'
         }
-      };
-    } catch (error) {
-      console.error('[FederatedLearning] Error fetching training metrics:', error);
-      return {
-        accuracy_progression: [],
-        convergence_data: [],
-        privacy_metrics: {
-          differential_privacy_epsilon: 0,
-          noise_level: 0,
-          privacy_budget_used: 0
-        }
-      };
-    }
-  }
-
-  // Perform privacy audit
-  async performPrivacyAudit(): Promise<{
-    privacy_score: number;
-    compliance: Record<string, boolean>;
-    recommendations: string[];
-    audit_timestamp: string;
-  }> {
-    try {
-      // Simulate privacy audit
-      const compliance = {
-        'lgpd_compliance': true,
-        'gdpr_compliance': true,
-        'differential_privacy': true,
-        'secure_aggregation': true,
-        'data_minimization': Math.random() > 0.3,
-        'encryption_at_rest': true,
-        'encryption_in_transit': true
-      };
-
-      const score = Object.values(compliance).filter(Boolean).length / Object.keys(compliance).length * 100;
-
-      const recommendations = [
-        'Implementar rotação periódica de chaves de criptografia',
-        'Aumentar o nível de ruído diferencial para maior privacidade',
-        'Estabelecer políticas mais rigorosas de minimização de dados',
-        'Implementar auditoria contínua de acesso aos dados'
       ];
 
-      return {
-        privacy_score: Math.round(score),
-        compliance,
-        recommendations: recommendations.slice(0, Math.floor(Math.random() * 3) + 1),
-        audit_timestamp: new Date().toISOString()
-      };
+      return mockRounds;
     } catch (error) {
-      console.error('[FederatedLearning] Error performing privacy audit:', error);
-      return {
-        privacy_score: 0,
-        compliance: {},
-        recommendations: [],
-        audit_timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  // Get node contribution analysis
-  async getNodeContributions(): Promise<Array<{
-    node_id: string;
-    contribution_score: number;
-    data_quality: number;
-    model_improvement: number;
-    reliability: number;
-  }>> {
-    try {
-      const nodes = await this.getActiveNodes();
-      
-      return nodes.map(node => ({
-        node_id: node.node_id,
-        contribution_score: node.contribution_score,
-        data_quality: Math.random() * 0.3 + 0.7,
-        model_improvement: Math.random() * 0.2 + 0.1,
-        reliability: node.status === 'active' ? Math.random() * 0.2 + 0.8 : 0.3
-      }));
-    } catch (error) {
-      console.error('[FederatedLearning] Error analyzing node contributions:', error);
+      console.error('Error fetching sync rounds:', error);
       return [];
     }
   }
-
-  private async getParticipatingNodeIds(): Promise<string[]> {
-    const nodes = await this.getActiveNodes();
-    return nodes
-      .filter(node => node.status === 'active')
-      .map(node => node.node_id)
-      .slice(0, Math.floor(Math.random() * 5) + 3); // 3-7 nodes
-  }
 }
-
-export const federatedLearningService = FederatedLearningService.getInstance();
