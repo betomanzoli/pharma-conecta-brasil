@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Import all phase components
+// Direct imports of all phase components
 import Phase1AIMatching from './phases/Phase1AIMatching';
 import Phase2CollaborativeGovernance from './phases/Phase2CollaborativeGovernance';
 import Phase3AdvancedSharedValue from './phases/Phase3AdvancedSharedValue';
@@ -40,7 +40,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Target,
       color: 'bg-blue-500',
-      component: () => import('./phases/Phase1AIMatching')
+      component: Phase1AIMatching
     },
     {
       id: 'phase2',
@@ -50,7 +50,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Users,
       color: 'bg-green-500',
-      component: () => import('./phases/Phase2CollaborativeGovernance')
+      component: Phase2CollaborativeGovernance
     },
     {
       id: 'phase3',
@@ -60,7 +60,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: TrendingUp,
       color: 'bg-purple-500',
-      component: () => import('./phases/Phase3AdvancedSharedValue')
+      component: Phase3AdvancedSharedValue
     },
     {
       id: 'phase4',
@@ -70,7 +70,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Shield,
       color: 'bg-orange-500',
-      component: () => import('./phases/Phase4IntegratedComplianceTracker')
+      component: Phase4IntegratedComplianceTracker
     },
     {
       id: 'phase5',
@@ -80,7 +80,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: BarChart3,
       color: 'bg-indigo-500',
-      component: () => import('./phases/Phase5AdvancedPredictiveAnalysis')
+      component: Phase5AdvancedPredictiveAnalysis
     },
     {
       id: 'phase6',
@@ -90,7 +90,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Zap,
       color: 'bg-cyan-500',
-      component: () => import('./phases/Phase6AutomationEcosystem')
+      component: Phase6AutomationEcosystem
     },
     {
       id: 'phase7',
@@ -100,7 +100,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Sparkles,
       color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-      component: () => import('./phases/Phase7FullGenerativeAI')
+      component: Phase7FullGenerativeAI
     }
   ];
 
