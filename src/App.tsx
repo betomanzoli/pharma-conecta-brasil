@@ -9,6 +9,7 @@ import PerformancePage from '@/pages/PerformancePage';
 import StrategicPlan from '@/pages/StrategicPlan';
 import AutomationPage from '@/pages/AutomationPage';
 import GenerativeAIPage from '@/pages/GenerativeAIPage';
+import ConsolidationPage from '@/pages/ConsolidationPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ function App() {
               <Route path="/strategic-plan" element={<StrategicPlan />} />
               <Route path="/automation" element={<AutomationPage />} />
               <Route path="/generative-ai" element={<GenerativeAIPage />} />
+              <Route path="/consolidation" element={<ConsolidationPage />} />
             </Routes>
             <Toaster />
           </div>

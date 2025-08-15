@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +14,10 @@ import {
   Sparkles,
   CheckCircle2,
   Trophy,
-  Rocket
+  Rocket,
+  ArrowRight
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Import all phase components
 import Phase1AIMatching from './phases/Phase1AIMatching';
@@ -39,7 +40,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Target,
       color: 'bg-blue-500',
-      component: Phase1AIMatching
+      component: () => import('./phases/Phase1AIMatching')
     },
     {
       id: 'phase2',
@@ -49,7 +50,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Users,
       color: 'bg-green-500',
-      component: Phase2CollaborativeGovernance
+      component: () => import('./phases/Phase2CollaborativeGovernance')
     },
     {
       id: 'phase3',
@@ -59,7 +60,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: TrendingUp,
       color: 'bg-purple-500',
-      component: Phase3AdvancedSharedValue
+      component: () => import('./phases/Phase3AdvancedSharedValue')
     },
     {
       id: 'phase4',
@@ -69,7 +70,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Shield,
       color: 'bg-orange-500',
-      component: Phase4IntegratedComplianceTracker
+      component: () => import('./phases/Phase4IntegratedComplianceTracker')
     },
     {
       id: 'phase5',
@@ -79,7 +80,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: BarChart3,
       color: 'bg-indigo-500',
-      component: Phase5AdvancedPredictiveAnalysis
+      component: () => import('./phases/Phase5AdvancedPredictiveAnalysis')
     },
     {
       id: 'phase6',
@@ -89,7 +90,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Zap,
       color: 'bg-cyan-500',
-      component: Phase6AutomationEcosystem
+      component: () => import('./phases/Phase6AutomationEcosystem')
     },
     {
       id: 'phase7',
@@ -99,7 +100,7 @@ const StrategicPlanDashboard = () => {
       status: 'completed',
       icon: Sparkles,
       color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-      component: Phase7FullGenerativeAI
+      component: () => import('./phases/Phase7FullGenerativeAI')
     }
   ];
 
@@ -127,7 +128,7 @@ const StrategicPlanDashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header with Achievement */}
+      {/* Header com Achievement e Link para Consolidação */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">
           <div className="p-3 rounded-full bg-gradient-to-r from-gold-500 to-yellow-500 text-white">
@@ -154,6 +155,17 @@ const StrategicPlanDashboard = () => {
             <Rocket className="h-3 w-3 mr-1" />
             Sistema Operacional
           </Badge>
+        </div>
+
+        {/* Link para Consolidação */}
+        <div className="pt-4">
+          <Link to="/consolidation">
+            <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+              <Shield className="h-4 w-4 mr-2" />
+              Acessar Consolidação das Fases
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -257,10 +269,12 @@ const StrategicPlanDashboard = () => {
                   com IA generativa, automação inteligente, compliance integrado e sistema de matching de última geração.
                 </p>
                 <div className="flex justify-center gap-4 pt-4">
-                  <Button className="bg-gradient-to-r from-gold-500 to-yellow-500 hover:from-gold-600 hover:to-yellow-600">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Sistema Completo
-                  </Button>
+                  <Link to="/consolidation">
+                    <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Consolidar Sistema
+                    </Button>
+                  </Link>
                   <Button variant="outline">
                     <Rocket className="h-4 w-4 mr-2" />
                     Expandir Globalmente
