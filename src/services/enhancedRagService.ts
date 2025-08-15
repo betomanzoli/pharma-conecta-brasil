@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -113,15 +112,17 @@ export class EnhancedRAGService {
       const embeddingRecord = chunk.ai_embeddings?.[0];
       let chunkVector: number[] = [];
       
-      // Fix: Properly handle embedding_data which might be stored as JSON string or object
+      // Fix: Safely handle embedding_data as any type from database
       if (embeddingRecord?.embedding_data) {
         try {
           const embeddingData = typeof embeddingRecord.embedding_data === 'string' 
-            ? JSON.parse(embeddingRecord.embedding_data)
+            ? JSON.parse(embeddingRecord.embedding_data as string)
             : embeddingRecord.embedding_data;
           
           if (embeddingData && typeof embeddingData === 'object' && 'vector' in embeddingData) {
             chunkVector = embeddingData.vector || [];
+          } else if (Array.isArray(embeddingData)) {
+            chunkVector = embeddingData;
           }
         } catch (e) {
           console.warn('[RAG] Failed to parse embedding data:', e);
@@ -139,9 +140,9 @@ export class EnhancedRAGService {
         source_type: chunk.knowledge_sources?.source_type || 'unknown',
         source_url: chunk.knowledge_sources?.source_url,
         metadata: {
-          // Fix: Handle potentially undefined metadata with proper defaults
-          ...((chunk.metadata && typeof chunk.metadata === 'object') ? chunk.metadata : {}),
-          source_metadata: ((chunk.knowledge_sources?.metadata && typeof chunk.knowledge_sources.metadata === 'object') ? chunk.knowledge_sources.metadata : {})
+          // Fix: Safe handling of metadata with proper type checking
+          ...(chunk.metadata && typeof chunk.metadata === 'object' && !Array.isArray(chunk.metadata) ? chunk.metadata : {}),
+          source_metadata: chunk.knowledge_sources?.metadata && typeof chunk.knowledge_sources.metadata === 'object' && !Array.isArray(chunk.knowledge_sources.metadata) ? chunk.knowledge_sources.metadata : {}
         }
       };
     });

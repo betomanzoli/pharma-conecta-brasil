@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SmartCacheService } from './smartCacheService';
 
@@ -18,11 +17,10 @@ export interface SourceMetrics {
 
 export interface MLModel {
   id: string;
-  model_name: string;
-  version: string;
-  accuracy: number;
+  model_version: string;
+  accuracy_score: number;
   training_data_size: number;
-  last_trained: string;
+  trained_at: string;
   is_active: boolean;
   weights: Record<string, number>;
 }
@@ -66,8 +64,21 @@ export class MLPrioritizationService {
         return null;
       }
 
-      this.modelWeights = data.weights || this.modelWeights;
-      return data as MLModel;
+      // Fix: Safe parsing of weights from database
+      if (data.weights && typeof data.weights === 'object' && !Array.isArray(data.weights)) {
+        this.modelWeights = data.weights as Record<string, number>;
+      }
+
+      // Fix: Map database fields to MLModel interface
+      return {
+        id: data.id,
+        model_version: data.model_version,
+        accuracy_score: data.accuracy_score,
+        training_data_size: data.training_data_size,
+        trained_at: data.trained_at,
+        is_active: data.is_active,
+        weights: this.modelWeights
+      } as MLModel;
     } catch (error) {
       console.error('[ML] Error loading model:', error);
       return null;
@@ -298,7 +309,7 @@ export class MLPrioritizationService {
       }
 
       // Save updated model
-      await this.saveModelWeights();
+      await this.saveModelWeights(feedbackData);
       
       console.log('[ML] Model weights updated:', this.modelWeights);
     } catch (error) {
@@ -329,7 +340,7 @@ export class MLPrioritizationService {
     return adjustments;
   }
 
-  private async saveModelWeights(): Promise<void> {
+  private async saveModelWeights(feedbackData: any[]): Promise<void> {
     try {
       // Deactivate current active model
       await supabase
@@ -337,12 +348,11 @@ export class MLPrioritizationService {
         .update({ is_active: false })
         .eq('is_active', true);
 
-      // Insert new model version
+      // Fix: Insert new model version with correct field names
       await supabase
         .from('ml_model_weights')
         .insert({
-          model_name: 'source_prioritization',
-          version: `v${Date.now()}`,
+          model_version: `v${Date.now()}`,
           weights: this.modelWeights,
           accuracy_score: 0.85, // Will be updated based on feedback
           training_data_size: feedbackData?.length || 0,
