@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -237,7 +236,7 @@ const AgentsDashboardPage = () => {
                                 sourceAgent={output.agent_type}
                                 targetAgents={['ai-coordinator-orchestrator']}
                                 agentOutputId={output.id}
-                                outputData={output.output_md}
+                                outputData={{ content: output.output_md, metadata: output.kpis }}
                                 onHandoffComplete={loadRecentOutputs}
                               />
                               
