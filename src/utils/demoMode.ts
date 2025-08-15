@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Demo mode utility functions
@@ -43,71 +42,90 @@ export const useDemoMode = () => {
 // Demo data for testing
 export const demoData = {
   user: {
-    id: 'demo-user-123',
-    email: 'demo@pharmaconnect.com',
+    id: 'demo-user-1',
+    email: 'demo@pharmaconnect.com.br',
     first_name: 'João',
     last_name: 'Silva',
-    user_type: 'pharmaceutical_company'
+    user_type: 'company'
+  },
+  analytics: {
+    activeProjects: 12,
+    totalProjects: 45,
+    completedProjects: 33,
+    complianceScore: 94,
+    pendingApprovals: 3,
+    monthlyGrowth: 15
   },
   projects: [
     {
-      id: '1',
-      name: 'Desenvolvimento Genérico XYZ',
+      id: 'proj-1',
+      name: 'Registro de Medicamento Genérico',
       status: 'active',
-      progress: 65,
-      deadline: '2024-12-31',
-      type: 'generic_development'
+      progress: 75,
+      deadline: '2024-12-15'
     },
     {
-      id: '2',
-      name: 'Registro ANVISA - Produto ABC',
+      id: 'proj-2', 
+      name: 'Análise de Bioequivalência',
       status: 'review',
-      progress: 80,
-      deadline: '2024-10-15',
-      type: 'regulatory_submission'
+      progress: 45,
+      deadline: '2024-11-30'
+    },
+    {
+      id: 'proj-3',
+      name: 'Validação de Processo Produtivo',
+      status: 'active',
+      progress: 90,
+      deadline: '2024-10-22'
     }
   ],
-  analytics: {
-    totalProjects: 12,
-    activeProjects: 8,
-    completedProjects: 4,
-    pendingApprovals: 3,
-    monthlyGrowth: 15.5,
-    complianceScore: 94
-  },
+  consultants: [
+    {
+      name: 'Dr. Maria Santos',
+      specialization: 'Assuntos Regulatórios',
+      rating: 4.9,
+      location: 'São Paulo, SP',
+      avatar: '',
+      expertise: ['ANVISA', 'Registro de Medicamentos', 'Farmacovigilância', 'GMP']
+    },
+    {
+      name: 'Dr. Carlos Oliveira',
+      specialization: 'Desenvolvimento Analítico',
+      rating: 4.8,
+      location: 'Rio de Janeiro, RJ',
+      avatar: '',
+      expertise: ['Validação Analítica', 'HPLC', 'Bioanalítica', 'ICH Guidelines']
+    },
+    {
+      name: 'Dra. Ana Costa',
+      specialization: 'Qualidade e Compliance',
+      rating: 4.9,
+      location: 'Belo Horizonte, MG',
+      avatar: '',
+      expertise: ['ISO 13485', 'Auditoria', 'Sistemas da Qualidade', 'CAPA']
+    }
+  ],
   notifications: [
     {
-      id: '1',
-      title: 'Deadline Approaching',
-      message: 'Projeto XYZ precisa ser finalizado em 5 dias',
-      type: 'warning',
-      read: false,
-      created_at: new Date().toISOString()
+      id: 'notif-1',
+      title: 'Documento aprovado',
+      message: 'Seu protocolo de validação foi aprovado pela equipe técnica.',
+      type: 'info',
+      created_at: '2024-01-15T10:30:00Z'
     },
     {
-      id: '2',
-      title: 'Aprovação ANVISA',
-      message: 'Produto ABC foi aprovado pela ANVISA',
-      type: 'success',
-      read: false,
-      created_at: new Date().toISOString()
-    }
-  ],
-  aiAgents: {
-    businessStrategist: {
-      active: true,
-      lastRun: '2024-01-15T10:30:00Z',
-      suggestions: 3
+      id: 'notif-2',
+      title: 'Prazo próximo',
+      message: 'O projeto "Análise de Bioequivalência" vence em 7 dias.',
+      type: 'warning', 
+      created_at: '2024-01-14T14:22:00Z'
     },
-    technicalRegulatory: {
-      active: true,
-      lastRun: '2024-01-15T09:15:00Z',
-      suggestions: 5
-    },
-    projectAnalyst: {
-      active: true,
-      lastRun: '2024-01-15T11:45:00Z',
-      suggestions: 2
+    {
+      id: 'notif-3',
+      title: 'Nova mensagem',
+      message: 'Dr. Maria Santos enviou uma nova mensagem sobre seu projeto.',
+      type: 'info',
+      created_at: '2024-01-13T09:15:00Z'
     }
-  }
+  ]
 };

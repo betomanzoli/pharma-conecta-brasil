@@ -23,12 +23,25 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const isDemo = isDemoMode();
-  const userData = isDemo ? demoData.user : user;
+  const userData = isDemo ? demoData.user : profile;
   const analytics = isDemo ? demoData.analytics : null;
   const projects = isDemo ? demoData.projects : [];
   const notifications = isDemo ? demoData.notifications.slice(0, 3) : [];
+
+  // Get the first name from either profile or demo data
+  const getFirstName = () => {
+    if (isDemo && userData) {
+      return userData.first_name;
+    }
+    if (profile) {
+      return profile.first_name;
+    }
+    return null;
+  };
+
+  const firstName = getFirstName();
 
   return (
     <MainLayout>
@@ -36,7 +49,7 @@ const HomePage = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Bem-vindo{userData?.first_name ? `, ${userData.first_name}` : ''}!
+            Bem-vindo{firstName ? `, ${firstName}` : ''}!
           </h1>
           <p className="text-gray-600">
             {isDemo 
