@@ -1,51 +1,89 @@
-import React, { useReducer, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Shield, Calculator, AlertTriangle } from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useReducer, useState } from 'react';
+import { Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { regulatoryFormSchema } from './regulatory-risk/regulatoryValidation';
+import { calculateRegulatoryRisk } from './regulatory-risk/regulatoryCalculations';
+import { RegulatoryFormData, RegulatoryResults } from './regulatory-risk/types';
+import RegulatoryForm from './regulatory-risk/RegulatoryForm';
+import RegulatoryResultsComponent from './regulatory-risk/RegulatoryResults';
 
-interface RegulatoryFormData {
-  productCategory: string;
-  noveltyDegree: string;
-  targetMarkets: string;
-  clinicalEvidence: string;
-  manufacturingComplexity: string;
-}
+type RegulatoryAction = 
+  | { type: 'UPDATE_FIELD'; field: keyof RegulatoryFormData; value: string }
+  | { type: 'RESET' };
 
 const initialFormData: RegulatoryFormData = {
   productCategory: '',
-  noveltyDegree: '',
+  novelty: '',
   targetMarkets: '',
   clinicalEvidence: '',
-  manufacturingComplexity: ''
+  manufacturingComplexity: '',
+  priorApprovals: '',
 };
 
-type FormAction = 
-  | { type: 'UPDATE_FIELD'; field: keyof RegulatoryFormData; value: string }
-  | { type: 'RESET_FORM' };
-
-const formReducer = (state: RegulatoryFormData, action: FormAction): RegulatoryFormData => {
+function regulatoryReducer(state: RegulatoryFormData, action: RegulatoryAction): RegulatoryFormData {
   switch (action.type) {
     case 'UPDATE_FIELD':
       return { ...state, [action.field]: action.value };
-    case 'RESET_FORM':
+    case 'RESET':
       return initialFormData;
     default:
       return state;
   }
-};
+}
 
 const RegulatoryRiskCalculator: React.FC = () => {
-  const [formData, dispatch] = useReducer(formReducer, initialFormData);
-  const [result, setResult] = useState<any>(null);
+  const [formData, dispatch] = useReducer(regulatoryReducer, initialFormData);
+  const [results, setResults] = useState<RegulatoryResults | null>(null);
 
   const handleFieldChange = (field: keyof RegulatoryFormData, value: string) => {
     dispatch({ type: 'UPDATE_FIELD', field, value });
   };
 
   const isFormValid = () => {
-    return Object.values(formData).every(value => value !== '');
+    try {
+      regulatoryFormSchema.parse(formData);
+      return true;
+    } catch {
+      return false;
+    }
   };
+
+  const handleCalculate = () => {
+    if (!isFormValid()) return;
+    
+    const calculatedResults = calculateRegulatoryRisk(formData);
+    setResults(calculatedResults);
+  };
+
+  const handleRecalculate = () => {
+    setResults(null);
+    dispatch({ type: 'RESET' });
+  };
+
+  if (results) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-red-500 rounded-lg flex items-center justify-center">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Avaliador de Risco Regulatório
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Resultado da análise de risco regulatório do seu projeto.
+          </p>
+        </motion.div>
+        <RegulatoryResultsComponent results={results} onRecalculate={handleRecalculate} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -63,30 +101,15 @@ const RegulatoryRiskCalculator: React.FC = () => {
           Avaliador de Risco Regulatório
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Análise de complexidade e probabilidade de aprovação ANVISA para seu produto.
+          Análise de complexidade e probabilidade de aprovação ANVISA.
         </p>
       </motion.div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="w-5 h-5" />
-            Em Desenvolvimento
-          </CardTitle>
-          <CardDescription>
-            Esta calculadora está sendo desenvolvida e estará disponível em breve.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center py-12">
-          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">
-            Nossa equipe está calibrando os algoritmos de análise de risco baseados nas regulamentações da ANVISA.
-          </p>
-          <Button disabled>
-            Aguarde - Em Breve
-          </Button>
-        </CardContent>
-      </Card>
+      <RegulatoryForm
+        formData={formData}
+        onChange={handleFieldChange}
+        onSubmit={handleCalculate}
+        isValid={isFormValid()}
+      />
     </div>
   );
 };
