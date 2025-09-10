@@ -43,6 +43,7 @@ import Projects from "./pages/Projects";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import ToolsPage from "./pages/ToolsPage";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App: React.FC = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/knowledge" element={<KnowledgeLibrary />} />
+            <Route path="/ferramentas" element={<ToolsPage />} />
             <Route path="/ai/hub" element={<MasterAIHub />} />
             <Route path="/master-ai" element={<MasterAIHub />} />
             <Route path="/ai/analista-projetos" element={<ProjectAnalyst />} />
