@@ -110,7 +110,7 @@ PRODUTO ANALISADO:
 - Forma: ${dosage_form}
 - Ativo: ${active_ingredient}
 - Indicação: ${indication}
-- Regiões: ${target_regions?.join(', ') || 'Brasil'}`
+- Regiões: ${target_regions?.join(', ') || 'Brasil'}
 
 ANÁLISE SOLICITADA:
 
@@ -186,7 +186,7 @@ Baseie a análise nas regulamentações atuais e forneça informações prática
               
               Forneça análises técnicas precisas e atualizadas baseadas nas regulamentações vigentes.`
             },
-            { role: "user", content: prompt }
+            { role: "user", content: regulatoryPrompt }
           ],
           max_tokens: 2500,
           temperature: 0.5,
