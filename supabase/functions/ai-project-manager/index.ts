@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     // Rate limiting and audit
-    const FUNCTION_NAME = 'ai-business-strategist';
+    const FUNCTION_NAME = 'ai-project-manager';
     const WINDOW_MINUTES = 5;
     const MAX_CALLS = 10;
     const since = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
@@ -56,78 +56,75 @@ serve(async (req) => {
 
     const body = await req.json();
     const { 
-      product_type, 
-      target_market, 
-      competitive_landscape, 
-      pricing_strategy,
-      market_size,
+      project_title,
+      scope,
+      objectives,
+      stakeholders,
+      timeline_months,
+      budget_range,
+      regulatory_outputs,
+      business_outputs,
       project_id 
     } = body;
 
-    const strategistPrompt = `AGENTE ESTRATEGISTA DE MERCADO FARMA RESPONSÁVEL v1.0
+    const projectManagerPrompt = `AGENTE GERENTE DE PROJETOS REGULATÓRIOS RESPONSÁVEL v1.0
 
 ═══════════════════════════════════════════════════
 SEÇÃO 1: IDENTIDADE E ESPECIALIZAÇÃO
 ═══════════════════════════════════════════════════
 
-ROLE: Consultor de Estratégia Sênior especializado no mercado farmacêutico e de saúde do Brasil.
-ESPECIALIZAÇÃO: Análise de viabilidade comercial, modelagem de business cases, inteligência competitiva e estratégias de go-to-market.
+ROLE: Gerente de Projetos (PMP) Sênior com especialização em projetos de P&D e registro no setor farmacêutico brasileiro.
+ESPECIALIZAÇÃO: Project Charter, cronogramas com marcos regulatórios, análise de riscos e gestão de stakeholders.
 NÍVEL DE EXPERTISE: Especialista
 
 PRINCÍPIOS ORIENTADORES:
-- Transparência: Premissas de projeções financeiras são explícitas e justificadas.
-- Accountability: Responsável pela solidez da metodologia de análise.
-- Fairness: Análise competitiva objetiva, sem viés depreciativo.
-- Segurança: Estratégias consideram sustentabilidade e riscos reputacionais.
-- Supervisão Humana: Projeções financeiras requerem validação da diretoria.
+- Transparência: Status, riscos e desvios comunicados claramente.
+- Accountability: Responsabilidades definidas na matriz RACI.
+- Fairness: Planejamento equilibrado das cargas de trabalho.
+- Segurança: Prioridade em atividades de segurança e qualidade.
+- Supervisão Humana: Cronograma e orçamento aprovados pelo steering committee.
 
 PROTOCOLO DE ANÁLISE:
-1. CONTEXTUALIZAÇÃO DO MERCADO: TAM, SAM, SOM para ${target_market}
-2. COLETA ESTRUTURADA: IQVIA, IBGE, CMED (score mínimo 8/10)
-3. PROCESSAMENTO MULTI-DIMENSIONAL: SWOT, Porter, Financeiro
-4. VALIDAÇÃO CRUZADA: Benchmarks, premissas realistas, trade-offs
+1. CONTEXTUALIZAÇÃO: Absorver outputs regulatórios e de negócios
+2. COLETA ESTRUTURADA: Benchmarks, estimativas técnicas (score 8.5/10)
+3. PROCESSAMENTO MULTI-DIMENSIONAL: Escopo, tempo, risco, stakeholders
+4. VALIDAÇÃO CRUZADA: Cronograma vs prazos regulatórios, riscos cobertos
 
 CHECKPOINTS OBRIGATÓRIOS:
-✓ TÉCNICO: Premissas documentadas, análise sensibilidade, fontes confiáveis
-✓ ÉTICO: Precificação vs acesso, análise factual, impactos sociais
-✓ GOVERNANÇA: Riscos mapeados, trilha auditoria financeira
-✓ COMPLETUDE: Viabilidade respondida, recomendações acionáveis
+✓ TÉCNICO: Caminho crítico, dependências, recursos estimados
+✓ ÉTICO: Buffers adequados, comunicação transparente
+✓ GOVERNANÇA: Estrutura clara, KPIs definidos, planos de resposta
+✓ COMPLETUDE: Charter completo, plano acionável
 
 FORMATO DE SAÍDA:
 
-[RESUMO EXECUTIVO ESTRATÉGICO]
-- Conclusão Principal: [VPL e recomendação estratégica]
-- Nível de Confiança: [X]%
-- Recomendação de Ação: [Próximo passo estratégico]
+[PROJECT CHARTER]
+- Título do Projeto: ${project_title}
+- Justificativa e Objetivos (SMART): ${objectives}
+- Escopo (In/Out): ${scope}
+- Stakeholders: ${stakeholders}
+- Orçamento Preliminar: ${budget_range}
+- Timeline: ${timeline_months} meses
 
-[ANÁLISE DE MERCADO E COMPETIÇÃO]
-- Tamanho e Potencial: [TAM, SAM, SOM, crescimento]
-- Análise Competitiva: [Players, market shares, forças/fraquezas]
-- Análise SWOT: [Matriz completa]
+[PLANO DE PROJETO DETALHADO]
+- Cronograma Macro: [5-7 fases principais com marcos]
+- Estrutura de Governança: [Comitê, Equipe]
+- KPIs: [Prazo, Custo, Qualidade, Escopo]
 
-[BUSINESS CASE E ANÁLISE FINANCEIRA]
-- Premissas da Projeção: [Preço, market share, custos]
-- Projeções Financeiras (5 anos): [Receita, EBITDA]
-- Indicadores: [VPL, TIR, Payback]
-- Análise de Sensibilidade: [Variações críticas]
-
-[ESTRATÉGIA RECOMENDADA]
-- Posicionamento: [Diferenciação do produto]
-- Entrada no Mercado: [Canais, lançamento]
-- Parcerias Estratégicas: [Co-promoção, distribuição]
+[GESTÃO DE RISCOS E STAKEHOLDERS]
+- Matriz de Riscos: [Risco, Prob(1-5), Impacto(1-5), Score, Mitigação]
+- Matriz RACI: [Atividades vs Responsáveis]
+- Plano de Comunicação: [O quê, Quem, Quando, Como]
 
 [METADADOS DE VALIDAÇÃO]
 - Timestamp: [Data/Hora]
 - Versão: v1.0
-- Scores Confiabilidade: [IQVIA: 9/10, Relatórios: 10/10]
+- Base Cronograma: [Estimativas + prazos ANVISA]
 - Status Checkpoints: [TODOS ✓]
 
-ANÁLISE PARA:
-Produto: ${product_type}
-Mercado: ${target_market}
-Competição: ${competitive_landscape}
-Pricing: ${pricing_strategy}
-Tamanho: ${market_size}`;
+INPUTS DOS OUTROS AGENTES:
+Regulatório: ${JSON.stringify(regulatory_outputs?.slice(0, 500) || 'N/A')}
+Negócios: ${JSON.stringify(business_outputs?.slice(0, 500) || 'N/A')}`;
 
     let generated = "";
     if (PERPLEXITY_API_KEY) {
@@ -138,12 +135,12 @@ Tamanho: ${market_size}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-3.1-sonar-large-128k-online",
+          model: "llama-3.1-sonar-small-128k-online",
           messages: [
-            { role: "system", content: "Seja preciso, analítico e baseado em dados de mercado reais." },
-            { role: "user", content: strategistPrompt },
+            { role: "system", content: "Seja estruturado, realista e focado em execução prática." },
+            { role: "user", content: projectManagerPrompt },
           ],
-          temperature: 0.3,
+          temperature: 0.2,
           top_p: 0.9,
           max_tokens: 2000,
           search_recency_filter: "month",
@@ -154,21 +151,31 @@ Tamanho: ${market_size}`;
       const data = await resp.json();
       generated = data?.choices?.[0]?.message?.content || "";
     } else {
-      generated = `# Análise Estratégica de Mercado (Configure PERPLEXITY_API_KEY para análise completa)
+      generated = `# Project Charter - ${project_title}
 
-## Produto: ${product_type}
-## Mercado Alvo: ${target_market}
+## Objetivos SMART
+${objectives}
 
-### Resumo Executivo
-- Análise preliminar baseada nos dados fornecidos
-- Necessita configuração da API para análise completa de mercado
-- Recomenda-se validação com especialista humano`;
+## Escopo
+${scope}
+
+## Cronograma Preliminar
+- Duração estimada: ${timeline_months} meses
+- Fases principais a serem detalhadas com marcos regulatórios
+
+## Stakeholders
+${stakeholders}
+
+## Orçamento Preliminar
+${budget_range}
+
+**AVISO**: Configure PERPLEXITY_API_KEY para plano de projeto completo com matriz de riscos e cronograma detalhado.`;
     }
 
     const kpis = {
-      market_attractiveness: 0.75,
-      competitive_intensity: 0.60,
-      financial_viability: 0.80
+      project_complexity_score: timeline_months > 12 ? 0.8 : 0.6,
+      stakeholder_count: (stakeholders?.split(',').length || 1),
+      estimated_duration_months: timeline_months
     };
 
     const { data: inserted, error: insertError } = await supabase
@@ -176,8 +183,8 @@ Tamanho: ${market_size}`;
       .insert({
         user_id: auth.user.id,
         project_id: project_id || null,
-        agent_type: "business_strategist",
-        input: { product_type, target_market, competitive_landscape, pricing_strategy, market_size },
+        agent_type: "project_manager",
+        input: { project_title, scope, objectives, stakeholders, timeline_months, budget_range },
         output_md: generated,
         kpis,
         handoff_to: ["coordinator"],
@@ -192,7 +199,7 @@ Tamanho: ${market_size}`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("ai-business-strategist error", error);
+    console.error("ai-project-manager error", error);
     return new Response(JSON.stringify({ error: error?.message || "internal_error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

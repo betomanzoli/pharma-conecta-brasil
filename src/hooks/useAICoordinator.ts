@@ -30,41 +30,36 @@ export const useAICoordinator = () => {
   const coordinate = useCallback(async (input: CoordinatorInput): Promise<AgentOutputRow | null> => {
     setLoading(true);
     try {
-      // Simular coordenação até termos a edge function específica
-      const simulatedOutput = `# Plano de Coordenação
+      // Usar a nova edge function do orquestrador
+      const { data, error } = await supabase.functions.invoke('ai-coordinator-orchestrator', {
+        body: {
+          project_id: input.project_id,
+          focus: input.focus,
+          priorities: input.priorities
+        }
+      });
 
-## Foco: ${input.focus}
+      if (error) throw error;
 
-## Prioridades Identificadas:
-${input.priorities.map((p, i) => `${i + 1}. ${p}`).join('\n')}
-
-## Ações Recomendadas:
-- Revisar outputs dos agentes especializados
-- Priorizar atividades baseadas no foco definido
-- Coordenar handoffs entre agentes
-- Monitorar KPIs de progresso
-
-## Próximos Passos:
-1. Executar ações de alta prioridade
-2. Revisar status dos projetos
-3. Atualizar stakeholders sobre progresso`;
-
-      const mockOutput: AgentOutputRow = {
+      const result: AgentOutputRow = data.output || {
         id: crypto.randomUUID(),
         user_id: 'current-user',
         project_id: input.project_id || null,
         agent_type: 'coordinator',
         input,
-        output_md: simulatedOutput,
-        kpis: { priorities_count: input.priorities.length, focus_area: input.focus },
+        output_md: data.output?.output_md || 'Erro na geração do plano.',
+        kpis: data.output?.kpis || { synthesized_items: 0 },
         handoff_to: [],
         status: 'completed',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      toast({ title: 'Coordenação concluída', description: 'Plano de ação gerado.' });
-      return mockOutput;
+      toast({ 
+        title: 'Orquestração concluída', 
+        description: 'Plano executivo consolidado gerado com validação de checkpoints.' 
+      });
+      return result;
     } catch (e: any) {
       toast({ title: 'Falha na coordenação', description: e?.message || 'Tente novamente.', variant: 'destructive' });
       return null;

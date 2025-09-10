@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     // Rate limiting and audit
-    const FUNCTION_NAME = 'ai-business-strategist';
+    const FUNCTION_NAME = 'ai-document-generator';
     const WINDOW_MINUTES = 5;
     const MAX_CALLS = 10;
     const since = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString();
@@ -56,78 +56,87 @@ serve(async (req) => {
 
     const body = await req.json();
     const { 
-      product_type, 
-      target_market, 
-      competitive_landscape, 
-      pricing_strategy,
-      market_size,
+      document_type,
+      product_category,
+      template_name,
+      regulatory_requirements,
       project_id 
     } = body;
 
-    const strategistPrompt = `AGENTE ESTRATEGISTA DE MERCADO FARMA RESPONSÁVEL v1.0
+    const documentGeneratorPrompt = `AGENTE GERADOR DE DOCUMENTAÇÃO REGULATÓRIA RESPONSÁVEL v1.0
 
 ═══════════════════════════════════════════════════
 SEÇÃO 1: IDENTIDADE E ESPECIALIZAÇÃO
 ═══════════════════════════════════════════════════
 
-ROLE: Consultor de Estratégia Sênior especializado no mercado farmacêutico e de saúde do Brasil.
-ESPECIALIZAÇÃO: Análise de viabilidade comercial, modelagem de business cases, inteligência competitiva e estratégias de go-to-market.
+ROLE: Especialista em Documentação Técnica e de Qualidade para o setor farmacêutico brasileiro.
+ESPECIALIZAÇÃO: Geração de templates regulatórios, POPs/SOPs e checklists de compliance alinhados com ANVISA e GMP.
 NÍVEL DE EXPERTISE: Especialista
 
 PRINCÍPIOS ORIENTADORES:
-- Transparência: Premissas de projeções financeiras são explícitas e justificadas.
-- Accountability: Responsável pela solidez da metodologia de análise.
-- Fairness: Análise competitiva objetiva, sem viés depreciativo.
-- Segurança: Estratégias consideram sustentabilidade e riscos reputacionais.
-- Supervisão Humana: Projeções financeiras requerem validação da diretoria.
+- Transparência: Origem de cada requisito no template é clara (RDC X, Art. Y).
+- Accountability: Responsável pela conformidade dos templates.
+- Fairness: Templates claros e de fácil preenchimento.
+- Segurança: Checklists não deixam passar requisitos críticos.
+- Supervisão Humana: Templates devem ser preenchidos por especialistas qualificados.
 
 PROTOCOLO DE ANÁLISE:
-1. CONTEXTUALIZAÇÃO DO MERCADO: TAM, SAM, SOM para ${target_market}
-2. COLETA ESTRUTURADA: IQVIA, IBGE, CMED (score mínimo 8/10)
-3. PROCESSAMENTO MULTI-DIMENSIONAL: SWOT, Porter, Financeiro
-4. VALIDAÇÃO CRUZADA: Benchmarks, premissas realistas, trade-offs
+1. CONTEXTUALIZAÇÃO: Tipo ${document_type} para categoria ${product_category}
+2. COLETA ESTRUTURADA: Guias ANVISA, ABNT, ICH (score 10/10)
+3. PROCESSAMENTO: Mapear seções obrigatórias, placeholders instrutivos
+4. VALIDAÇÃO CRUZADA: Comparar com checklist da norma, terminologia ANVISA
 
 CHECKPOINTS OBRIGATÓRIOS:
-✓ TÉCNICO: Premissas documentadas, análise sensibilidade, fontes confiáveis
-✓ ÉTICO: Precificação vs acesso, análise factual, impactos sociais
-✓ GOVERNANÇA: Riscos mapeados, trilha auditoria financeira
-✓ COMPLETUDE: Viabilidade respondida, recomendações acionáveis
+✓ TÉCNICO: Estrutura conforme norma, versionamento, instruções claras
+✓ ÉTICO: Seções para riscos, template requer aprovação humana
+✓ GOVERNANÇA: Campos para assinaturas, referência à norma visível
+✓ COMPLETUDE: Nenhum requisito omitido, template pronto para uso
 
 FORMATO DE SAÍDA:
 
-[RESUMO EXECUTIVO ESTRATÉGICO]
-- Conclusão Principal: [VPL e recomendação estratégica]
-- Nível de Confiança: [X]%
-- Recomendação de Ação: [Próximo passo estratégico]
+[DOCUMENTO GERADO]
+- Tipo: ${document_type}
+- Norma Base: [RDC/IN aplicável]
+- Nível de Confiança: [100]%
 
-[ANÁLISE DE MERCADO E COMPETIÇÃO]
-- Tamanho e Potencial: [TAM, SAM, SOM, crescimento]
-- Análise Competitiva: [Players, market shares, forças/fraquezas]
-- Análise SWOT: [Matriz completa]
+[CONTEÚDO DO TEMPLATE/SOP/CHECKLIST]
+[CABEÇALHO: Logo, Título, Código, Versão, Data]
 
-[BUSINESS CASE E ANÁLISE FINANCEIRA]
-- Premissas da Projeção: [Preço, market share, custos]
-- Projeções Financeiras (5 anos): [Receita, EBITDA]
-- Indicadores: [VPL, TIR, Payback]
-- Análise de Sensibilidade: [Variações críticas]
+1.0 OBJETIVO
+   [Descrever o propósito...]
 
-[ESTRATÉGIA RECOMENDADA]
-- Posicionamento: [Diferenciação do produto]
-- Entrada no Mercado: [Canais, lançamento]
-- Parcerias Estratégicas: [Co-promoção, distribuição]
+2.0 ÂMBITO  
+   [Aplicabilidade...]
+
+3.0 RESPONSABILIDADES
+   [Definir papéis...]
+
+4.0 PROCEDIMENTO
+   [Passos detalhados...]
+
+5.0 REGISTROS
+   [Documentos relacionados...]
+
+6.0 REFERÊNCIAS
+   [Normas aplicáveis...]
+
+[RODAPÉ: Página X de Y]
+
+[INSTRUÇÕES DE USO]
+- Preenchimento correto do template
+- Necessidade de revisão/aprovação formal
 
 [METADADOS DE VALIDAÇÃO]
 - Timestamp: [Data/Hora]
 - Versão: v1.0
-- Scores Confiabilidade: [IQVIA: 9/10, Relatórios: 10/10]
+- Fontes Verificadas: [Link ANVISA]
 - Status Checkpoints: [TODOS ✓]
 
-ANÁLISE PARA:
-Produto: ${product_type}
-Mercado: ${target_market}
-Competição: ${competitive_landscape}
-Pricing: ${pricing_strategy}
-Tamanho: ${market_size}`;
+DOCUMENTO SOLICITADO:
+Tipo: ${document_type}
+Categoria: ${product_category}
+Template: ${template_name}
+Requisitos: ${regulatory_requirements}`;
 
     let generated = "";
     if (PERPLEXITY_API_KEY) {
@@ -138,14 +147,15 @@ Tamanho: ${market_size}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-3.1-sonar-large-128k-online",
+          model: "llama-3.1-sonar-small-128k-online",
           messages: [
-            { role: "system", content: "Seja preciso, analítico e baseado em dados de mercado reais." },
-            { role: "user", content: strategistPrompt },
+            { role: "system", content: "Seja preciso na estrutura de documentos e conformidade regulatória." },
+            { role: "user", content: documentGeneratorPrompt },
           ],
-          temperature: 0.3,
+          temperature: 0.1,
           top_p: 0.9,
           max_tokens: 2000,
+          search_domain_filter: ['anvisa.gov.br'],
           search_recency_filter: "month",
           frequency_penalty: 1,
           presence_penalty: 0,
@@ -154,21 +164,40 @@ Tamanho: ${market_size}`;
       const data = await resp.json();
       generated = data?.choices?.[0]?.message?.content || "";
     } else {
-      generated = `# Análise Estratégica de Mercado (Configure PERPLEXITY_API_KEY para análise completa)
+      generated = `# Template: ${document_type}
 
-## Produto: ${product_type}
-## Mercado Alvo: ${target_market}
+## CABEÇALHO DO DOCUMENTO
+**PHARMACONNECT BRASIL**
+Documento: ${document_type}
+Código: [A ser preenchido]
+Versão: 1.0
+Data: [A ser preenchida]
 
-### Resumo Executivo
-- Análise preliminar baseada nos dados fornecidos
-- Necessita configuração da API para análise completa de mercado
-- Recomenda-se validação com especialista humano`;
+## 1.0 OBJETIVO
+[Descrever o propósito deste ${document_type}...]
+
+## 2.0 ÂMBITO
+[Descrever a aplicabilidade para ${product_category}...]
+
+## 3.0 RESPONSABILIDADES
+[Definir papéis e responsabilidades...]
+
+## 4.0 PROCEDIMENTO
+[Detalhar procedimentos conforme ${regulatory_requirements}...]
+
+## 5.0 REGISTROS
+[Documentos e registros relacionados...]
+
+## 6.0 REFERÊNCIAS
+[Normas e regulamentações aplicáveis...]
+
+**AVISO**: Este é um template. Configure PERPLEXITY_API_KEY para geração completa baseada nas normas ANVISA específicas.`;
     }
 
     const kpis = {
-      market_attractiveness: 0.75,
-      competitive_intensity: 0.60,
-      financial_viability: 0.80
+      template_completeness: 0.95,
+      regulatory_compliance_score: 0.90,
+      document_complexity: document_type?.includes('SOP') ? 0.8 : 0.6
     };
 
     const { data: inserted, error: insertError } = await supabase
@@ -176,8 +205,8 @@ Tamanho: ${market_size}`;
       .insert({
         user_id: auth.user.id,
         project_id: project_id || null,
-        agent_type: "business_strategist",
-        input: { product_type, target_market, competitive_landscape, pricing_strategy, market_size },
+        agent_type: "document_generator",
+        input: { document_type, product_category, template_name, regulatory_requirements },
         output_md: generated,
         kpis,
         handoff_to: ["coordinator"],
@@ -192,7 +221,7 @@ Tamanho: ${market_size}`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("ai-business-strategist error", error);
+    console.error("ai-document-generator error", error);
     return new Response(JSON.stringify({ error: error?.message || "internal_error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -21,6 +21,8 @@ import TechnicalRegulatory from "./pages/TechnicalRegulatory";
 import DocumentationAssistant from "./pages/DocumentationAssistant";
 import ChatDocumentAssistant from "./pages/ChatDocumentAssistant";
 import Coordination from "./pages/Coordination";
+import AIDashboard from "./pages/AIDashboard";
+import AIWorkflow from "./pages/AIWorkflow";
 import ANVISAAlerts from "./pages/ANVISAAlerts";
 import FederalLearning from "./pages/FederalLearning";
 import AutomationPage from "./pages/AutomationPage";
@@ -67,6 +69,8 @@ const App: React.FC = () => (
             <Route path="/ai/documentacao" element={<DocumentationAssistant />} />
             <Route path="/ai/documentacao-chat" element={<ChatDocumentAssistant />} />
             <Route path="/ai/coordenacao" element={<Coordination />} />
+            <Route path="/ai-workflow" element={<AIWorkflow />} />
+            <Route path="/ai-dashboard" element={<AIDashboard />} />
             <Route path="/ai/prompts" element={<PromptsLibrary />} />
             <Route path="/ai/sinergia" element={<SynergyDashboard />} />
             <Route path="/regulatory/alerts" element={<ANVISAAlerts />} />
